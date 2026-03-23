@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,8 @@ import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
 import { useToast } from '../../src/contexts/ToastContext';
 import { Visit } from '../../src/types';
-import { COUNTRIES, getCountryByCode } from '../../src/constants/countries';
+import { COUNTRIES, getCountryByCode, getVisaTypesWithCustom } from '../../src/constants/countries';
+import { getDefaultAllowedDays, isCustomVisaType } from '../../src/constants/visaDefaults';
 import { DatePickerInput } from '../../src/components/common/DatePickerInput';
 import { CountryInfoCard } from '../../src/components/common/CountryInfoCard';
 import { v4 as uuidv4 } from 'uuid';
@@ -46,7 +47,19 @@ export default function AddVisitScreen() {
   const [countrySearch, setCountrySearch] = useState('');
 
   const selectedCountry = countryCode ? getCountryByCode(countryCode) : null;
-  const visaTypes = selectedCountry?.visaTypes || [];
+  // Get visa types with Custom option added
+  const visaTypes = countryCode ? getVisaTypesWithCustom(countryCode) : [];
+  
+  // Check if allowed days should be editable (only when Custom is selected)
+  const isAllowedDaysEditable = isCustomVisaType(visaType);
+
+  // Auto-populate allowed days when visa type changes
+  useEffect(() => {
+    if (visaType && !isCustomVisaType(visaType)) {
+      const defaultDays = getDefaultAllowedDays(visaType);
+      setAllowedDays(defaultDays.toString());
+    }
+  }, [visaType]);
 
   const filteredCountries = countrySearch
     ? COUNTRIES.filter(c =>
@@ -161,19 +174,43 @@ export default function AddVisitScreen() {
             </TouchableOpacity>
           </View>
 
-          {/* Allowed Days */}
+          {/* Allowed Days - Only editable when Custom is selected */}
           <View style={styles.inputGroup}>
             <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-              {t('allowedDays')} ({t('optional')})
+              {t('allowedDays')} {isAllowedDaysEditable ? '' : '(Auto)'}
             </Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
-              value={allowedDays}
-              onChangeText={setAllowedDays}
-              placeholder="90"
-              placeholderTextColor={colors.textSecondary}
-              keyboardType="number-pad"
-            />
+            <View style={styles.allowedDaysRow}>
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.allowedDaysInput,
+                  { 
+                    backgroundColor: isAllowedDaysEditable ? colors.card : colors.border + '50',
+                    color: colors.text, 
+                    borderColor: colors.border 
+                  }
+                ]}
+                value={allowedDays}
+                onChangeText={setAllowedDays}
+                placeholder="90"
+                placeholderTextColor={colors.textSecondary}
+                keyboardType="number-pad"
+                editable={isAllowedDaysEditable}
+              />
+              {!isAllowedDaysEditable && visaType && (
+                <View style={[styles.autoLabel, { backgroundColor: colors.primary + '20' }]}>
+                  <Ionicons name="information-circle" size={14} color={colors.primary} />
+                  <Text style={[styles.autoLabelText, { color: colors.primary }]}>
+                    Based on visa type
+                  </Text>
+                </View>
+              )}
+            </View>
+            {!isAllowedDaysEditable && (
+              <Text style={[styles.hintText, { color: colors.textSecondary }]}>
+                Select "Custom" visa type to edit manually
+              </Text>
+            )}
           </View>
 
           {/* Passport */}
@@ -277,6 +314,7 @@ export default function AddVisitScreen() {
                       setCountryCode(item.code);
                       setCountryName(item.name);
                       setVisaType('');
+                      setAllowedDays('');
                       setShowCountryPicker(false);
                       setCountrySearch('');
                     }}
@@ -308,20 +346,40 @@ export default function AddVisitScreen() {
               <FlatList
                 data={visaTypes}
                 keyExtractor={(item) => item}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[styles.listItem, { borderBottomColor: colors.border }]}
-                    onPress={() => {
-                      setVisaType(item);
-                      setShowVisaPicker(false);
-                    }}
-                  >
-                    <Text style={[styles.listText, { color: colors.text }]}>{item}</Text>
-                    {visaType === item && (
-                      <Ionicons name="checkmark" size={24} color={colors.primary} />
-                    )}
-                  </TouchableOpacity>
-                )}
+                renderItem={({ item }) => {
+                  const isCustom = isCustomVisaType(item);
+                  const defaultDays = getDefaultAllowedDays(item);
+                  return (
+                    <TouchableOpacity
+                      style={[styles.listItem, { borderBottomColor: colors.border }]}
+                      onPress={() => {
+                        setVisaType(item);
+                        // Auto-populate allowed days unless Custom
+                        if (!isCustom) {
+                          setAllowedDays(defaultDays.toString());
+                        }
+                        setShowVisaPicker(false);
+                      }}
+                    >
+                      <View style={styles.visaTypeInfo}>
+                        <Text style={[styles.listText, { color: colors.text }]}>{item}</Text>
+                        {!isCustom && (
+                          <Text style={[styles.visaDays, { color: colors.textSecondary }]}>
+                            {defaultDays} days
+                          </Text>
+                        )}
+                        {isCustom && (
+                          <Text style={[styles.visaDays, { color: colors.primary }]}>
+                            Set your own duration
+                          </Text>
+                        )}
+                      </View>
+                      {visaType === item && (
+                        <Ionicons name="checkmark" size={24} color={colors.primary} />
+                      )}
+                    </TouchableOpacity>
+                  );
+                }}
                 ListEmptyComponent={
                   <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                     No visa types available
@@ -442,6 +500,31 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
   },
+  allowedDaysRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  allowedDaysInput: {
+    flex: 1,
+  },
+  autoLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 4,
+  },
+  autoLabelText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  hintText: {
+    fontSize: 12,
+    marginTop: 6,
+    fontStyle: 'italic',
+  },
   saveButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -503,6 +586,13 @@ const styles = StyleSheet.create({
   listText: {
     flex: 1,
     fontSize: 16,
+  },
+  visaTypeInfo: {
+    flex: 1,
+  },
+  visaDays: {
+    fontSize: 13,
+    marginTop: 2,
   },
   schengenBadge: {
     paddingHorizontal: 8,

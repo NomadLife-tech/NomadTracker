@@ -221,3 +221,12 @@ export function searchCountries(query: string): Country[] {
     c.code.toLowerCase().includes(lowerQuery)
   );
 }
+
+// Get visa types for a country with Custom option added
+export function getVisaTypesWithCustom(countryCode: string): string[] {
+  const country = getCountryByCode(countryCode);
+  if (!country) return ['Custom'];
+  // Add "Custom" at the end of the visa types list
+  return [...country.visaTypes, 'Custom'];
+}
+
