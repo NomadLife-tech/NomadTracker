@@ -84,15 +84,28 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
   };
 
   // Generate Leaflet map HTML - always in light mode
+  // Zoom level 15 shows approximately 2km radius area
   const mapHtml = useMemo(() => {
     const lat = coords[0];
     const lng = coords[1];
-    const zoom = activeVisit ? 5 : 2;
+    // Zoom level 15 = ~2km radius view, Zoom level 2 = world view for empty state
+    const zoom = activeVisit ? 15 : 2;
     
     // Always use light tile style
     const tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
     
+    // Add marker and 2km radius circle for active visit
     const markerHtml = activeVisit && country ? `
+      // Add 2km radius circle
+      L.circle([${lat}, ${lng}], {
+        color: '#007AFF',
+        fillColor: '#007AFF',
+        fillOpacity: 0.1,
+        weight: 2,
+        radius: 2000 // 2km in meters
+      }).addTo(map);
+      
+      // Add center marker with flag
       L.marker([${lat}, ${lng}], {
         icon: L.divIcon({
           className: 'custom-marker',
