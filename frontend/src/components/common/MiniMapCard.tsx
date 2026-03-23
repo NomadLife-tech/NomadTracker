@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Visit } from '../../types';
 import { getCountryByCode } from '../../constants/countries';
@@ -15,50 +15,50 @@ interface MiniMapCardProps {
 
 // Country coordinates for map centering
 const COUNTRY_COORDS: { [key: string]: [number, number] } = {
-  US: [37.0902, -95.7129], GB: [55.3781, -3.4360], DE: [51.1657, 10.4515],
-  FR: [46.2276, 2.2137], ES: [40.4637, -3.7492], IT: [41.8719, 12.5674],
-  PT: [39.3999, -8.2245], NL: [52.1326, 5.2913], BE: [50.5039, 4.4699],
-  AT: [47.5162, 14.5501], CH: [46.8182, 8.2275], GR: [39.0742, 21.8243],
-  SE: [60.1282, 18.6435], NO: [60.4720, 8.4689], DK: [56.2639, 9.5018],
-  FI: [61.9241, 25.7482], PL: [51.9194, 19.1451], CZ: [49.8175, 15.4730],
-  HU: [47.1625, 19.5033], IE: [53.1424, -7.6921], JP: [36.2048, 138.2529],
-  KR: [35.9078, 127.7669], CN: [35.8617, 104.1954], TW: [23.6978, 120.9605],
-  SG: [1.3521, 103.8198], MY: [4.2105, 101.9758], TH: [15.8700, 100.9925],
-  ID: [-0.7893, 113.9213], VN: [14.0583, 108.2772], PH: [12.8797, 121.7740],
-  IN: [20.5937, 78.9629], AU: [-25.2744, 133.7751], NZ: [-40.9006, 174.8860],
-  CA: [56.1304, -106.3468], MX: [23.6345, -102.5528], BR: [-14.2350, -51.9253],
-  AR: [-38.4161, -63.6167], CL: [-35.6751, -71.5430], CO: [4.5709, -74.2973],
-  PE: [-9.1900, -75.0152], AE: [23.4241, 53.8478], SA: [23.8859, 45.0792],
-  QA: [25.3548, 51.1839], EG: [26.8206, 30.8025], ZA: [-30.5595, 22.9375],
-  KE: [-0.0236, 37.9062], MA: [31.7917, -7.0926], TR: [38.9637, 35.2433],
-  IL: [31.0461, 34.8516], RU: [61.5240, 105.3188], UA: [48.3794, 31.1656],
-  HR: [45.1000, 15.2000], RO: [45.9432, 24.9668], BG: [42.7339, 25.4858],
-  RS: [44.0165, 21.0059], GE: [42.3154, 43.3569], AM: [40.0691, 45.0382],
-  AZ: [40.1431, 47.5769], KZ: [48.0196, 66.9237], UZ: [41.3775, 64.5853],
-  LK: [7.8731, 80.7718], NP: [28.3949, 84.1240], BD: [23.6850, 90.3563],
-  MM: [21.9162, 95.9560], KH: [12.5657, 104.9910], LA: [19.8563, 102.4955],
-  MV: [3.2028, 73.2207], BT: [27.5142, 90.4336], MN: [46.8625, 103.8467],
-  PA: [8.5380, -80.7821], CR: [9.7489, -83.7534], EC: [-1.8312, -78.1834],
-  UY: [-32.5228, -55.7658], PY: [-23.4425, -58.4438], BO: [-16.2902, -63.5887],
-  IS: [64.9631, -19.0208], LU: [49.8153, 6.1296], MT: [35.9375, 14.3754],
-  CY: [35.1264, 33.4299], EE: [58.5953, 25.0136], LV: [56.8796, 24.6032],
-  LT: [55.1694, 23.8813], SK: [48.6690, 19.6990], SI: [46.1512, 14.9955],
-  ME: [42.7087, 19.3744], AL: [41.1533, 20.1683], MK: [41.5124, 21.7453],
-  BA: [43.9159, 17.6791], MD: [47.4116, 28.3699], BY: [53.7098, 27.9534],
-  AF: [33.9391, 67.7100], PK: [30.3753, 69.3451], NG: [9.0820, 8.6753],
-  GH: [7.9465, -1.0232], ET: [9.1450, 40.4897], TZ: [-6.3690, 34.8888],
-  UG: [1.3733, 32.2903], RW: [-1.9403, 29.8739], MZ: [-18.6657, 35.5296],
-  ZW: [-19.0154, 29.1549], ZM: [-13.1339, 27.8493], NA: [-22.9576, 18.4904],
-  BW: [-22.3285, 24.6849], MW: [-13.2543, 34.3015], AO: [-11.2027, 17.8739],
-  CD: [-4.0383, 21.7587], CG: [-0.2280, 15.8277], CM: [7.3697, 12.3547],
-  CI: [7.5400, -5.5471], SN: [14.4974, -14.4524], ML: [17.5707, -3.9962],
-  NE: [17.6078, 8.0817], TD: [15.4542, 18.7322], SD: [12.8628, 30.2176],
-  LY: [26.3351, 17.2283], TN: [33.8869, 9.5375], DZ: [28.0339, 1.6596],
+  US: [37.0902, -95.7129], GB: [51.5074, -0.1278], DE: [52.5200, 13.4050],
+  FR: [48.8566, 2.3522], ES: [40.4168, -3.7038], IT: [41.9028, 12.4964],
+  PT: [38.7223, -9.1393], NL: [52.3676, 4.9041], BE: [50.8503, 4.3517],
+  AT: [48.2082, 16.3738], CH: [46.9480, 7.4474], GR: [37.9838, 23.7275],
+  SE: [59.3293, 18.0686], NO: [59.9139, 10.7522], DK: [55.6761, 12.5683],
+  FI: [60.1699, 24.9384], PL: [52.2297, 21.0122], CZ: [50.0755, 14.4378],
+  HU: [47.4979, 19.0402], IE: [53.3498, -6.2603], JP: [35.6762, 139.6503],
+  KR: [37.5665, 126.9780], CN: [39.9042, 116.4074], TW: [25.0330, 121.5654],
+  SG: [1.3521, 103.8198], MY: [3.1390, 101.6869], TH: [13.7563, 100.5018],
+  ID: [-6.2088, 106.8456], VN: [21.0278, 105.8342], PH: [14.5995, 120.9842],
+  IN: [28.6139, 77.2090], AU: [-33.8688, 151.2093], NZ: [-36.8485, 174.7633],
+  CA: [43.6532, -79.3832], MX: [19.4326, -99.1332], BR: [-23.5505, -46.6333],
+  AR: [-34.6037, -58.3816], CL: [-33.4489, -70.6693], CO: [4.7110, -74.0721],
+  PE: [-12.0464, -77.0428], AE: [25.2048, 55.2708], SA: [24.7136, 46.6753],
+  QA: [25.2854, 51.5310], EG: [30.0444, 31.2357], ZA: [-33.9249, 18.4241],
+  KE: [-1.2921, 36.8219], MA: [33.9716, -6.8498], TR: [41.0082, 28.9784],
+  IL: [32.0853, 34.7818], RU: [55.7558, 37.6173], UA: [50.4501, 30.5234],
+  HR: [45.8150, 15.9819], RO: [44.4268, 26.1025], BG: [42.6977, 23.3219],
+  RS: [44.7866, 20.4489], GE: [41.7151, 44.8271], AM: [40.1792, 44.4991],
+  AZ: [40.4093, 49.8671], KZ: [51.1605, 71.4704], UZ: [41.2995, 69.2401],
+  LK: [6.9271, 79.8612], NP: [27.7172, 85.3240], BD: [23.8103, 90.4125],
+  MM: [16.8661, 96.1951], KH: [11.5564, 104.9282], LA: [17.9757, 102.6331],
+  MV: [4.1755, 73.5093], BT: [27.4728, 89.6390], MN: [47.8864, 106.9057],
+  PA: [8.9824, -79.5199], CR: [9.9281, -84.0907], EC: [-0.1807, -78.4678],
+  UY: [-34.9011, -56.1645], PY: [-25.2637, -57.5759], BO: [-16.4897, -68.1193],
+  IS: [64.1466, -21.9426], LU: [49.6116, 6.1319], MT: [35.8989, 14.5146],
+  CY: [35.1856, 33.3823], EE: [59.4370, 24.7536], LV: [56.9496, 24.1052],
+  LT: [54.6872, 25.2797], SK: [48.1486, 17.1077], SI: [46.0569, 14.5058],
+  ME: [42.4304, 19.2594], AL: [41.3275, 19.8187], MK: [41.9981, 21.4254],
+  BA: [43.8563, 18.4131], MD: [47.0105, 28.8638], BY: [53.9006, 27.5590],
+  AF: [34.5553, 69.2075], PK: [33.6844, 73.0479], NG: [9.0765, 7.3986],
+  GH: [5.6037, -0.1870], ET: [8.9806, 38.7578], TZ: [-6.7924, 39.2083],
+  UG: [0.3476, 32.5825], RW: [-1.9403, 30.0587], MZ: [-25.9692, 32.5732],
+  ZW: [-17.8252, 31.0335], ZM: [-15.3875, 28.3228], NA: [-22.5609, 17.0658],
+  BW: [-24.6282, 25.9231], MW: [-13.9626, 33.7741], AO: [-8.8390, 13.2894],
+  CD: [-4.4419, 15.2663], CG: [-4.2634, 15.2429], CM: [3.8480, 11.5021],
+  CI: [5.3600, -4.0083], SN: [14.7167, -17.4677], ML: [12.6392, -8.0029],
+  NE: [13.5137, 2.1098], TD: [12.1348, 15.0557], SD: [15.5007, 32.5599],
+  LY: [32.8872, 13.1913], TN: [36.8065, 10.1815], DZ: [36.7538, 3.0588],
 };
 
 export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCardProps) {
-  // Get theme colors for dark mode support on overlays
   const { colors, isDarkMode } = useTheme();
+  const [isOverlayVisible, setIsOverlayVisible] = useState(true);
   
   const activeVisitStatus = useMemo(() => {
     if (!activeVisit) return null;
@@ -74,42 +74,42 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
     return colors.danger;
   };
 
-  // Generate Leaflet map HTML - ALWAYS in light mode regardless of theme
+  // Generate Leaflet map HTML with 3D-style modern tiles - ALWAYS light mode
   const mapHtml = useMemo(() => {
     const lat = coords[0];
     const lng = coords[1];
     const zoom = activeVisit ? 15 : 2;
     
-    // Always use light tile style for the map
-    const tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    // Modern 3D-style map tiles - using Esri World Imagery with labels overlay for satellite look
+    // or CartoDB Voyager for clean modern style
+    const baseTileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+    const labelsTileUrl = 'https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png';
     
     const markerHtml = activeVisit && country ? `
-      // Add 2km radius circle with gradient effect
+      // Add subtle 2km radius area
       L.circle([${lat}, ${lng}], {
-        color: '#007AFF',
-        fillColor: '#007AFF',
-        fillOpacity: 0.08,
+        color: 'rgba(255,255,255,0.8)',
+        fillColor: 'rgba(0,122,255,0.15)',
+        fillOpacity: 1,
         weight: 2,
         radius: 2000,
-        dashArray: '5, 5'
       }).addTo(map);
       
-      // Add inner glow circle
-      L.circle([${lat}, ${lng}], {
-        color: 'transparent',
-        fillColor: '#007AFF',
-        fillOpacity: 0.15,
-        weight: 0,
-        radius: 800
-      }).addTo(map);
-      
-      // Add center marker with flag
+      // Add glowing center marker
       L.marker([${lat}, ${lng}], {
         icon: L.divIcon({
           className: 'custom-marker',
-          html: '<div class="marker-wrapper"><div class="marker-glow"></div><div class="marker-ring"></div><div class="marker-center"><span class="flag">${country.flag}</span></div></div>',
-          iconSize: [80, 80],
-          iconAnchor: [40, 40],
+          html: \`
+            <div class="marker-outer">
+              <div class="marker-glow"></div>
+              <div class="marker-ring"></div>
+              <div class="marker-inner">
+                <span class="flag">${country.flag}</span>
+              </div>
+            </div>
+          \`,
+          iconSize: [90, 90],
+          iconAnchor: [45, 45],
         })
       }).addTo(map);
     ` : '';
@@ -126,50 +126,53 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
           html, body { height: 100%; overflow: hidden; }
           #map { width: 100%; height: 100%; }
           .custom-marker { background: none !important; border: none !important; }
-          .marker-wrapper {
+          .marker-outer {
             position: relative;
-            width: 80px;
-            height: 80px;
+            width: 90px;
+            height: 90px;
             display: flex;
             align-items: center;
             justify-content: center;
           }
           .marker-glow {
             position: absolute;
-            width: 80px;
-            height: 80px;
+            width: 90px;
+            height: 90px;
             border-radius: 50%;
-            background: radial-gradient(circle, rgba(0,122,255,0.4) 0%, rgba(0,122,255,0) 70%);
-            animation: glow-pulse 2.5s ease-out infinite;
+            background: radial-gradient(circle, rgba(0,122,255,0.5) 0%, rgba(0,122,255,0) 70%);
+            animation: glow 3s ease-in-out infinite;
           }
           .marker-ring {
             position: absolute;
-            width: 56px;
-            height: 56px;
+            width: 64px;
+            height: 64px;
             border-radius: 50%;
-            border: 3px solid rgba(0,122,255,0.6);
-            animation: ring-pulse 2.5s ease-out infinite;
+            border: 3px solid rgba(255,255,255,0.9);
+            box-shadow: 0 0 20px rgba(0,122,255,0.6), inset 0 0 10px rgba(0,122,255,0.3);
+            animation: ring 3s ease-in-out infinite;
           }
-          .marker-center {
-            width: 48px;
-            height: 48px;
+          .marker-inner {
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
-            background: linear-gradient(145deg, #ffffff 0%, #f0f0f0 100%);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.25), 0 2px 8px rgba(0,122,255,0.3);
+            background: linear-gradient(145deg, #ffffff 0%, #f8f8f8 100%);
+            box-shadow: 
+              0 8px 32px rgba(0,0,0,0.3),
+              0 2px 8px rgba(0,0,0,0.2),
+              inset 0 2px 4px rgba(255,255,255,0.9);
             display: flex;
             align-items: center;
             justify-content: center;
             z-index: 2;
           }
-          .flag { font-size: 28px; }
-          @keyframes glow-pulse {
-            0% { transform: scale(0.8); opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
+          .flag { font-size: 30px; }
+          @keyframes glow {
+            0%, 100% { transform: scale(0.9); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; }
           }
-          @keyframes ring-pulse {
-            0% { transform: scale(0.9); opacity: 1; }
-            50% { opacity: 0.6; }
-            100% { transform: scale(1.3); opacity: 0; }
+          @keyframes ring {
+            0%, 100% { transform: scale(0.95); opacity: 0.9; }
+            50% { transform: scale(1.05); opacity: 1; }
           }
           .leaflet-control-container { display: none !important; }
         </style>
@@ -188,7 +191,13 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
             keyboard: false
           }).setView([${lat}, ${lng}], ${zoom});
           
-          L.tileLayer('${tileUrl}', {
+          // Base satellite imagery layer
+          L.tileLayer('${baseTileUrl}', {
+            maxZoom: 19,
+          }).addTo(map);
+          
+          // Labels overlay for better readability
+          L.tileLayer('${labelsTileUrl}', {
             subdomains: 'abcd',
             maxZoom: 19,
           }).addTo(map);
@@ -206,7 +215,7 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
         width: '100%',
         height: '100%',
         border: 'none',
-        borderRadius: 20,
+        borderRadius: 24,
         display: 'block',
       } as React.CSSProperties;
       
@@ -234,145 +243,171 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
     }
   };
 
-  // Overlay card background with blur effect simulation
-  const cardBgColor = isDarkMode ? 'rgba(28, 28, 30, 0.92)' : 'rgba(255, 255, 255, 0.92)';
-  const badgeBgColor = isDarkMode ? 'rgba(28, 28, 30, 0.88)' : 'rgba(255, 255, 255, 0.88)';
+  // Dark mode compliant overlay colors
+  const cardBgColor = isDarkMode ? 'rgba(28, 28, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+  const badgeBgColor = isDarkMode ? 'rgba(28, 28, 30, 0.9)' : 'rgba(255, 255, 255, 0.9)';
 
   if (activeVisit && activeVisitStatus) {
     return (
-      <TouchableOpacity 
-        style={styles.container} 
-        onPress={onPress}
-        activeOpacity={0.95}
-      >
-        {/* Map Background - Always Light Mode */}
-        <View style={styles.mapContainer}>
-          {renderMap()}
-        </View>
+      <View style={styles.container}>
+        {/* Map Background - Always Light/Satellite Mode - Tappable to navigate */}
+        <TouchableOpacity 
+          style={styles.mapTouchable}
+          onPress={onPress}
+          activeOpacity={0.98}
+        >
+          <View style={styles.mapContainer}>
+            {renderMap()}
+          </View>
+        </TouchableOpacity>
 
-        {/* Top Badges Row */}
-        <View style={styles.topBadgesRow}>
-          {/* Location Badge */}
-          <View style={[styles.topBadge, { backgroundColor: badgeBgColor }]}>
-            <View style={styles.locationDot} />
-            <Text style={[styles.topBadgeText, { color: colors.text }]}>{t('currentlyIn')}</Text>
+        {/* Top Badges */}
+        <View style={styles.topRow}>
+          <View style={[styles.locationBadge, { backgroundColor: badgeBgColor }]}>
+            <View style={styles.locationPulse} />
+            <Text style={[styles.locationText, { color: colors.text }]}>{t('currentlyIn')}</Text>
           </View>
           
-          {/* Live Indicator */}
           <View style={[styles.liveBadge, { backgroundColor: badgeBgColor }]}>
-            <View style={styles.liveDotAnimated} />
+            <View style={styles.liveIndicator} />
             <Text style={styles.liveText}>LIVE</Text>
           </View>
         </View>
 
-        {/* Info Card - Dark Mode Compliant */}
-        <View style={[styles.infoCard, { backgroundColor: cardBgColor }]}>
-          {/* Country Header */}
-          <View style={styles.countryHeader}>
-            <View style={[styles.flagCircle, { backgroundColor: colors.background }]}>
-              <Text style={styles.flagEmoji}>{country?.flag}</Text>
+        {/* Collapsible Info Card */}
+        {isOverlayVisible ? (
+          <View style={[styles.infoCard, { backgroundColor: cardBgColor }]}>
+            {/* Close Button */}
+            <TouchableOpacity 
+              style={[styles.closeButton, { backgroundColor: colors.border }]}
+              onPress={() => setIsOverlayVisible(false)}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Ionicons name="close" size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+
+            {/* Country Header */}
+            <View style={styles.countryHeader}>
+              <View style={[styles.flagBubble, { backgroundColor: colors.background }]}>
+                <Text style={styles.flagEmoji}>{country?.flag}</Text>
+              </View>
+              <View style={styles.countryDetails}>
+                <Text style={[styles.countryName, { color: colors.text }]} numberOfLines={1}>
+                  {activeVisit.countryName}
+                </Text>
+                <Text style={[styles.visaType, { color: colors.textSecondary }]} numberOfLines={1}>
+                  {activeVisit.visaType}
+                </Text>
+              </View>
             </View>
-            <View style={styles.countryInfo}>
-              <Text style={[styles.countryName, { color: colors.text }]} numberOfLines={1}>
+
+            {/* Stats */}
+            <View style={[styles.statsContainer, { borderTopColor: colors.border }]}>
+              <View style={styles.statBox}>
+                <Text style={[styles.statNum, { color: colors.text }]}>
+                  {activeVisitStatus.daysUsed}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                  {t('daysUsed')}
+                </Text>
+              </View>
+              
+              <View style={[styles.statSeparator, { backgroundColor: colors.border }]} />
+              
+              <View style={styles.statBox}>
+                <Text style={[
+                  styles.statNum, 
+                  styles.highlightStat,
+                  { color: getProgressColor(activeVisitStatus.percentageUsed) }
+                ]}>
+                  {activeVisitStatus.daysRemaining}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                  {t('daysRemaining')}
+                </Text>
+              </View>
+              
+              <View style={[styles.statSeparator, { backgroundColor: colors.border }]} />
+              
+              <View style={styles.statBox}>
+                <Text style={[styles.statNum, { color: colors.text }]}>
+                  {activeVisit.allowedDays || 90}
+                </Text>
+                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                  {t('allowedDays')}
+                </Text>
+              </View>
+            </View>
+
+            {/* Progress */}
+            <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
+              <View
+                style={[
+                  styles.progressFill,
+                  {
+                    width: `${Math.min(100, activeVisitStatus.percentageUsed)}%`,
+                    backgroundColor: getProgressColor(activeVisitStatus.percentageUsed),
+                  },
+                ]}
+              />
+            </View>
+
+            {activeVisitStatus.isOverstay && (
+              <View style={[styles.alertBar, { backgroundColor: colors.danger + '20' }]}>
+                <Ionicons name="alert-circle" size={16} color={colors.danger} />
+                <Text style={[styles.alertText, { color: colors.danger }]}>
+                  Visa Overstay Warning
+                </Text>
+              </View>
+            )}
+          </View>
+        ) : (
+          /* Minimized State - Show button to expand */
+          <TouchableOpacity 
+            style={[styles.expandButton, { backgroundColor: cardBgColor }]}
+            onPress={() => setIsOverlayVisible(true)}
+          >
+            <View style={[styles.miniFlagBubble, { backgroundColor: colors.background }]}>
+              <Text style={styles.miniFlagEmoji}>{country?.flag}</Text>
+            </View>
+            <View style={styles.miniInfo}>
+              <Text style={[styles.miniCountry, { color: colors.text }]} numberOfLines={1}>
                 {activeVisit.countryName}
               </Text>
-              <Text style={[styles.visaType, { color: colors.textSecondary }]} numberOfLines={1}>
-                {activeVisit.visaType}
+              <Text style={[styles.miniDays, { color: getProgressColor(activeVisitStatus.percentageUsed) }]}>
+                {activeVisitStatus.daysRemaining} days left
               </Text>
             </View>
-            <TouchableOpacity style={styles.expandButton}>
-              <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Stats Grid */}
-          <View style={[styles.statsGrid, { borderTopColor: colors.border }]}>
-            <View style={styles.statBlock}>
-              <Text style={[styles.statNumber, { color: colors.text }]}>
-                {activeVisitStatus.daysUsed}
-              </Text>
-              <Text style={[styles.statTitle, { color: colors.textSecondary }]}>
-                {t('daysUsed')}
-              </Text>
-            </View>
-            
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            
-            <View style={styles.statBlock}>
-              <Text style={[
-                styles.statNumber, 
-                styles.highlightNumber,
-                { color: getProgressColor(activeVisitStatus.percentageUsed) }
-              ]}>
-                {activeVisitStatus.daysRemaining}
-              </Text>
-              <Text style={[styles.statTitle, { color: colors.textSecondary }]}>
-                {t('daysRemaining')}
-              </Text>
-            </View>
-            
-            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-            
-            <View style={styles.statBlock}>
-              <Text style={[styles.statNumber, { color: colors.text }]}>
-                {activeVisit.allowedDays || 90}
-              </Text>
-              <Text style={[styles.statTitle, { color: colors.textSecondary }]}>
-                {t('allowedDays')}
-              </Text>
-            </View>
-          </View>
-
-          {/* Progress Bar */}
-          <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
-            <View
-              style={[
-                styles.progressFill,
-                {
-                  width: `${Math.min(100, activeVisitStatus.percentageUsed)}%`,
-                  backgroundColor: getProgressColor(activeVisitStatus.percentageUsed),
-                },
-              ]}
-            />
-          </View>
-
-          {activeVisitStatus.isOverstay && (
-            <View style={[styles.warningBar, { backgroundColor: colors.danger + '15' }]}>
-              <Ionicons name="alert-circle" size={16} color={colors.danger} />
-              <Text style={[styles.warningText, { color: colors.danger }]}>
-                {t('overstay')} - Visa Exceeded
-              </Text>
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
+            <Ionicons name="chevron-up" size={20} color={colors.textSecondary} />
+          </TouchableOpacity>
+        )}
+      </View>
     );
   }
 
-  // Empty State - No active visit
+  // Empty State
   return (
     <View style={styles.container}>
       <View style={styles.mapContainer}>
         {renderMap()}
       </View>
 
-      {/* Empty State Card - Dark Mode Compliant */}
       <View style={[styles.emptyCard, { backgroundColor: cardBgColor }]}>
-        <View style={[styles.emptyIconCircle, { backgroundColor: colors.primary + '15' }]}>
-          <Ionicons name="airplane" size={28} color={colors.primary} />
+        <View style={[styles.emptyIconBg, { backgroundColor: colors.primary + '15' }]}>
+          <Ionicons name="airplane" size={32} color={colors.primary} />
         </View>
         <Text style={[styles.emptyTitle, { color: colors.text }]}>
           {t('noActiveVisit')}
         </Text>
-        <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
-          Start tracking your journey
+        <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
+          Start tracking your travels
         </Text>
         <TouchableOpacity 
-          style={[styles.addButton, { backgroundColor: colors.primary }]} 
+          style={[styles.addBtn, { backgroundColor: colors.primary }]} 
           onPress={onAddVisit}
         >
           <Ionicons name="add" size={20} color="#FFFFFF" />
-          <Text style={styles.addButtonText}>{t('addNewVisit')}</Text>
+          <Text style={styles.addBtnText}>{t('addNewVisit')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -381,11 +416,15 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
 
 const styles = StyleSheet.create({
   container: {
-    height: 300,
+    height: 320,
     borderRadius: 24,
     overflow: 'hidden',
     marginBottom: 16,
     position: 'relative',
+  },
+  mapTouchable: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 24,
   },
   mapContainer: {
     ...StyleSheet.absoluteFillObject,
@@ -401,44 +440,54 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
-  topBadgesRow: {
+  topRow: {
     position: 'absolute',
-    top: 12,
-    left: 12,
-    right: 12,
+    top: 14,
+    left: 14,
+    right: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  topBadge: {
+  locationBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 24,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  locationDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+  locationPulse: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#007AFF',
   },
-  topBadgeText: {
+  locationText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 14,
-    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    gap: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  liveDotAnimated: {
+  liveIndicator: {
     width: 8,
     height: 8,
     borderRadius: 4,
@@ -446,151 +495,194 @@ const styles = StyleSheet.create({
   },
   liveText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#34C759',
     letterSpacing: 0.5,
   },
   infoCard: {
     position: 'absolute',
-    bottom: 12,
-    left: 12,
-    right: 12,
+    bottom: 14,
+    left: 14,
+    right: 14,
     borderRadius: 20,
-    padding: 16,
+    padding: 18,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 24,
-    elevation: 8,
+    elevation: 10,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
   },
   countryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 14,
+    paddingRight: 30,
   },
-  flagCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+  flagBubble: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
   flagEmoji: {
-    fontSize: 26,
+    fontSize: 28,
   },
-  countryInfo: {
+  countryDetails: {
     flex: 1,
   },
   countryName: {
-    fontSize: 18,
+    fontSize: 19,
     fontWeight: '700',
   },
   visaType: {
     fontSize: 13,
-    marginTop: 2,
+    marginTop: 3,
   },
-  expandButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statsGrid: {
+  statsContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 14,
-    paddingTop: 14,
+    marginTop: 16,
+    paddingTop: 16,
     borderTopWidth: 1,
   },
-  statBlock: {
+  statBox: {
     flex: 1,
     alignItems: 'center',
   },
-  statDivider: {
+  statSeparator: {
     width: 1,
-    height: 36,
+    height: 40,
   },
-  statNumber: {
-    fontSize: 22,
+  statNum: {
+    fontSize: 24,
     fontWeight: '700',
   },
-  highlightNumber: {
-    fontSize: 26,
+  highlightStat: {
+    fontSize: 28,
   },
-  statTitle: {
+  statLabel: {
     fontSize: 10,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
-    marginTop: 2,
+    marginTop: 4,
   },
   progressTrack: {
-    height: 5,
+    height: 6,
     borderRadius: 3,
     overflow: 'hidden',
-    marginTop: 14,
+    marginTop: 16,
   },
   progressFill: {
     height: '100%',
     borderRadius: 3,
   },
-  warningBar: {
+  alertBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 10,
     borderRadius: 12,
-    marginTop: 12,
+    marginTop: 14,
     gap: 8,
   },
-  warningText: {
+  alertText: {
     fontSize: 13,
     fontWeight: '600',
+  },
+  expandButton: {
+    position: 'absolute',
+    bottom: 14,
+    left: 14,
+    right: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 20,
+    gap: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  miniFlagBubble: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  miniFlagEmoji: {
+    fontSize: 22,
+  },
+  miniInfo: {
+    flex: 1,
+  },
+  miniCountry: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  miniDays: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginTop: 2,
   },
   emptyCard: {
     position: 'absolute',
     top: '50%',
     left: '50%',
-    transform: [{ translateX: -130 }, { translateY: -90 }],
-    width: 260,
+    transform: [{ translateX: -140 }, { translateY: -100 }],
+    width: 280,
     borderRadius: 24,
-    padding: 24,
+    padding: 28,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 24,
-    elevation: 8,
+    elevation: 10,
   },
-  emptyIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+  emptyIconBg: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 12,
-  },
-  emptyTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-  },
-  emptySubtitle: {
-    fontSize: 13,
-    marginTop: 4,
     marginBottom: 16,
   },
-  addButton: {
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  emptyDesc: {
+    fontSize: 14,
+    marginTop: 6,
+    marginBottom: 20,
+  },
+  addBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 14,
-    gap: 6,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 16,
+    gap: 8,
   },
-  addButtonText: {
+  addBtnText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '600',
   },
 });
