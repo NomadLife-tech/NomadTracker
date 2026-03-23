@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Visit } from '../../types';
 import { getCountryByCode } from '../../constants/countries';
 import { getVisaStatus } from '../../utils/dateUtils';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface MiniMapCardProps {
   activeVisit: Visit | null;
@@ -55,20 +56,10 @@ const COUNTRY_COORDS: { [key: string]: [number, number] } = {
   LY: [26.3351, 17.2283], TN: [33.8869, 9.5375], DZ: [28.0339, 1.6596],
 };
 
-// Light mode colors (always used regardless of device theme)
-const LIGHT_COLORS = {
-  background: '#F2F2F7',
-  card: '#FFFFFF',
-  text: '#1C1C1E',
-  textSecondary: '#8E8E93',
-  primary: '#007AFF',
-  success: '#34C759',
-  warning: '#FF9500',
-  danger: '#FF3B30',
-  border: '#E5E5EA',
-};
-
 export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCardProps) {
+  // Get theme colors for dark mode support on overlays
+  const { colors, isDarkMode } = useTheme();
+  
   const activeVisitStatus = useMemo(() => {
     if (!activeVisit) return null;
     return getVisaStatus(activeVisit);
@@ -78,40 +69,47 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
   const coords = activeVisit ? COUNTRY_COORDS[activeVisit.countryCode] || [20, 0] : [20, 0];
 
   const getProgressColor = (percentage: number) => {
-    if (percentage < 70) return LIGHT_COLORS.success;
-    if (percentage < 90) return LIGHT_COLORS.warning;
-    return LIGHT_COLORS.danger;
+    if (percentage < 70) return colors.success;
+    if (percentage < 90) return colors.warning;
+    return colors.danger;
   };
 
-  // Generate Leaflet map HTML - always in light mode
-  // Zoom level 15 shows approximately 2km radius area
+  // Generate Leaflet map HTML - ALWAYS in light mode regardless of theme
   const mapHtml = useMemo(() => {
     const lat = coords[0];
     const lng = coords[1];
-    // Zoom level 15 = ~2km radius view, Zoom level 2 = world view for empty state
     const zoom = activeVisit ? 15 : 2;
     
-    // Always use light tile style
+    // Always use light tile style for the map
     const tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
     
-    // Add marker and 2km radius circle for active visit
     const markerHtml = activeVisit && country ? `
-      // Add 2km radius circle
+      // Add 2km radius circle with gradient effect
       L.circle([${lat}, ${lng}], {
         color: '#007AFF',
         fillColor: '#007AFF',
-        fillOpacity: 0.1,
+        fillOpacity: 0.08,
         weight: 2,
-        radius: 2000 // 2km in meters
+        radius: 2000,
+        dashArray: '5, 5'
+      }).addTo(map);
+      
+      // Add inner glow circle
+      L.circle([${lat}, ${lng}], {
+        color: 'transparent',
+        fillColor: '#007AFF',
+        fillOpacity: 0.15,
+        weight: 0,
+        radius: 800
       }).addTo(map);
       
       // Add center marker with flag
       L.marker([${lat}, ${lng}], {
         icon: L.divIcon({
           className: 'custom-marker',
-          html: '<div class="marker-container"><div class="marker-pulse"></div><div class="marker-dot"><span class="marker-flag">${country.flag}</span></div></div>',
-          iconSize: [60, 60],
-          iconAnchor: [30, 30],
+          html: '<div class="marker-wrapper"><div class="marker-glow"></div><div class="marker-ring"></div><div class="marker-center"><span class="flag">${country.flag}</span></div></div>',
+          iconSize: [80, 80],
+          iconAnchor: [40, 40],
         })
       }).addTo(map);
     ` : '';
@@ -126,44 +124,52 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           html, body { height: 100%; overflow: hidden; }
-          #map { 
-            width: 100%; 
-            height: 100%; 
-          }
+          #map { width: 100%; height: 100%; }
           .custom-marker { background: none !important; border: none !important; }
-          .marker-container {
+          .marker-wrapper {
             position: relative;
-            width: 60px;
-            height: 60px;
+            width: 80px;
+            height: 80px;
             display: flex;
             align-items: center;
             justify-content: center;
           }
-          .marker-pulse {
+          .marker-glow {
             position: absolute;
-            width: 60px;
-            height: 60px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
-            background: rgba(0, 122, 255, 0.3);
-            animation: pulse 2s ease-out infinite;
+            background: radial-gradient(circle, rgba(0,122,255,0.4) 0%, rgba(0,122,255,0) 70%);
+            animation: glow-pulse 2.5s ease-out infinite;
           }
-          .marker-dot {
-            width: 44px;
-            height: 44px;
+          .marker-ring {
+            position: absolute;
+            width: 56px;
+            height: 56px;
             border-radius: 50%;
-            background: white;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            border: 3px solid rgba(0,122,255,0.6);
+            animation: ring-pulse 2.5s ease-out infinite;
+          }
+          .marker-center {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #ffffff 0%, #f0f0f0 100%);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25), 0 2px 8px rgba(0,122,255,0.3);
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 1;
+            z-index: 2;
           }
-          .marker-flag {
-            font-size: 26px;
-          }
-          @keyframes pulse {
+          .flag { font-size: 28px; }
+          @keyframes glow-pulse {
             0% { transform: scale(0.8); opacity: 1; }
-            100% { transform: scale(1.8); opacity: 0; }
+            100% { transform: scale(1.5); opacity: 0; }
+          }
+          @keyframes ring-pulse {
+            0% { transform: scale(0.9); opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { transform: scale(1.3); opacity: 0; }
           }
           .leaflet-control-container { display: none !important; }
         </style>
@@ -194,10 +200,8 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
     `;
   }, [coords, activeVisit, country]);
 
-  // Render the map using iframe for web or WebView for native
   const renderMap = () => {
     if (Platform.OS === 'web') {
-      // For web, use an iframe with proper sandbox attributes
       const iframeStyle = {
         width: '100%',
         height: '100%',
@@ -217,7 +221,6 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
         </View>
       );
     } else {
-      // For native, use WebView
       const WebView = require('react-native-webview').WebView;
       return (
         <WebView
@@ -231,6 +234,10 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
     }
   };
 
+  // Overlay card background with blur effect simulation
+  const cardBgColor = isDarkMode ? 'rgba(28, 28, 30, 0.92)' : 'rgba(255, 255, 255, 0.92)';
+  const badgeBgColor = isDarkMode ? 'rgba(28, 28, 30, 0.88)' : 'rgba(255, 255, 255, 0.88)';
+
   if (activeVisit && activeVisitStatus) {
     return (
       <TouchableOpacity 
@@ -238,60 +245,89 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
         onPress={onPress}
         activeOpacity={0.95}
       >
-        {/* Real Map Background */}
+        {/* Map Background - Always Light Mode */}
         <View style={styles.mapContainer}>
           {renderMap()}
         </View>
 
-        {/* Floating Info Card Overlay - Google Maps style */}
-        <View style={styles.infoCard}>
-          {/* Header Row */}
-          <View style={styles.infoHeader}>
-            <View style={styles.flagContainer}>
-              <Text style={styles.flagText}>{country?.flag}</Text>
+        {/* Top Badges Row */}
+        <View style={styles.topBadgesRow}>
+          {/* Location Badge */}
+          <View style={[styles.topBadge, { backgroundColor: badgeBgColor }]}>
+            <View style={styles.locationDot} />
+            <Text style={[styles.topBadgeText, { color: colors.text }]}>{t('currentlyIn')}</Text>
+          </View>
+          
+          {/* Live Indicator */}
+          <View style={[styles.liveBadge, { backgroundColor: badgeBgColor }]}>
+            <View style={styles.liveDotAnimated} />
+            <Text style={styles.liveText}>LIVE</Text>
+          </View>
+        </View>
+
+        {/* Info Card - Dark Mode Compliant */}
+        <View style={[styles.infoCard, { backgroundColor: cardBgColor }]}>
+          {/* Country Header */}
+          <View style={styles.countryHeader}>
+            <View style={[styles.flagCircle, { backgroundColor: colors.background }]}>
+              <Text style={styles.flagEmoji}>{country?.flag}</Text>
             </View>
-            <View style={styles.headerInfo}>
-              <Text style={styles.countryName}>{activeVisit.countryName}</Text>
-              <Text style={styles.visaType}>{activeVisit.visaType}</Text>
+            <View style={styles.countryInfo}>
+              <Text style={[styles.countryName, { color: colors.text }]} numberOfLines={1}>
+                {activeVisit.countryName}
+              </Text>
+              <Text style={[styles.visaType, { color: colors.textSecondary }]} numberOfLines={1}>
+                {activeVisit.visaType}
+              </Text>
             </View>
-            <View style={styles.liveBadge}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveText}>LIVE</Text>
-            </View>
+            <TouchableOpacity style={styles.expandButton}>
+              <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+            </TouchableOpacity>
           </View>
 
-          {/* Divider */}
-          <View style={styles.divider} />
-
-          {/* Stats Row */}
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{activeVisitStatus.daysUsed}</Text>
-              <Text style={styles.statLabel}>{t('daysUsed')}</Text>
+          {/* Stats Grid */}
+          <View style={[styles.statsGrid, { borderTopColor: colors.border }]}>
+            <View style={styles.statBlock}>
+              <Text style={[styles.statNumber, { color: colors.text }]}>
+                {activeVisitStatus.daysUsed}
+              </Text>
+              <Text style={[styles.statTitle, { color: colors.textSecondary }]}>
+                {t('daysUsed')}
+              </Text>
             </View>
             
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             
-            <View style={styles.statItem}>
-              <Text style={[styles.statValue, styles.remainingValue, { color: getProgressColor(activeVisitStatus.percentageUsed) }]}>
+            <View style={styles.statBlock}>
+              <Text style={[
+                styles.statNumber, 
+                styles.highlightNumber,
+                { color: getProgressColor(activeVisitStatus.percentageUsed) }
+              ]}>
                 {activeVisitStatus.daysRemaining}
               </Text>
-              <Text style={styles.statLabel}>{t('daysRemaining')}</Text>
+              <Text style={[styles.statTitle, { color: colors.textSecondary }]}>
+                {t('daysRemaining')}
+              </Text>
             </View>
             
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
             
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{activeVisit.allowedDays || 90}</Text>
-              <Text style={styles.statLabel}>{t('allowedDays')}</Text>
+            <View style={styles.statBlock}>
+              <Text style={[styles.statNumber, { color: colors.text }]}>
+                {activeVisit.allowedDays || 90}
+              </Text>
+              <Text style={[styles.statTitle, { color: colors.textSecondary }]}>
+                {t('allowedDays')}
+              </Text>
             </View>
           </View>
 
           {/* Progress Bar */}
-          <View style={styles.progressContainer}>
+          <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
             <View
               style={[
-                styles.progressBar,
+                styles.progressFill,
                 {
                   width: `${Math.min(100, activeVisitStatus.percentageUsed)}%`,
                   backgroundColor: getProgressColor(activeVisitStatus.percentageUsed),
@@ -301,37 +337,41 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
           </View>
 
           {activeVisitStatus.isOverstay && (
-            <View style={styles.warningBanner}>
-              <Ionicons name="warning" size={14} color={LIGHT_COLORS.danger} />
-              <Text style={styles.warningText}>{t('overstay')}!</Text>
+            <View style={[styles.warningBar, { backgroundColor: colors.danger + '15' }]}>
+              <Ionicons name="alert-circle" size={16} color={colors.danger} />
+              <Text style={[styles.warningText, { color: colors.danger }]}>
+                {t('overstay')} - Visa Exceeded
+              </Text>
             </View>
           )}
-        </View>
-
-        {/* Top-left badge */}
-        <View style={styles.topBadge}>
-          <Ionicons name="location" size={14} color={LIGHT_COLORS.primary} />
-          <Text style={styles.topBadgeText}>{t('currentlyIn')}</Text>
         </View>
       </TouchableOpacity>
     );
   }
 
-  // No active visit state
+  // Empty State - No active visit
   return (
     <View style={styles.container}>
-      {/* Real Map Background - World view */}
       <View style={styles.mapContainer}>
         {renderMap()}
       </View>
 
-      {/* Floating Empty State Card */}
-      <View style={styles.emptyCard}>
-        <Ionicons name="airplane-outline" size={32} color={LIGHT_COLORS.textSecondary} />
-        <Text style={styles.emptyTitle}>{t('noActiveVisit')}</Text>
-        <Text style={styles.emptyHint}>Track your current location</Text>
-        <TouchableOpacity style={styles.addButton} onPress={onAddVisit}>
-          <Ionicons name="add" size={18} color="#FFFFFF" />
+      {/* Empty State Card - Dark Mode Compliant */}
+      <View style={[styles.emptyCard, { backgroundColor: cardBgColor }]}>
+        <View style={[styles.emptyIconCircle, { backgroundColor: colors.primary + '15' }]}>
+          <Ionicons name="airplane" size={28} color={colors.primary} />
+        </View>
+        <Text style={[styles.emptyTitle, { color: colors.text }]}>
+          {t('noActiveVisit')}
+        </Text>
+        <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
+          Start tracking your journey
+        </Text>
+        <TouchableOpacity 
+          style={[styles.addButton, { backgroundColor: colors.primary }]} 
+          onPress={onAddVisit}
+        >
+          <Ionicons name="add" size={20} color="#FFFFFF" />
           <Text style={styles.addButtonText}>{t('addNewVisit')}</Text>
         </TouchableOpacity>
       </View>
@@ -341,21 +381,15 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
 
 const styles = StyleSheet.create({
   container: {
-    height: 280,
-    borderRadius: 20,
+    height: 300,
+    borderRadius: 24,
     overflow: 'hidden',
     marginBottom: 16,
-    backgroundColor: LIGHT_COLORS.card,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 5,
     position: 'relative',
   },
   mapContainer: {
     ...StyleSheet.absoluteFillObject,
-    borderRadius: 20,
+    borderRadius: 24,
     overflow: 'hidden',
   },
   iframeContainer: {
@@ -367,191 +401,196 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'transparent',
   },
-  topBadge: {
+  topBadgesRow: {
     position: 'absolute',
     top: 12,
     left: 12,
+    right: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  topBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 20,
-    gap: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    gap: 6,
+  },
+  locationDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#007AFF',
   },
   topBadgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: LIGHT_COLORS.text,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+    gap: 5,
+  },
+  liveDotAnimated: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#34C759',
+  },
+  liveText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#34C759',
+    letterSpacing: 0.5,
   },
   infoCard: {
     position: 'absolute',
     bottom: 12,
     left: 12,
     right: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.98)',
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 20,
+    padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowRadius: 24,
+    elevation: 8,
   },
-  infoHeader: {
+  countryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
   },
-  flagContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: LIGHT_COLORS.background,
+  flagCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  flagText: {
-    fontSize: 24,
+  flagEmoji: {
+    fontSize: 26,
   },
-  headerInfo: {
+  countryInfo: {
     flex: 1,
   },
   countryName: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '700',
-    color: LIGHT_COLORS.text,
   },
   visaType: {
-    fontSize: 12,
-    color: LIGHT_COLORS.textSecondary,
-    marginTop: 1,
+    fontSize: 13,
+    marginTop: 2,
   },
-  liveBadge: {
+  expandButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statsGrid: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(52, 199, 89, 0.15)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 10,
-    gap: 4,
+    marginTop: 14,
+    paddingTop: 14,
+    borderTopWidth: 1,
   },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: LIGHT_COLORS.success,
-  },
-  liveText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: LIGHT_COLORS.success,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: LIGHT_COLORS.border,
-    marginVertical: 12,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  statItem: {
+  statBlock: {
     flex: 1,
     alignItems: 'center',
   },
   statDivider: {
     width: 1,
-    height: 28,
-    backgroundColor: LIGHT_COLORS.border,
+    height: 36,
   },
-  statValue: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: LIGHT_COLORS.text,
-  },
-  remainingValue: {
+  statNumber: {
     fontSize: 22,
+    fontWeight: '700',
   },
-  statLabel: {
-    fontSize: 9,
-    color: LIGHT_COLORS.textSecondary,
-    marginTop: 2,
+  highlightNumber: {
+    fontSize: 26,
+  },
+  statTitle: {
+    fontSize: 10,
+    fontWeight: '600',
     textTransform: 'uppercase',
-    fontWeight: '500',
+    letterSpacing: 0.3,
+    marginTop: 2,
   },
-  progressContainer: {
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: LIGHT_COLORS.border,
+  progressTrack: {
+    height: 5,
+    borderRadius: 3,
     overflow: 'hidden',
-    marginTop: 12,
+    marginTop: 14,
   },
-  progressBar: {
+  progressFill: {
     height: '100%',
-    borderRadius: 2,
+    borderRadius: 3,
   },
-  warningBanner: {
+  warningBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 59, 48, 0.1)',
-    padding: 8,
-    borderRadius: 8,
-    marginTop: 10,
-    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 12,
+    marginTop: 12,
+    gap: 8,
   },
   warningText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
-    color: LIGHT_COLORS.danger,
   },
   emptyCard: {
     position: 'absolute',
     top: '50%',
     left: '50%',
-    transform: [{ translateX: -120 }, { translateY: -70 }],
-    width: 240,
-    backgroundColor: 'rgba(255, 255, 255, 0.98)',
-    borderRadius: 16,
-    padding: 20,
+    transform: [{ translateX: -130 }, { translateY: -90 }],
+    width: 260,
+    borderRadius: 24,
+    padding: 24,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  emptyIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
   },
   emptyTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: LIGHT_COLORS.text,
-    marginTop: 10,
+    fontSize: 17,
+    fontWeight: '700',
   },
-  emptyHint: {
-    fontSize: 12,
-    color: LIGHT_COLORS.textSecondary,
+  emptySubtitle: {
+    fontSize: 13,
     marginTop: 4,
-    marginBottom: 14,
+    marginBottom: 16,
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: LIGHT_COLORS.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
-    gap: 4,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 14,
+    gap: 6,
   },
   addButtonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
 });
