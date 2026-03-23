@@ -14,9 +14,9 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
+import { MiniMapCard } from '../../src/components/common/MiniMapCard';
 import { 
   isCurrentVisit, 
-  getVisaStatus, 
   calculateSchengenDays,
   getSchengenBreakdown,
   getDaysByCountryForYear,
@@ -54,11 +54,6 @@ export default function DashboardScreen() {
     return visits.find(v => isCurrentVisit(v));
   }, [visits]);
 
-  const activeVisitStatus = useMemo(() => {
-    if (!activeVisit) return null;
-    return getVisaStatus(activeVisit);
-  }, [activeVisit]);
-
   // Statistics
   const totalVisits = visits.length;
   const uniqueCountries = useMemo(() => {
@@ -86,6 +81,7 @@ export default function DashboardScreen() {
     return getDaysByCountryForYear(visits, selectedYear);
   }, [visits, selectedYear]);
 
+  // Colors for Schengen progress
   const getProgressColor = (percentage: number) => {
     if (percentage < 70) return colors.success;
     if (percentage < 90) return colors.warning;
@@ -107,98 +103,13 @@ export default function DashboardScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Current Visit Card */}
-        <View style={[styles.card, { backgroundColor: colors.card }]}>
-          <View style={styles.cardHeader}>
-            <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>
-              {activeVisit ? t('currentlyIn') : t('noActiveVisit')}
-            </Text>
-            {activeVisit && (
-              <View style={[styles.liveBadge, { backgroundColor: colors.success + '20' }]}>
-                <View style={[styles.liveDot, { backgroundColor: colors.success }]} />
-                <Text style={[styles.liveText, { color: colors.success }]}>{t('live')}</Text>
-              </View>
-            )}
-          </View>
-
-          {activeVisit && activeVisitStatus ? (
-            <TouchableOpacity
-              onPress={() => router.push(`/visit/${activeVisit.id}`)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.currentVisitContent}>
-                <View style={styles.countryRow}>
-                  <Text style={styles.flag}>{getCountryByCode(activeVisit.countryCode)?.flag}</Text>
-                  <View style={styles.countryInfo}>
-                    <Text style={[styles.countryName, { color: colors.text }]}>
-                      {activeVisit.countryName}
-                    </Text>
-                    <Text style={[styles.visaType, { color: colors.textSecondary }]}>
-                      {activeVisit.visaType}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.statsRow}>
-                  <View style={styles.statItem}>
-                    <Text style={[styles.statValue, { color: colors.text }]}>
-                      {activeVisitStatus.daysUsed}
-                    </Text>
-                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                      {t('daysUsed')}
-                    </Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Text style={[styles.statValue, { color: getProgressColor(activeVisitStatus.percentageUsed) }]}>
-                      {activeVisitStatus.daysRemaining}
-                    </Text>
-                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                      {t('daysRemaining')}
-                    </Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Text style={[styles.statValue, { color: colors.text }]}>
-                      {activeVisit.allowedDays || 90}
-                    </Text>
-                    <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                      {t('allowedDays')}
-                    </Text>
-                  </View>
-                </View>
-
-                {/* Progress bar */}
-                <View style={[styles.progressContainer, { backgroundColor: colors.border }]}>
-                  <View
-                    style={[
-                      styles.progressBar,
-                      {
-                        width: `${Math.min(100, activeVisitStatus.percentageUsed)}%`,
-                        backgroundColor: getProgressColor(activeVisitStatus.percentageUsed),
-                      },
-                    ]}
-                  />
-                </View>
-
-                {activeVisitStatus.isOverstay && (
-                  <View style={[styles.warningBanner, { backgroundColor: colors.danger + '20' }]}>
-                    <Ionicons name="warning" size={16} color={colors.danger} />
-                    <Text style={[styles.warningText, { color: colors.danger }]}>
-                      {t('overstay')}!
-                    </Text>
-                  </View>
-                )}
-              </View>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={[styles.addVisitButton, { backgroundColor: colors.primary }]}
-              onPress={() => router.push('/visit/add')}
-            >
-              <Ionicons name="add" size={24} color="#FFFFFF" />
-              <Text style={styles.addVisitText}>{t('addNewVisit')}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        {/* Current Visit Mini Map Card - Always Light Mode */}
+        <MiniMapCard
+          activeVisit={activeVisit || null}
+          onPress={() => activeVisit && router.push(`/visit/${activeVisit.id}`)}
+          onAddVisit={() => router.push('/visit/add')}
+          t={t}
+        />
 
         {/* Statistics Card */}
         <View style={[styles.card, { backgroundColor: colors.card }]}>
@@ -479,95 +390,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-  },
-  liveBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  liveDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  liveText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  currentVisitContent: {
-    gap: 16,
-  },
-  countryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  flag: {
-    fontSize: 48,
-  },
-  countryInfo: {
-    flex: 1,
-  },
-  countryName: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  visaType: {
-    fontSize: 14,
-    marginTop: 2,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  statItem: {
-    alignItems: 'center',
-    flex: 1,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  statLabel: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  progressContainer: {
-    height: 8,
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressBar: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  warningBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 10,
-    borderRadius: 8,
-    gap: 6,
-  },
-  warningText: {
-    fontWeight: '600',
-  },
-  addVisitButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    borderRadius: 12,
-    gap: 8,
-    marginTop: 8,
-  },
-  addVisitText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
   statsGrid: {
     flexDirection: 'row',
