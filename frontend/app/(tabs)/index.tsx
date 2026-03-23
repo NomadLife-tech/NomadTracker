@@ -8,10 +8,12 @@ import {
   RefreshControl,
   Modal,
   FlatList,
+  Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { PieChart } from 'react-native-chart-kit';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
 import { MiniMapCard } from '../../src/components/common/MiniMapCard';
@@ -24,6 +26,8 @@ import {
   formatDate,
 } from '../../src/utils/dateUtils';
 import { getCountryByCode } from '../../src/constants/countries';
+
+const screenWidth = Dimensions.get('window').width;
 
 export default function DashboardScreen() {
   const { colors } = useTheme();
@@ -76,10 +80,26 @@ export default function DashboardScreen() {
     return getSchengenBreakdown(visits);
   }, [visits, hasSchengenVisits]);
 
-  // Pie chart data
-  const pieData = useMemo(() => {
+  // Pie chart data - formatted for react-native-chart-kit
+  const rawPieData = useMemo(() => {
     return getDaysByCountryForYear(visits, selectedYear);
   }, [visits, selectedYear]);
+
+  // Transform data for PieChart component
+  const pieChartData = useMemo(() => {
+    return rawPieData.map((item) => ({
+      name: item.country,
+      population: item.days,
+      color: item.color,
+      legendFontColor: colors.textSecondary,
+      legendFontSize: 12,
+    }));
+  }, [rawPieData, colors.textSecondary]);
+
+  // Calculate total days for the year
+  const totalDaysInYear = useMemo(() => {
+    return rawPieData.reduce((sum, item) => sum + item.days, 0);
+  }, [rawPieData]);
 
   // Colors for Schengen progress
   const getProgressColor = (percentage: number) => {
@@ -191,7 +211,7 @@ export default function DashboardScreen() {
           </View>
         )}
 
-        {/* Days per Country Chart */}
+        {/* Days per Country Pie Chart */}
         <View style={[styles.card, { backgroundColor: colors.card }]}>
           <View style={styles.cardHeader}>
             <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>
@@ -222,27 +242,54 @@ export default function DashboardScreen() {
             </View>
           </View>
 
-          {pieData.length > 0 ? (
-            <View style={styles.chartContainer}>
-              {pieData.map((item, index) => (
-                <View key={item.countryCode} style={styles.chartItem}>
-                  <View style={[styles.chartColor, { backgroundColor: item.color }]} />
-                  <Text style={[styles.chartFlag, { fontSize: 16 }]}>
-                    {getCountryByCode(item.countryCode)?.flag}
-                  </Text>
-                  <Text style={[styles.chartCountry, { color: colors.text }]} numberOfLines={1}>
-                    {item.country}
-                  </Text>
-                  <Text style={[styles.chartDays, { color: colors.textSecondary }]}>
-                    {item.days} {t('days')}
-                  </Text>
-                </View>
-              ))}
+          {pieChartData.length > 0 ? (
+            <View style={styles.pieChartWrapper}>
+              {/* Total Days Badge */}
+              <View style={styles.totalDaysBadge}>
+                <Text style={[styles.totalDaysValue, { color: colors.text }]}>{totalDaysInYear}</Text>
+                <Text style={[styles.totalDaysLabel, { color: colors.textSecondary }]}>Total Days</Text>
+              </View>
+
+              {/* Pie Chart */}
+              <PieChart
+                data={pieChartData}
+                width={screenWidth - 64}
+                height={180}
+                chartConfig={{
+                  color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
+                  labelColor: (opacity = 1) => colors.textSecondary,
+                }}
+                accessor="population"
+                backgroundColor="transparent"
+                paddingLeft="0"
+                absolute={false}
+                hasLegend={false}
+                center={[(screenWidth - 64) / 4, 0]}
+              />
+
+              {/* Custom Legend */}
+              <View style={styles.legendContainer}>
+                {rawPieData.map((item) => (
+                  <View key={item.countryCode} style={styles.legendItem}>
+                    <View style={[styles.legendColor, { backgroundColor: item.color }]} />
+                    <Text style={styles.legendFlag}>{getCountryByCode(item.countryCode)?.flag}</Text>
+                    <Text style={[styles.legendCountry, { color: colors.text }]} numberOfLines={1}>
+                      {item.country}
+                    </Text>
+                    <Text style={[styles.legendDays, { color: colors.textSecondary }]}>
+                      {item.days}d
+                    </Text>
+                  </View>
+                ))}
+              </View>
             </View>
           ) : (
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No data for {selectedYear}
-            </Text>
+            <View style={styles.emptyChartContainer}>
+              <Ionicons name="pie-chart-outline" size={48} color={colors.border} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                No data for {selectedYear}
+              </Text>
+            </View>
           )}
         </View>
 
@@ -461,30 +508,62 @@ const styles = StyleSheet.create({
     minWidth: 50,
     textAlign: 'center',
   },
-  chartContainer: {
+  pieChartWrapper: {
+    alignItems: 'center',
     marginTop: 8,
+  },
+  totalDaysBadge: {
+    position: 'absolute',
+    top: 60,
+    left: '50%',
+    marginLeft: -40,
+    width: 80,
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  totalDaysValue: {
+    fontSize: 28,
+    fontWeight: '800',
+  },
+  totalDaysLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+    marginTop: -2,
+  },
+  legendContainer: {
+    width: '100%',
+    marginTop: 12,
     gap: 8,
   },
-  chartItem: {
+  legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
+    paddingVertical: 4,
   },
-  chartColor: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  legendColor: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
   },
-  chartFlag: {
-    width: 24,
+  legendFlag: {
+    fontSize: 18,
+    width: 28,
   },
-  chartCountry: {
+  legendCountry: {
     flex: 1,
     fontSize: 14,
     fontWeight: '500',
   },
-  chartDays: {
+  legendDays: {
     fontSize: 14,
+    fontWeight: '600',
+  },
+  emptyChartContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
+    gap: 12,
   },
   emptyText: {
     textAlign: 'center',
