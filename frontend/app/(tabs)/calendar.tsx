@@ -6,8 +6,9 @@ import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
-import { getVisitsForDate, generateCalendarMarks, formatDate } from '../../src/utils/dateUtils';
+import { getVisitsForDate, formatDate } from '../../src/utils/dateUtils';
 import { getCountryByCode } from '../../src/constants/countries';
+import { format, parseISO, eachDayOfInterval } from 'date-fns';
 
 export default function CalendarScreen() {
   const { colors, isDark } = useTheme();
@@ -24,20 +25,52 @@ export default function CalendarScreen() {
     }, [])
   );
 
+  // Generate marked dates with flag info for custom rendering
   const markedDates = useMemo(() => {
-    const marks = generateCalendarMarks(visits);
+    const marks: Record<string, any> = {};
     
-    // Add selection mark if date is selected
-    if (selectedDate) {
+    visits.forEach(visit => {
+      const entryDate = parseISO(visit.entryDate);
+      const exitDate = visit.exitDate ? parseISO(visit.exitDate) : new Date();
+      
+      const days = eachDayOfInterval({ start: entryDate, end: exitDate });
+      const country = getCountryByCode(visit.countryCode);
+      
+      days.forEach((day) => {
+        const dateStr = format(day, 'yyyy-MM-dd');
+        
+        if (!marks[dateStr]) {
+          marks[dateStr] = {
+            customStyles: {
+              container: {},
+              text: {},
+            },
+            flag: country?.flag || '🏳️',
+            countryCode: visit.countryCode,
+            hasVisit: true,
+          };
+        }
+      });
+    });
+    
+    // Add selection styling
+    if (selectedDate && marks[selectedDate]) {
       marks[selectedDate] = {
         ...marks[selectedDate],
         selected: true,
-        selectedColor: colors.primary,
+      };
+    } else if (selectedDate) {
+      marks[selectedDate] = {
+        selected: true,
+        customStyles: {
+          container: {},
+          text: {},
+        },
       };
     }
     
     return marks;
-  }, [visits, selectedDate, colors]);
+  }, [visits, selectedDate]);
 
   const selectedVisits = useMemo(() => {
     if (!selectedDate) return [];
@@ -52,35 +85,100 @@ export default function CalendarScreen() {
     }
   };
 
+  // Custom day component with flag emoji
+  const renderDay = (date: any, state: any) => {
+    if (!date) return <View style={styles.emptyDay} />;
+    
+    const dateStr = date.dateString;
+    const marking = markedDates[dateStr];
+    const isSelected = selectedDate === dateStr;
+    const isToday = dateStr === format(new Date(), 'yyyy-MM-dd');
+    const isDisabled = state === 'disabled';
+    
+    return (
+      <TouchableOpacity
+        style={[
+          styles.dayContainer,
+          isSelected && [styles.selectedDay, { backgroundColor: colors.primary }],
+        ]}
+        onPress={() => handleDayPress({ dateString: dateStr })}
+        disabled={isDisabled}
+      >
+        {marking?.hasVisit ? (
+          // Day with visit - show flag
+          <View style={styles.flagDayContent}>
+            <Text style={[
+              styles.flagEmoji,
+              isSelected && styles.selectedFlagEmoji,
+            ]}>
+              {marking.flag}
+            </Text>
+            <Text style={[
+              styles.dayNumber,
+              isSelected && styles.selectedDayText,
+              isToday && !isSelected && { color: colors.primary },
+              isDisabled && { color: colors.textSecondary + '40' },
+            ]}>
+              {date.day}
+            </Text>
+          </View>
+        ) : (
+          // Day without visit - normal display
+          <View style={styles.normalDayContent}>
+            <Text style={[
+              styles.dayText,
+              isSelected && styles.selectedDayText,
+              isToday && !isSelected && { color: colors.primary, fontWeight: '700' },
+              isDisabled && { color: colors.textSecondary + '40' },
+              { color: isSelected ? '#FFFFFF' : colors.text },
+            ]}>
+              {date.day}
+            </Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>{t('calendar')}</Text>
+      </View>
+
       <Calendar
         style={[styles.calendar, { backgroundColor: colors.card }]}
         theme={{
           calendarBackground: colors.card,
           textSectionTitleColor: colors.textSecondary,
-          selectedDayBackgroundColor: colors.primary,
-          selectedDayTextColor: '#FFFFFF',
-          todayTextColor: colors.primary,
-          dayTextColor: colors.text,
-          textDisabledColor: colors.textSecondary + '50',
-          dotColor: colors.primary,
-          selectedDotColor: '#FFFFFF',
           arrowColor: colors.primary,
           monthTextColor: colors.text,
-          indicatorColor: colors.primary,
-          textDayFontWeight: '500',
           textMonthFontWeight: '700',
           textDayHeaderFontWeight: '600',
-          textDayFontSize: 16,
           textMonthFontSize: 18,
           textDayHeaderFontSize: 13,
         }}
-        markedDates={markedDates}
-        markingType="multi-period"
+        dayComponent={({ date, state }) => renderDay(date, state)}
         onDayPress={handleDayPress}
         enableSwipeMonths
+        hideExtraDays={false}
       />
+
+      {/* Legend */}
+      <View style={[styles.legend, { backgroundColor: colors.card }]}>
+        <Text style={[styles.legendTitle, { color: colors.textSecondary }]}>Legend</Text>
+        <View style={styles.legendItems}>
+          <View style={styles.legendItem}>
+            <Text style={styles.legendFlag}>🇺🇸</Text>
+            <Text style={[styles.legendText, { color: colors.text }]}>Visit day</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.todayDot, { backgroundColor: colors.primary }]} />
+            <Text style={[styles.legendText, { color: colors.text }]}>Today</Text>
+          </View>
+        </View>
+      </View>
 
       {/* Selected date info */}
       {selectedDate && (
@@ -88,11 +186,20 @@ export default function CalendarScreen() {
           <Text style={[styles.selectedDate, { color: colors.text }]}>
             {formatDate(selectedDate, 'EEEE, MMMM d, yyyy')}
           </Text>
-          <Text style={[styles.selectedVisits, { color: colors.textSecondary }]}>
-            {selectedVisits.length === 0
-              ? t('noVisitsOnDate')
-              : `${selectedVisits.length} visit${selectedVisits.length > 1 ? 's' : ''}`}
-          </Text>
+          {selectedVisits.length > 0 ? (
+            <View style={styles.selectedVisitPreview}>
+              {selectedVisits.map((visit, index) => (
+                <View key={visit.id} style={styles.visitPreviewItem}>
+                  <Text style={styles.previewFlag}>{getCountryByCode(visit.countryCode)?.flag}</Text>
+                  <Text style={[styles.previewCountry, { color: colors.text }]}>{visit.countryName}</Text>
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text style={[styles.noVisits, { color: colors.textSecondary }]}>
+              {t('noVisitsOnDate')}
+            </Text>
+          )}
           {selectedVisits.length > 0 && (
             <TouchableOpacity
               style={[styles.viewButton, { backgroundColor: colors.primary }]}
@@ -127,7 +234,9 @@ export default function CalendarScreen() {
                     router.push(`/visit/${item.id}`);
                   }}
                 >
-                  <Text style={styles.flag}>{getCountryByCode(item.countryCode)?.flag}</Text>
+                  <View style={[styles.visitFlagBubble, { backgroundColor: colors.background }]}>
+                    <Text style={styles.visitFlag}>{getCountryByCode(item.countryCode)?.flag}</Text>
+                  </View>
                   <View style={styles.visitInfo}>
                     <Text style={[styles.visitCountry, { color: colors.text }]}>{item.countryName}</Text>
                     <Text style={[styles.visitVisa, { color: colors.textSecondary }]}>{item.visaType}</Text>
@@ -156,40 +265,151 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '800',
+  },
   calendar: {
-    margin: 16,
-    borderRadius: 16,
-    padding: 8,
+    marginHorizontal: 16,
+    borderRadius: 20,
+    padding: 12,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  emptyDay: {
+    width: 44,
+    height: 44,
+  },
+  dayContainer: {
+    width: 44,
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 12,
+  },
+  selectedDay: {
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
     elevation: 3,
+  },
+  flagDayContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  flagEmoji: {
+    fontSize: 20,
+    marginBottom: -2,
+  },
+  selectedFlagEmoji: {
+    fontSize: 18,
+  },
+  dayNumber: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#666',
+  },
+  normalDayContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dayText: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  selectedDayText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  legend: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 12,
+  },
+  legendTitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  legendItems: {
+    flexDirection: 'row',
+    gap: 20,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendFlag: {
+    fontSize: 16,
+  },
+  todayDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  legendText: {
+    fontSize: 13,
   },
   selectedInfo: {
     margin: 16,
-    marginTop: 0,
+    marginTop: 12,
     padding: 16,
     borderRadius: 16,
     alignItems: 'center',
   },
   selectedDate: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '600',
   },
-  selectedVisits: {
+  selectedVisitPreview: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+    justifyContent: 'center',
+  },
+  visitPreviewItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: 'rgba(0,122,255,0.1)',
+    borderRadius: 16,
+  },
+  previewFlag: {
+    fontSize: 18,
+  },
+  previewCountry: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  noVisits: {
     fontSize: 14,
-    marginTop: 4,
+    marginTop: 6,
   },
   viewButton: {
-    marginTop: 12,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 20,
+    marginTop: 14,
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    borderRadius: 24,
   },
   viewButtonText: {
     color: '#FFFFFF',
     fontWeight: '600',
+    fontSize: 15,
   },
   modalOverlay: {
     flex: 1,
@@ -197,19 +417,19 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     maxHeight: '70%',
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: 20,
     borderBottomWidth: 1,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
   },
   visitItem: {
@@ -217,21 +437,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    gap: 12,
+    gap: 14,
   },
-  flag: {
-    fontSize: 32,
+  visitFlagBubble: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  visitFlag: {
+    fontSize: 28,
   },
   visitInfo: {
     flex: 1,
   },
   visitCountry: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
   },
   visitVisa: {
     fontSize: 13,
-    marginTop: 2,
+    marginTop: 3,
   },
   visitDates: {
     fontSize: 12,
