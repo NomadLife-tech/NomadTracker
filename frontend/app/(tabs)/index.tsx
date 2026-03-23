@@ -107,14 +107,6 @@ export default function DashboardScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={[styles.title, { color: colors.text }]}>Nomad Tracker</Text>
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            {t('dashboard')}
-          </Text>
-        </View>
-
         {/* Current Visit Card */}
         <View style={[styles.card, { backgroundColor: colors.card }]}>
           <View style={styles.cardHeader}>
@@ -465,17 +457,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-  },
-  subtitle: {
-    fontSize: 16,
-    marginTop: 4,
   },
   card: {
     borderRadius: 16,
