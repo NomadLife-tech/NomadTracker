@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Visit } from '../../types';
 import { getCountryByCode } from '../../constants/countries';
@@ -12,7 +12,7 @@ interface MiniMapCardProps {
   t: (key: string) => string;
 }
 
-// Country coordinates for mini map centering
+// Country coordinates for map centering
 const COUNTRY_COORDS: { [key: string]: [number, number] } = {
   US: [37.0902, -95.7129], GB: [55.3781, -3.4360], DE: [51.1657, 10.4515],
   FR: [46.2276, 2.2137], ES: [40.4637, -3.7492], IT: [41.8719, 12.5674],
@@ -55,7 +55,7 @@ const COUNTRY_COORDS: { [key: string]: [number, number] } = {
   LY: [26.3351, 17.2283], TN: [33.8869, 9.5375], DZ: [28.0339, 1.6596],
 };
 
-// Light mode colors (always)
+// Light mode colors (always used regardless of device theme)
 const LIGHT_COLORS = {
   background: '#F2F2F7',
   card: '#FFFFFF',
@@ -83,67 +83,172 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
     return LIGHT_COLORS.danger;
   };
 
-  // Generate static map URL (using light mode tile)
-  const mapUrl = useMemo(() => {
+  // Generate Leaflet map HTML - always in light mode
+  const mapHtml = useMemo(() => {
     const lat = coords[0];
     const lng = coords[1];
-    const zoom = activeVisit ? 4 : 1;
-    // Using OpenStreetMap static map via StaticMapService (or similar)
-    // For simplicity, using a generated map-like gradient background
-    return `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/${lng},${lat},${zoom},0/400x200@2x?access_token=pk.placeholder`;
-  }, [coords, activeVisit]);
+    const zoom = activeVisit ? 5 : 2;
+    
+    // Always use light tile style
+    const tileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    
+    const markerHtml = activeVisit && country ? `
+      L.marker([${lat}, ${lng}], {
+        icon: L.divIcon({
+          className: 'custom-marker',
+          html: '<div class="marker-container"><div class="marker-pulse"></div><div class="marker-dot"><span class="marker-flag">${country.flag}</span></div></div>',
+          iconSize: [60, 60],
+          iconAnchor: [30, 30],
+        })
+      }).addTo(map);
+    ` : '';
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+        <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
+          html, body { height: 100%; overflow: hidden; }
+          #map { 
+            width: 100%; 
+            height: 100%; 
+          }
+          .custom-marker { background: none !important; border: none !important; }
+          .marker-container {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .marker-pulse {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: rgba(0, 122, 255, 0.3);
+            animation: pulse 2s ease-out infinite;
+          }
+          .marker-dot {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+          }
+          .marker-flag {
+            font-size: 26px;
+          }
+          @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(1.8); opacity: 0; }
+          }
+          .leaflet-control-container { display: none !important; }
+        </style>
+      </head>
+      <body>
+        <div id="map"></div>
+        <script>
+          var map = L.map('map', { 
+            zoomControl: false,
+            attributionControl: false,
+            dragging: false,
+            touchZoom: false,
+            scrollWheelZoom: false,
+            doubleClickZoom: false,
+            boxZoom: false,
+            keyboard: false
+          }).setView([${lat}, ${lng}], ${zoom});
+          
+          L.tileLayer('${tileUrl}', {
+            subdomains: 'abcd',
+            maxZoom: 19,
+          }).addTo(map);
+          
+          ${markerHtml}
+        </script>
+      </body>
+      </html>
+    `;
+  }, [coords, activeVisit, country]);
+
+  // Render the map using iframe for web or WebView for native
+  const renderMap = () => {
+    if (Platform.OS === 'web') {
+      // For web, use an iframe with proper sandbox attributes
+      const iframeStyle = {
+        width: '100%',
+        height: '100%',
+        border: 'none',
+        borderRadius: 20,
+        display: 'block',
+      } as React.CSSProperties;
+      
+      return (
+        <View style={styles.iframeContainer}>
+          <iframe
+            srcDoc={mapHtml}
+            style={iframeStyle}
+            title="Mini Map"
+            sandbox="allow-scripts"
+          />
+        </View>
+      );
+    } else {
+      // For native, use WebView
+      const WebView = require('react-native-webview').WebView;
+      return (
+        <WebView
+          source={{ html: mapHtml }}
+          style={styles.webview}
+          scrollEnabled={false}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+        />
+      );
+    }
+  };
 
   if (activeVisit && activeVisitStatus) {
     return (
       <TouchableOpacity 
         style={styles.container} 
         onPress={onPress}
-        activeOpacity={0.9}
+        activeOpacity={0.95}
       >
-        {/* Mini Map Background - Always Light Mode */}
+        {/* Real Map Background */}
         <View style={styles.mapContainer}>
-          {/* Gradient map-like background */}
-          <View style={styles.mapGradient}>
-            <View style={styles.mapOverlay}>
-              {/* Grid pattern for map effect */}
-              <View style={styles.gridContainer}>
-                {[...Array(12)].map((_, i) => (
-                  <View key={`h-${i}`} style={[styles.gridLineH, { top: `${(i + 1) * 8}%` }]} />
-                ))}
-                {[...Array(16)].map((_, i) => (
-                  <View key={`v-${i}`} style={[styles.gridLineV, { left: `${(i + 1) * 6}%` }]} />
-                ))}
-              </View>
-              
-              {/* Country marker */}
-              <View style={styles.markerContainer}>
-                <View style={styles.markerPulse} />
-                <View style={styles.marker}>
-                  <Text style={styles.markerFlag}>{country?.flag}</Text>
-                </View>
-              </View>
-            </View>
-          </View>
+          {renderMap()}
         </View>
 
-        {/* Info Overlay - Always Light Mode */}
-        <View style={styles.infoOverlay}>
-          {/* Header */}
-          <View style={styles.header}>
-            <View style={styles.headerLeft}>
-              <Text style={styles.labelText}>{t('currentlyIn')}</Text>
-              <View style={styles.liveBadge}>
-                <View style={styles.liveDot} />
-                <Text style={styles.liveText}>{t('live')}</Text>
-              </View>
+        {/* Floating Info Card Overlay - Google Maps style */}
+        <View style={styles.infoCard}>
+          {/* Header Row */}
+          <View style={styles.infoHeader}>
+            <View style={styles.flagContainer}>
+              <Text style={styles.flagText}>{country?.flag}</Text>
+            </View>
+            <View style={styles.headerInfo}>
+              <Text style={styles.countryName}>{activeVisit.countryName}</Text>
+              <Text style={styles.visaType}>{activeVisit.visaType}</Text>
+            </View>
+            <View style={styles.liveBadge}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveText}>LIVE</Text>
             </View>
           </View>
 
-          {/* Country Info */}
-          <View style={styles.countryRow}>
-            <Text style={styles.countryName}>{activeVisit.countryName}</Text>
-            <Text style={styles.visaType}>{activeVisit.visaType}</Text>
-          </View>
+          {/* Divider */}
+          <View style={styles.divider} />
 
           {/* Stats Row */}
           <View style={styles.statsRow}>
@@ -151,21 +256,25 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
               <Text style={styles.statValue}>{activeVisitStatus.daysUsed}</Text>
               <Text style={styles.statLabel}>{t('daysUsed')}</Text>
             </View>
+            
             <View style={styles.statDivider} />
+            
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: getProgressColor(activeVisitStatus.percentageUsed) }]}>
+              <Text style={[styles.statValue, styles.remainingValue, { color: getProgressColor(activeVisitStatus.percentageUsed) }]}>
                 {activeVisitStatus.daysRemaining}
               </Text>
               <Text style={styles.statLabel}>{t('daysRemaining')}</Text>
             </View>
+            
             <View style={styles.statDivider} />
+            
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{activeVisit.allowedDays || 90}</Text>
               <Text style={styles.statLabel}>{t('allowedDays')}</Text>
             </View>
           </View>
 
-          {/* Progress bar */}
+          {/* Progress Bar */}
           <View style={styles.progressContainer}>
             <View
               style={[
@@ -185,41 +294,31 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
             </View>
           )}
         </View>
+
+        {/* Top-left badge */}
+        <View style={styles.topBadge}>
+          <Ionicons name="location" size={14} color={LIGHT_COLORS.primary} />
+          <Text style={styles.topBadgeText}>{t('currentlyIn')}</Text>
+        </View>
       </TouchableOpacity>
     );
   }
 
-  // No active visit state - Always Light Mode
+  // No active visit state
   return (
     <View style={styles.container}>
-      {/* Mini Map Background */}
+      {/* Real Map Background - World view */}
       <View style={styles.mapContainer}>
-        <View style={styles.mapGradient}>
-          <View style={styles.mapOverlay}>
-            {/* Grid pattern for map effect */}
-            <View style={styles.gridContainer}>
-              {[...Array(12)].map((_, i) => (
-                <View key={`h-${i}`} style={[styles.gridLineH, { top: `${(i + 1) * 8}%` }]} />
-              ))}
-              {[...Array(16)].map((_, i) => (
-                <View key={`v-${i}`} style={[styles.gridLineV, { left: `${(i + 1) * 6}%` }]} />
-              ))}
-            </View>
-            
-            {/* Globe icon */}
-            <View style={styles.globeContainer}>
-              <Ionicons name="globe-outline" size={48} color="#C7C7CC" />
-            </View>
-          </View>
-        </View>
+        {renderMap()}
       </View>
 
-      {/* Empty State Overlay */}
-      <View style={styles.emptyOverlay}>
-        <Text style={styles.emptyLabel}>{t('noActiveVisit')}</Text>
+      {/* Floating Empty State Card */}
+      <View style={styles.emptyCard}>
+        <Ionicons name="airplane-outline" size={32} color={LIGHT_COLORS.textSecondary} />
+        <Text style={styles.emptyTitle}>{t('noActiveVisit')}</Text>
         <Text style={styles.emptyHint}>Track your current location</Text>
         <TouchableOpacity style={styles.addButton} onPress={onAddVisit}>
-          <Ionicons name="add" size={20} color="#FFFFFF" />
+          <Ionicons name="add" size={18} color="#FFFFFF" />
           <Text style={styles.addButtonText}>{t('addNewVisit')}</Text>
         </TouchableOpacity>
       </View>
@@ -229,6 +328,7 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
 
 const styles = StyleSheet.create({
   container: {
+    height: 280,
     borderRadius: 20,
     overflow: 'hidden',
     marginBottom: 16,
@@ -238,103 +338,94 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 5,
+    position: 'relative',
   },
   mapContainer: {
-    height: 140,
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 20,
     overflow: 'hidden',
   },
-  mapGradient: {
+  iframeContainer: {
     flex: 1,
-    backgroundColor: '#E8F4E8', // Light green tint for land
+    width: '100%',
+    height: '100%',
   },
-  mapOverlay: {
+  webview: {
     flex: 1,
-    backgroundColor: 'rgba(200, 220, 240, 0.4)', // Light blue tint for water
+    backgroundColor: 'transparent',
   },
-  gridContainer: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  gridLineH: {
+  topBadge: {
     position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: 'rgba(0, 122, 255, 0.08)',
-  },
-  gridLineV: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: 1,
-    backgroundColor: 'rgba(0, 122, 255, 0.08)',
-  },
-  markerContainer: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    marginTop: -24,
-    marginLeft: -24,
+    top: 12,
+    left: 12,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  markerPulse: {
-    position: 'absolute',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(0, 122, 255, 0.2)',
-  },
-  marker: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: LIGHT_COLORS.card,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 20,
+    gap: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 3,
   },
-  markerFlag: {
-    fontSize: 28,
-  },
-  globeContainer: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    marginTop: -24,
-    marginLeft: -24,
-  },
-  infoOverlay: {
-    padding: 16,
-    backgroundColor: LIGHT_COLORS.card,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  labelText: {
+  topBadgeText: {
     fontSize: 12,
     fontWeight: '600',
-    color: LIGHT_COLORS.textSecondary,
+    color: LIGHT_COLORS.text,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  },
+  infoCard: {
+    position: 'absolute',
+    bottom: 12,
+    left: 12,
+    right: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    borderRadius: 16,
+    padding: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  infoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  flagContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: LIGHT_COLORS.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  flagText: {
+    fontSize: 24,
+  },
+  headerInfo: {
+    flex: 1,
+  },
+  countryName: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: LIGHT_COLORS.text,
+  },
+  visaType: {
+    fontSize: 12,
+    color: LIGHT_COLORS.textSecondary,
+    marginTop: 1,
   },
   liveBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(52, 199, 89, 0.15)',
     paddingHorizontal: 8,
-    paddingVertical: 3,
+    paddingVertical: 4,
     borderRadius: 10,
     gap: 4,
   },
@@ -349,23 +440,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: LIGHT_COLORS.success,
   },
-  countryRow: {
-    marginBottom: 12,
-  },
-  countryName: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: LIGHT_COLORS.text,
-  },
-  visaType: {
-    fontSize: 13,
-    color: LIGHT_COLORS.textSecondary,
-    marginTop: 2,
+  divider: {
+    height: 1,
+    backgroundColor: LIGHT_COLORS.border,
+    marginVertical: 12,
   },
   statsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
   },
   statItem: {
     flex: 1,
@@ -373,7 +455,7 @@ const styles = StyleSheet.create({
   },
   statDivider: {
     width: 1,
-    height: 30,
+    height: 28,
     backgroundColor: LIGHT_COLORS.border,
   },
   statValue: {
@@ -381,21 +463,26 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: LIGHT_COLORS.text,
   },
+  remainingValue: {
+    fontSize: 22,
+  },
   statLabel: {
-    fontSize: 10,
+    fontSize: 9,
     color: LIGHT_COLORS.textSecondary,
     marginTop: 2,
     textTransform: 'uppercase',
+    fontWeight: '500',
   },
   progressContainer: {
-    height: 6,
-    borderRadius: 3,
+    height: 4,
+    borderRadius: 2,
     backgroundColor: LIGHT_COLORS.border,
     overflow: 'hidden',
+    marginTop: 12,
   },
   progressBar: {
     height: '100%',
-    borderRadius: 3,
+    borderRadius: 2,
   },
   warningBanner: {
     flexDirection: 'row',
@@ -404,7 +491,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 59, 48, 0.1)',
     padding: 8,
     borderRadius: 8,
-    marginTop: 12,
+    marginTop: 10,
     gap: 6,
   },
   warningText: {
@@ -412,36 +499,46 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: LIGHT_COLORS.danger,
   },
-  emptyOverlay: {
+  emptyCard: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -120 }, { translateY: -70 }],
+    width: 240,
+    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+    borderRadius: 16,
     padding: 20,
     alignItems: 'center',
-    backgroundColor: LIGHT_COLORS.card,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 5,
   },
-  emptyLabel: {
-    fontSize: 14,
+  emptyTitle: {
+    fontSize: 15,
     fontWeight: '600',
-    color: LIGHT_COLORS.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    color: LIGHT_COLORS.text,
+    marginTop: 10,
   },
   emptyHint: {
-    fontSize: 13,
+    fontSize: 12,
     color: LIGHT_COLORS.textSecondary,
     marginTop: 4,
-    marginBottom: 16,
+    marginBottom: 14,
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: LIGHT_COLORS.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
-    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    gap: 4,
   },
   addButtonText: {
     color: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '600',
   },
 });
