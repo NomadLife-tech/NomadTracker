@@ -105,6 +105,53 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleDeletePhoto = async () => {
+    Alert.alert(
+      t('deletePhoto'),
+      t('confirmDeletePhoto'),
+      [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('delete'),
+          style: 'destructive',
+          onPress: async () => {
+            await updateProfile({
+              ...profile,
+              avatar: '🌍',
+              avatarType: 'preset',
+            });
+            showToast(t('success'), 'success');
+          },
+        },
+      ]
+    );
+  };
+
+  const handleTakePhoto = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    if (status !== 'granted') {
+      showToast(t('permissionDenied'), 'error');
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0].base64) {
+      await updateProfile({
+        ...profile,
+        avatar: `data:image/jpeg;base64,${result.assets[0].base64}`,
+        avatarType: 'custom',
+      });
+      setShowAvatarModal(false);
+      showToast(t('success'), 'success');
+    }
+  };
+
   const resetPassportForm = () => {
     setPassportCountry('');
     setPassportCountryName('');
@@ -428,19 +475,40 @@ export default function ProfileScreen() {
             {t('personalInfo')}
           </Text>
 
-          {/* Avatar */}
-          <TouchableOpacity style={styles.avatarRow} onPress={() => setShowAvatarModal(true)}>
+          {/* Avatar / Profile Photo */}
+          <View style={styles.profilePhotoSection}>
             <View style={[styles.avatar, { backgroundColor: colors.border }]}>
-              {profile.avatarType === 'custom' ? (
-                <View style={styles.customAvatar}>
-                  <Text style={styles.avatarEmoji}>{profile.avatar?.substring(0, 2) || '🌍'}</Text>
-                </View>
+              {profile.avatarType === 'custom' && profile.avatar?.startsWith('data:image') ? (
+                <Image 
+                  source={{ uri: profile.avatar }} 
+                  style={styles.avatarImage} 
+                  resizeMode="cover"
+                />
               ) : (
                 <Text style={styles.avatarEmoji}>{profile.avatar || '🌍'}</Text>
               )}
             </View>
-            <Text style={[styles.avatarLabel, { color: colors.primary }]}>{t('selectAvatar')}</Text>
-          </TouchableOpacity>
+            <View style={styles.photoActions}>
+              <TouchableOpacity 
+                style={[styles.photoActionButton, { backgroundColor: colors.primary }]} 
+                onPress={() => setShowAvatarModal(true)}
+              >
+                <Ionicons name="camera" size={18} color="#FFFFFF" />
+                <Text style={styles.photoActionText}>
+                  {profile.avatarType === 'custom' ? t('changePhoto') : t('addPhoto')}
+                </Text>
+              </TouchableOpacity>
+              {profile.avatarType === 'custom' && profile.avatar?.startsWith('data:image') && (
+                <TouchableOpacity 
+                  style={[styles.photoActionButton, styles.deletePhotoButton, { backgroundColor: colors.danger }]} 
+                  onPress={handleDeletePhoto}
+                >
+                  <Ionicons name="trash" size={18} color="#FFFFFF" />
+                  <Text style={styles.photoActionText}>{t('deletePhoto')}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
 
           {/* Name Fields */}
           <View style={styles.inputGroup}>
@@ -604,29 +672,58 @@ export default function ProfileScreen() {
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>{t('selectAvatar')}</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>{t('selectProfileImage')}</Text>
               <TouchableOpacity onPress={() => setShowAvatarModal(false)}>
                 <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
+            
+            {/* Photo Options */}
+            <View style={styles.photoOptionsSection}>
+              <Text style={[styles.photoOptionsTitle, { color: colors.textSecondary }]}>
+                {t('uploadPhoto')}
+              </Text>
+              <View style={styles.photoOptionsRow}>
+                <TouchableOpacity
+                  style={[styles.photoOptionButton, { backgroundColor: colors.primary }]}
+                  onPress={handleTakePhoto}
+                >
+                  <Ionicons name="camera" size={24} color="#FFFFFF" />
+                  <Text style={styles.photoOptionText}>{t('takePhoto')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.photoOptionButton, { backgroundColor: colors.success }]}
+                  onPress={handleCustomPhoto}
+                >
+                  <Ionicons name="images" size={24} color="#FFFFFF" />
+                  <Text style={styles.photoOptionText}>{t('chooseFromLibrary')}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Divider */}
+            <View style={[styles.divider, { backgroundColor: colors.border }]}>
+              <Text style={[styles.dividerText, { color: colors.textSecondary, backgroundColor: colors.card }]}>
+                {t('orSelectEmoji')}
+              </Text>
+            </View>
+
+            {/* Emoji Avatars */}
             <View style={styles.avatarGrid}>
               {PRESET_AVATARS.map((emoji) => (
                 <TouchableOpacity
                   key={emoji}
-                  style={[styles.avatarOption, { borderColor: colors.border }]}
+                  style={[
+                    styles.avatarOption, 
+                    { borderColor: colors.border },
+                    profile.avatar === emoji && profile.avatarType === 'preset' && { borderColor: colors.primary, borderWidth: 2 }
+                  ]}
                   onPress={() => handleAvatarSelect(emoji)}
                 >
                   <Text style={styles.avatarOptionEmoji}>{emoji}</Text>
                 </TouchableOpacity>
               ))}
             </View>
-            <TouchableOpacity
-              style={[styles.customPhotoButton, { backgroundColor: colors.primary }]}
-              onPress={handleCustomPhoto}
-            >
-              <Ionicons name="camera" size={20} color="#FFFFFF" />
-              <Text style={styles.customPhotoText}>{t('chooseFromLibrary')}</Text>
-            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -1043,26 +1140,99 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 50,
   },
   customAvatar: {
     width: '100%',
     height: '100%',
-    borderRadius: 40,
+    borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarEmoji: {
-    fontSize: 40,
+    fontSize: 50,
   },
   avatarLabel: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  profilePhotoSection: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  photoActions: {
+    flexDirection: 'row',
+    marginTop: 12,
+    gap: 10,
+  },
+  photoActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    gap: 6,
+  },
+  deletePhotoButton: {
+    // Additional styles for delete button if needed
+  },
+  photoActionText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  photoOptionsSection: {
+    padding: 16,
+    paddingBottom: 8,
+  },
+  photoOptionsTitle: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  photoOptionsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  photoOptionButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+    borderRadius: 12,
+    gap: 8,
+  },
+  photoOptionText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+  divider: {
+    height: 1,
+    marginHorizontal: 16,
+    marginVertical: 16,
+    position: 'relative',
+  },
+  dividerText: {
+    position: 'absolute',
+    left: '50%',
+    top: -10,
+    paddingHorizontal: 12,
+    fontSize: 12,
+    textTransform: 'uppercase',
+    transform: [{ translateX: -50 }],
   },
   inputGroup: {
     marginBottom: 16,

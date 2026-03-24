@@ -42,7 +42,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: t('dashboard'),
+          title: 'My Nomad Time Tracker',
           tabBarLabel: t('dashboard'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
