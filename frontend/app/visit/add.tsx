@@ -196,8 +196,12 @@ export default function AddVisitScreen() {
             <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('visaType')} *</Text>
             <TouchableOpacity
               style={[styles.pickerButton, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => setShowVisaPicker(true)}
+              onPress={() => {
+                console.log('Visa type picker pressed');
+                setShowVisaPicker(true);
+              }}
               disabled={!countryCode}
+              activeOpacity={0.7}
             >
               {visaType ? (
                 <Text style={[styles.pickerText, { color: colors.text }]}>{visaType}</Text>
@@ -360,6 +364,7 @@ export default function AddVisitScreen() {
                     <TouchableOpacity
                       style={[styles.listItem, { borderBottomColor: colors.border }]}
                       onPress={() => {
+                        console.log('Selected visa type:', item);
                         setVisaType(item);
                         // Auto-populate allowed days unless Custom
                         if (!isCustom) {
@@ -367,6 +372,7 @@ export default function AddVisitScreen() {
                         }
                         setShowVisaPicker(false);
                       }}
+                      activeOpacity={0.7}
                     >
                       <View style={styles.visaTypeInfo}>
                         <Text style={[styles.listText, { color: colors.text }]}>{item}</Text>
