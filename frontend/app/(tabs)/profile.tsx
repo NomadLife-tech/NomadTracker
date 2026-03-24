@@ -246,12 +246,23 @@ export default function ProfileScreen() {
   const openPassportModal = (passport?: Passport) => {
     if (passport) {
       setEditingPassport(passport);
-      setPassportCountry(passport.countryCode);
-      setPassportCountryName(passport.countryName);
-      setPassportType(passport.type);
-      setPassportNumber(passport.passportNumber);
-      setPassportIssueDate(new Date(passport.issueDate));
-      setPassportExpiryDate(new Date(passport.expiryDate));
+      setPassportCountry(passport.countryCode || '');
+      setPassportCountryName(passport.countryName || '');
+      setPassportType(passport.type || 'primary');
+      setPassportNumber(passport.passportNumber || '');
+      // Handle empty or invalid dates
+      if (passport.issueDate && passport.issueDate.length > 0) {
+        const issueDate = new Date(passport.issueDate);
+        setPassportIssueDate(isNaN(issueDate.getTime()) ? undefined : issueDate);
+      } else {
+        setPassportIssueDate(undefined);
+      }
+      if (passport.expiryDate && passport.expiryDate.length > 0) {
+        const expiryDate = new Date(passport.expiryDate);
+        setPassportExpiryDate(isNaN(expiryDate.getTime()) ? undefined : expiryDate);
+      } else {
+        setPassportExpiryDate(undefined);
+      }
       setPassportAttachments(passport.attachments || []);
     } else {
       resetPassportForm();
@@ -315,9 +326,9 @@ export default function ProfileScreen() {
   const openInsuranceModal = (insurance?: Insurance) => {
     if (insurance) {
       setEditingInsurance(insurance);
-      setInsuranceType(insurance.type);
-      setInsuranceProvider(insurance.provider);
-      setInsurancePolicyNumber(insurance.policyNumber);
+      setInsuranceType(insurance.type || 'medical');
+      setInsuranceProvider(insurance.provider || '');
+      setInsurancePolicyNumber(insurance.policyNumber || '');
       setInsurancePhone(insurance.phone || '');
       setInsuranceNotes(insurance.notes || '');
       setInsuranceAttachments(insurance.attachments || []);
