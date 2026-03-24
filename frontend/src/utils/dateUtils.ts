@@ -110,22 +110,47 @@ export function calculateDaysInCountry(entryDate: string, exitDate?: string): nu
 
 // Check if visit is currently active (user is currently in the country)
 export function isCurrentVisit(visit: Visit): boolean {
-  const today = startOfDay(new Date());
-  const entryDate = startOfDay(new Date(visit.entryDate));
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  
+  // Parse entry date - extract just the date part to avoid timezone issues
+  const entryParts = visit.entryDate.split('T')[0].split('-');
+  const entryDate = new Date(
+    parseInt(entryParts[0]), 
+    parseInt(entryParts[1]) - 1, 
+    parseInt(entryParts[2])
+  );
+  
+  console.log(`isCurrentVisit check for ${visit.countryCode}:`, {
+    today: today.toDateString(),
+    entryDate: entryDate.toDateString(),
+    exitDate: visit.exitDate,
+    entryDateRaw: visit.entryDate,
+  });
   
   // Entry date must be today or in the past
   if (entryDate > today) {
+    console.log('  -> FALSE: entry date is in future');
     return false;
   }
   
   // If no exit date, the visit is ongoing
   if (!visit.exitDate) {
+    console.log('  -> TRUE: no exit date, ongoing');
     return true;
   }
   
-  // If exit date is today or in the future, still active
-  const exitDate = startOfDay(new Date(visit.exitDate));
-  return exitDate >= today;
+  // Parse exit date - extract just the date part
+  const exitParts = visit.exitDate.split('T')[0].split('-');
+  const exitDate = new Date(
+    parseInt(exitParts[0]), 
+    parseInt(exitParts[1]) - 1, 
+    parseInt(exitParts[2])
+  );
+  
+  const isActive = exitDate >= today;
+  console.log(`  -> ${isActive}: exitDate ${exitDate.toDateString()} >= today ${today.toDateString()}`);
+  return isActive;
 }
 
 // Get visa status with all calculated fields
