@@ -106,25 +106,39 @@ export default function ProfileScreen() {
   };
 
   const handleDeletePhoto = async () => {
-    Alert.alert(
-      t('deletePhoto'),
-      t('confirmDeletePhoto'),
-      [
-        { text: t('cancel'), style: 'cancel' },
-        {
-          text: t('delete'),
-          style: 'destructive',
-          onPress: async () => {
-            await updateProfile({
-              ...profile,
-              avatar: '🌍',
-              avatarType: 'preset',
-            });
-            showToast(t('success'), 'success');
+    if (Platform.OS === 'web') {
+      // Use window.confirm for web
+      const confirmed = window.confirm(t('confirmDeletePhoto'));
+      if (confirmed) {
+        await updateProfile({
+          ...profile,
+          avatar: '🌍',
+          avatarType: 'preset',
+        });
+        showToast(t('success'), 'success');
+      }
+    } else {
+      // Use Alert for native
+      Alert.alert(
+        t('deletePhoto'),
+        t('confirmDeletePhoto'),
+        [
+          { text: t('cancel'), style: 'cancel' },
+          {
+            text: t('delete'),
+            style: 'destructive',
+            onPress: async () => {
+              await updateProfile({
+                ...profile,
+                avatar: '🌍',
+                avatarType: 'preset',
+              });
+              showToast(t('success'), 'success');
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const handleTakePhoto = async () => {
