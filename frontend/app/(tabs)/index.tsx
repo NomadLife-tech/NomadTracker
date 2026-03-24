@@ -83,11 +83,6 @@ export default function DashboardScreen() {
     return calculateSchengenDays(visits);
   }, [visits, hasSchengenVisits]);
 
-  // Statistics - New Dashboard Enhancements
-  const travelStreaks = useMemo(() => {
-    return calculateTravelStreaks(visits);
-  }, [visits]);
-
   const countryHeatmapData = useMemo(() => {
     return calculateCountryHeatmap(visits);
   }, [visits]);

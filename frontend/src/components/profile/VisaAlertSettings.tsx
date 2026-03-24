@@ -36,7 +36,7 @@ export function VisaAlertSettings({
   return (
     <View style={[styles.section, { backgroundColor: colors.card }]}>
       <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
-        {t('visaAlerts')}
+        {t('visaExpirationAlerts')}
       </Text>
 
       {/* Master Toggle */}
@@ -44,7 +44,7 @@ export function VisaAlertSettings({
         <View style={styles.settingInfo}>
           <Ionicons name="notifications" size={22} color={colors.text} />
           <Text style={[styles.settingLabel, { color: colors.text }]}>
-            {t('enableVisaAlerts')}
+            {t('enableAlerts')}
           </Text>
         </View>
         <Switch

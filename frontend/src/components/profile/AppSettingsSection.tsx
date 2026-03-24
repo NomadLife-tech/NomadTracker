@@ -72,7 +72,7 @@ export function AppSettingsSection({
               {t('cloudSave')}
             </Text>
             <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
-              {t('cloudSaveHint')}
+              {t('cloudSaveDescription')}
             </Text>
           </View>
         </View>

@@ -40,11 +40,6 @@ export function ProfileHeader({ profile, onAvatarPress, t }: ProfileHeaderProps)
             ? `${profile.firstName} ${profile.lastName}`.trim()
             : t('traveler')}
         </Text>
-        {profile.homeCountry && (
-          <Text style={[styles.country, { color: colors.textSecondary }]}>
-            {t('homeCountry')}: {profile.homeCountry}
-          </Text>
-        )}
       </View>
     </View>
   );
