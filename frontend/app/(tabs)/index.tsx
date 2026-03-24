@@ -52,20 +52,6 @@ export default function DashboardScreen() {
   // Note: Removed useFocusEffect with refreshAll() that caused race condition
   // AppContext already manages state updates properly
 
-  // Debug logging for visit detection
-  React.useEffect(() => {
-    console.log('[Dashboard] Visits count:', visits.length);
-    visits.forEach((v, i) => {
-      const isActive = isCurrentVisit(v);
-      console.log(`[Dashboard] Visit ${i}:`, {
-        country: v.countryName,
-        entryDate: v.entryDate,
-        exitDate: v.exitDate,
-        isActive,
-      });
-    });
-  }, [visits]);
-
   const onRefresh = async () => {
     setRefreshing(true);
     await refreshAll();
