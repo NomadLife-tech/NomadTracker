@@ -26,7 +26,7 @@ interface AppContextType {
   setLanguage: (language: SupportedLanguage) => Promise<void>;
   
   // i18n
-  t: (key: string) => string;
+  t: (key: string, params?: Record<string, string>) => string;
   
   // Data management
   refreshAll: () => Promise<void>;
@@ -50,6 +50,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>({
     darkMode: false,
     language: 'en',
+    visaAlertsEnabled: true,
+    visaAlertDays: [30, 15, 7],
+    customAlertDays: undefined,
+    alertFrequency: 'daily',
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -126,8 +130,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [settings]);
 
   // i18n
-  const t = useCallback((key: string) => {
-    return getTranslation(settings.language, key);
+  const t = useCallback((key: string, params?: Record<string, string>) => {
+    let text = getTranslation(settings.language, key);
+    if (params) {
+      Object.entries(params).forEach(([paramKey, paramValue]) => {
+        text = text.replace(`{{${paramKey}}}`, paramValue);
+      });
+    }
+    return text;
   }, [settings.language]);
 
   // Data management

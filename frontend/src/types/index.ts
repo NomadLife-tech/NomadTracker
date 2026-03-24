@@ -67,6 +67,11 @@ export interface UserProfile {
 export interface AppSettings {
   darkMode: boolean;
   language: SupportedLanguage;
+  // Visa Expiration Alerts
+  visaAlertsEnabled: boolean;
+  visaAlertDays: number[];          // e.g., [90, 60, 30, 15, 10, 7]
+  customAlertDays?: number;         // Custom days before expiration
+  alertFrequency: 'once' | 'daily' | 'weekly';
 }
 
 export type SupportedLanguage = 'en' | 'es' | 'fr' | 'de' | 'pt' | 'zh' | 'ja' | 'ko';

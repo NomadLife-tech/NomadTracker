@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -25,7 +25,7 @@ import * as FileSystem from 'expo-file-system';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
 import { useToast } from '../../src/contexts/ToastContext';
-import { Passport, Insurance, SupportedLanguage, Attachment } from '../../src/types';
+import { Passport, Insurance, SupportedLanguage, Attachment, AppSettings } from '../../src/types';
 import { COUNTRIES, getCountryByCode } from '../../src/constants/countries';
 import { LANGUAGE_NAMES } from '../../src/constants/translations';
 import { DatePickerInput } from '../../src/components/common/DatePickerInput';
@@ -33,10 +33,16 @@ import { exportData, importData } from '../../src/services/dataExport';
 import { v4 as uuidv4 } from 'uuid';
 
 const PRESET_AVATARS = ['🌍', '🌎', '🌏', '✈️', '🚶', '🧭', '💼', '🏞️', '🏖️', '🛳️'];
+const ALERT_DAY_OPTIONS = [90, 60, 30, 15, 10, 7];
+const ALERT_FREQUENCY_OPTIONS: { value: AppSettings['alertFrequency']; label: string }[] = [
+  { value: 'once', label: 'Once' },
+  { value: 'daily', label: 'Daily' },
+  { value: 'weekly', label: 'Weekly' },
+];
 
 export default function ProfileScreen() {
   const { colors } = useTheme();
-  const { profile, settings, updateProfile, setDarkMode, setLanguage, refreshAll, t } = useApp();
+  const { profile, settings, updateProfile, updateSettings, setDarkMode, setLanguage, refreshAll, t } = useApp();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
 
@@ -45,7 +51,22 @@ export default function ProfileScreen() {
   const [showPassportModal, setShowPassportModal] = useState(false);
   const [showInsuranceModal, setShowInsuranceModal] = useState(false);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
+  const [showAlertFrequencyModal, setShowAlertFrequencyModal] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
+
+  // Visa Alert Settings state
+  const [visaAlertsEnabled, setVisaAlertsEnabled] = useState(settings.visaAlertsEnabled ?? true);
+  const [selectedAlertDays, setSelectedAlertDays] = useState<number[]>(settings.visaAlertDays ?? [30, 15, 7]);
+  const [customAlertDays, setCustomAlertDays] = useState<string>(settings.customAlertDays?.toString() ?? '');
+  const [alertFrequency, setAlertFrequency] = useState<AppSettings['alertFrequency']>(settings.alertFrequency ?? 'daily');
+
+  // Sync state with settings when settings change
+  useEffect(() => {
+    setVisaAlertsEnabled(settings.visaAlertsEnabled ?? true);
+    setSelectedAlertDays(settings.visaAlertDays ?? [30, 15, 7]);
+    setCustomAlertDays(settings.customAlertDays?.toString() ?? '');
+    setAlertFrequency(settings.alertFrequency ?? 'daily');
+  }, [settings]);
 
   const [editingPassport, setEditingPassport] = useState<Passport | null>(null);
   const [editingInsurance, setEditingInsurance] = useState<Insurance | null>(null);
@@ -90,11 +111,37 @@ export default function ProfileScreen() {
 
   const handleSaveSettings = async () => {
     try {
-      // Settings are already being saved via setDarkMode and setLanguage
-      // This button provides explicit confirmation to the user
+      // Parse custom days if provided
+      const customDays = customAlertDays ? parseInt(customAlertDays, 10) : undefined;
+      
+      // Save all settings including visa alerts
+      await updateSettings({
+        ...settings,
+        visaAlertsEnabled,
+        visaAlertDays: selectedAlertDays,
+        customAlertDays: customDays && !isNaN(customDays) ? customDays : undefined,
+        alertFrequency,
+      });
       showToast(t('settingsSaved'), 'success');
     } catch (error) {
       showToast(t('error'), 'error');
+    }
+  };
+
+  const toggleAlertDay = (day: number) => {
+    if (selectedAlertDays.includes(day)) {
+      setSelectedAlertDays(selectedAlertDays.filter(d => d !== day));
+    } else {
+      setSelectedAlertDays([...selectedAlertDays, day].sort((a, b) => b - a));
+    }
+  };
+
+  const getFrequencyLabel = (freq: AppSettings['alertFrequency']) => {
+    switch (freq) {
+      case 'once': return t('alertOnce');
+      case 'daily': return t('alertDaily');
+      case 'weekly': return t('alertWeekly');
+      default: return t('alertDaily');
     }
   };
 
@@ -614,6 +661,106 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
+        {/* Visa Expiration Alerts */}
+        <View style={[styles.section, { backgroundColor: colors.card }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+            {t('visaExpirationAlerts')}
+          </Text>
+
+          {/* Enable/Disable Alerts */}
+          <View style={styles.settingRow}>
+            <View style={styles.settingInfo}>
+              <Ionicons name="notifications" size={22} color={colors.text} />
+              <Text style={[styles.settingLabel, { color: colors.text }]}>{t('enableAlerts')}</Text>
+            </View>
+            <Switch
+              value={visaAlertsEnabled}
+              onValueChange={setVisaAlertsEnabled}
+              trackColor={{ false: colors.border, true: colors.primary }}
+            />
+          </View>
+
+          {visaAlertsEnabled && (
+            <>
+              {/* Alert Days Selection */}
+              <View style={styles.alertDaysSection}>
+                <Text style={[styles.alertDaysLabel, { color: colors.textSecondary }]}>
+                  {t('alertDaysBefore')}
+                </Text>
+                <View style={styles.alertDaysGrid}>
+                  {ALERT_DAY_OPTIONS.map((day) => (
+                    <TouchableOpacity
+                      key={day}
+                      style={[
+                        styles.alertDayChip,
+                        { borderColor: colors.border },
+                        selectedAlertDays.includes(day) && { backgroundColor: colors.primary, borderColor: colors.primary }
+                      ]}
+                      onPress={() => toggleAlertDay(day)}
+                    >
+                      <Text style={[
+                        styles.alertDayText,
+                        { color: selectedAlertDays.includes(day) ? '#FFFFFF' : colors.text }
+                      ]}>
+                        {day} {t('days')}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Custom Days Input */}
+              <View style={styles.customDaysSection}>
+                <Text style={[styles.alertDaysLabel, { color: colors.textSecondary }]}>
+                  {t('customDays')}
+                </Text>
+                <View style={styles.customDaysRow}>
+                  <TextInput
+                    style={[styles.customDaysInput, { backgroundColor: colors.background, color: colors.text, borderColor: colors.border }]}
+                    value={customAlertDays}
+                    onChangeText={setCustomAlertDays}
+                    placeholder={t('enterDays')}
+                    placeholderTextColor={colors.textSecondary}
+                    keyboardType="number-pad"
+                    maxLength={3}
+                  />
+                  <Text style={[styles.customDaysSuffix, { color: colors.textSecondary }]}>
+                    {t('daysBefore')}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Alert Frequency */}
+              <TouchableOpacity 
+                style={styles.settingRow} 
+                onPress={() => setShowAlertFrequencyModal(true)}
+              >
+                <View style={styles.settingInfo}>
+                  <Ionicons name="time" size={22} color={colors.text} />
+                  <Text style={[styles.settingLabel, { color: colors.text }]}>{t('alertFrequency')}</Text>
+                </View>
+                <View style={styles.settingValue}>
+                  <Text style={[styles.settingValueText, { color: colors.textSecondary }]}>
+                    {getFrequencyLabel(alertFrequency)}
+                  </Text>
+                  <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
+                </View>
+              </TouchableOpacity>
+
+              {/* Summary */}
+              <View style={[styles.alertSummary, { backgroundColor: colors.primary + '10' }]}>
+                <Ionicons name="information-circle" size={20} color={colors.primary} />
+                <Text style={[styles.alertSummaryText, { color: colors.text }]}>
+                  {t('alertSummary', { 
+                    days: [...selectedAlertDays, ...(customAlertDays ? [parseInt(customAlertDays)] : [])].filter(d => !isNaN(d)).sort((a, b) => b - a).join(', '),
+                    frequency: getFrequencyLabel(alertFrequency).toLowerCase()
+                  })}
+                </Text>
+              </View>
+            </>
+          )}
+        </View>
+
         {/* Passports */}
         <View style={[styles.section, { backgroundColor: colors.card }]}>
           <View style={styles.sectionHeader}>
@@ -833,6 +980,57 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
               )}
             />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Alert Frequency Modal */}
+      <Modal visible={showAlertFrequencyModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>{t('alertFrequency')}</Text>
+              <TouchableOpacity onPress={() => setShowAlertFrequencyModal(false)}>
+                <Ionicons name="close" size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.frequencyOptions}>
+              {ALERT_FREQUENCY_OPTIONS.map((option) => (
+                <TouchableOpacity
+                  key={option.value}
+                  style={[
+                    styles.frequencyOption,
+                    { borderBottomColor: colors.border },
+                    alertFrequency === option.value && { backgroundColor: colors.primary + '15' }
+                  ]}
+                  onPress={() => {
+                    setAlertFrequency(option.value);
+                    setShowAlertFrequencyModal(false);
+                  }}
+                >
+                  <View style={styles.frequencyOptionContent}>
+                    <Ionicons 
+                      name={option.value === 'once' ? 'flag' : option.value === 'daily' ? 'today' : 'calendar'} 
+                      size={22} 
+                      color={alertFrequency === option.value ? colors.primary : colors.text} 
+                    />
+                    <View style={styles.frequencyOptionText}>
+                      <Text style={[styles.frequencyOptionLabel, { color: colors.text }]}>
+                        {getFrequencyLabel(option.value)}
+                      </Text>
+                      <Text style={[styles.frequencyOptionDesc, { color: colors.textSecondary }]}>
+                        {option.value === 'once' && t('alertOnceDesc')}
+                        {option.value === 'daily' && t('alertDailyDesc')}
+                        {option.value === 'weekly' && t('alertWeeklyDesc')}
+                      </Text>
+                    </View>
+                  </View>
+                  {alertFrequency === option.value && (
+                    <Ionicons name="checkmark-circle" size={24} color={colors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
         </View>
       </Modal>
@@ -1687,5 +1885,95 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // Visa Alert Styles
+  alertDaysSection: {
+    marginTop: 16,
+    paddingHorizontal: 4,
+  },
+  alertDaysLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  alertDaysGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  alertDayChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  alertDayText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  customDaysSection: {
+    marginTop: 20,
+    paddingHorizontal: 4,
+  },
+  customDaysRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  customDaysInput: {
+    width: 80,
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  customDaysSuffix: {
+    fontSize: 14,
+  },
+  alertSummary: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    padding: 14,
+    borderRadius: 12,
+    marginTop: 20,
+    gap: 10,
+  },
+  alertSummaryText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  frequencyOptions: {
+    paddingBottom: 20,
+  },
+  frequencyOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  frequencyOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    flex: 1,
+  },
+  frequencyOptionText: {
+    flex: 1,
+  },
+  frequencyOptionLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  frequencyOptionDesc: {
+    fontSize: 13,
   },
 });
