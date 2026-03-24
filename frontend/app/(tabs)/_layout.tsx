@@ -1,10 +1,21 @@
 import React from 'react';
 import { Tabs, usePathname, useRouter } from 'expo-router';
-import { Platform, View, TouchableOpacity, StyleSheet } from 'react-native';
+import { Platform, View, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
+
+// Logo Header Component
+function LogoHeader() {
+  return (
+    <Image
+      source={require('../../assets/images/logo-header.png')}
+      style={styles.headerLogo}
+      resizeMode="contain"
+    />
+  );
+}
 
 // Floating Action Button Component
 function FloatingAddButton() {
@@ -76,7 +87,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="index"
           options={{
-            title: 'My Nomad Time Tracker',
+            headerTitle: () => <LogoHeader />,
             tabBarLabel: t('dashboard'),
             tabBarIcon: ({ color, size }) => (
               <Ionicons name="home" size={size} color={color} />
@@ -153,5 +164,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
     zIndex: 1000,
+  },
+  headerLogo: {
+    width: 220,
+    height: 40,
   },
 });
