@@ -83,7 +83,7 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, onLocationDetect
   // Reverse geocode to find country from coordinates
   const detectCurrentLocation = async () => {
     if (Platform.OS === 'web') {
-      setLocationError('Location detection works on mobile devices');
+      setLocationError(t('locationDetectionWebError'));
       return;
     }
     
@@ -124,14 +124,14 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, onLocationDetect
             onLocationDetected(foundCountry.code, foundCountry.name);
           }
         } else {
-          setLocationError('Country not found');
+          setLocationError(t('countryNotFound'));
         }
       } else {
-        setLocationError('Could not determine country');
+        setLocationError(t('couldNotDetermineCountry'));
       }
     } catch (error) {
       console.error('Location detection error:', error);
-      setLocationError('Failed to detect location');
+      setLocationError(t('failedToDetectLocation'));
     } finally {
       setIsDetectingLocation(false);
     }
@@ -528,7 +528,7 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, onLocationDetect
               {t('noActiveVisit')}
             </Text>
             <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
-              Start tracking your travels
+              {t('startTrackingTravels')}
             </Text>
             
             {/* GPS Detection Button - Only on native */}
@@ -544,7 +544,7 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, onLocationDetect
                   <Ionicons name="navigate" size={18} color={colors.success} />
                 )}
                 <Text style={[styles.detectBtnText, { color: colors.success }]}>
-                  {isDetectingLocation ? 'Detecting...' : t('detectLocation')}
+                  {isDetectingLocation ? t('detectingLocation') : t('detectLocation')}
                 </Text>
               </TouchableOpacity>
             )}
