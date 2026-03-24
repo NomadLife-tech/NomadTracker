@@ -237,10 +237,17 @@ export default function MapScreen() {
             padding: 0; 
             background: ${bgColor};
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            height: 100%;
+            overflow: hidden;
           }
           #map { 
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             width: 100%; 
-            height: 100vh; 
+            height: 100%; 
           }
           
           /* Modern Pin Styles */
@@ -489,7 +496,7 @@ export default function MapScreen() {
   // Empty state
   if (Object.keys(countryVisits).length === 0) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+      <View style={[styles.container, styles.emptyWrapper, { backgroundColor: colors.background }]}>
         <View style={styles.emptyContainer}>
           <View style={[styles.emptyIconContainer, { backgroundColor: colors.primary + '15' }]}>
             <Ionicons name="earth" size={64} color={colors.primary} />
@@ -521,7 +528,6 @@ export default function MapScreen() {
             width: '100%',
             height: '100%',
             border: 'none',
-            marginTop: insets.top,
           }}
           title="Travel Map"
         />
@@ -546,7 +552,7 @@ export default function MapScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <WebView
-        style={[styles.webview, { marginTop: insets.top }]}
+        style={styles.webview}
         source={{ html: mapHtml }}
         scrollEnabled={true}
         javaScriptEnabled={true}
@@ -583,6 +589,9 @@ const styles = StyleSheet.create({
   },
   webview: {
     flex: 1,
+  },
+  emptyWrapper: {
+    justifyContent: 'center',
   },
   emptyContainer: {
     flex: 1,
