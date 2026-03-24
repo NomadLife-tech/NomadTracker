@@ -18,7 +18,6 @@ import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
 import { MiniMapCard } from '../../src/components/common/MiniMapCard';
 import { 
-  TravelStreaksCard,
   CountryHeatmap,
 } from '../../src/components/statistics';
 import { 
@@ -32,7 +31,6 @@ import {
   countsAgainstSchengen,
 } from '../../src/utils/dateUtils';
 import {
-  calculateTravelStreaks,
   calculateCountryHeatmap,
 } from '../../src/utils/statisticsUtils';
 import { getCountryByCode } from '../../src/constants/countries';
@@ -366,9 +364,6 @@ export default function DashboardScreen() {
             )}
           </View>
         )}
-
-        {/* Travel Streaks Card */}
-        <TravelStreaksCard streaks={travelStreaks} t={t} />
 
         {/* Country Heatmap */}
         <CountryHeatmap data={countryHeatmapData} t={t} />
