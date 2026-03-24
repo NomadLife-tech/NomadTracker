@@ -390,10 +390,24 @@ export default function ProfileScreen() {
 
   const pickAttachment = async (type: 'passport' | 'insurance') => {
     try {
+      // On native, temporarily close the modal to allow file picker to work
+      if (Platform.OS !== 'web') {
+        if (type === 'passport') setShowPassportModal(false);
+        else setShowInsuranceModal(false);
+      }
+
       const result = await DocumentPicker.getDocumentAsync({
         type: ['application/pdf', 'image/jpeg', 'image/png'],
         copyToCacheDirectory: true,
       });
+
+      // Reopen modal after picker completes
+      if (Platform.OS !== 'web') {
+        setTimeout(() => {
+          if (type === 'passport') setShowPassportModal(true);
+          else setShowInsuranceModal(true);
+        }, 100);
+      }
 
       if (result.canceled || !result.assets || result.assets.length === 0) return;
 
@@ -409,10 +423,11 @@ export default function ProfileScreen() {
       if (Platform.OS !== 'web') {
         try {
           const base64Data = await FileSystem.readAsStringAsync(file.uri, {
-            encoding: 'base64' as any,
+            encoding: 'base64',
           });
           uri = `data:${file.mimeType};base64,${base64Data}`;
         } catch (e) {
+          console.log('Error reading file as base64:', e);
           uri = file.uri;
         }
       }
@@ -434,17 +449,39 @@ export default function ProfileScreen() {
       }
       showToast('File attached successfully', 'success');
     } catch (error) {
+      console.error('Error picking document:', error);
       showToast('Failed to attach file', 'error');
+      // Reopen modal on error
+      if (Platform.OS !== 'web') {
+        setTimeout(() => {
+          if (type === 'passport') setShowPassportModal(true);
+          else setShowInsuranceModal(true);
+        }, 100);
+      }
     }
   };
 
   const pickImageAttachment = async (type: 'passport' | 'insurance') => {
     try {
+      // On native, temporarily close the modal to allow image picker to work
+      if (Platform.OS !== 'web') {
+        if (type === 'passport') setShowPassportModal(false);
+        else setShowInsuranceModal(false);
+      }
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 0.7,
         base64: true,
       });
+
+      // Reopen modal after picker completes
+      if (Platform.OS !== 'web') {
+        setTimeout(() => {
+          if (type === 'passport') setShowPassportModal(true);
+          else setShowInsuranceModal(true);
+        }, 100);
+      }
 
       if (result.canceled || !result.assets[0]) return;
 
@@ -468,7 +505,15 @@ export default function ProfileScreen() {
       }
       showToast('Image attached successfully', 'success');
     } catch (error) {
+      console.error('Error picking image:', error);
       showToast('Failed to attach image', 'error');
+      // Reopen modal on error
+      if (Platform.OS !== 'web') {
+        setTimeout(() => {
+          if (type === 'passport') setShowPassportModal(true);
+          else setShowInsuranceModal(true);
+        }, 100);
+      }
     }
   };
 
@@ -886,7 +931,14 @@ export default function ProfileScreen() {
               <ScrollView style={styles.formScroll}>
                 <TouchableOpacity
                   style={[styles.pickerButton, { backgroundColor: colors.background, borderColor: colors.border }]}
-                  onPress={() => setShowCountryPicker(true)}
+                  onPress={() => {
+                    // On native, close passport modal before showing country picker to avoid modal stacking issues
+                    if (Platform.OS !== 'web') {
+                      setShowPassportModal(false);
+                    }
+                    setShowCountryPicker(true);
+                  }}
+                  activeOpacity={0.7}
                 >
                   {passportCountry ? (
                     <>
@@ -1118,7 +1170,14 @@ export default function ProfileScreen() {
           <View style={[styles.modalContent, { backgroundColor: colors.card, maxHeight: '80%' }]}>
             <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>{t('selectCountry')}</Text>
-              <TouchableOpacity onPress={() => setShowCountryPicker(false)}>
+              <TouchableOpacity onPress={() => {
+                setShowCountryPicker(false);
+                setCountrySearch('');
+                // On native, reopen passport modal when closing country picker
+                if (Platform.OS !== 'web') {
+                  setTimeout(() => setShowPassportModal(true), 100);
+                }
+              }}>
                 <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
@@ -1143,7 +1202,12 @@ export default function ProfileScreen() {
                     setPassportCountryName(item.name);
                     setShowCountryPicker(false);
                     setCountrySearch('');
+                    // On native, reopen the passport modal after selecting country
+                    if (Platform.OS !== 'web') {
+                      setTimeout(() => setShowPassportModal(true), 100);
+                    }
                   }}
+                  activeOpacity={0.7}
                 >
                   <Text style={styles.countryFlag}>{item.flag}</Text>
                   <Text style={[styles.countryName, { color: colors.text }]}>{item.name}</Text>
