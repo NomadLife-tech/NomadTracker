@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 import { Visit } from '../../types';
-import { getCountryByCode } from '../../constants/countries';
+import { getCountryByCode, COUNTRIES } from '../../constants/countries';
 import { getVisaStatus } from '../../utils/dateUtils';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -10,6 +11,7 @@ interface MiniMapCardProps {
   activeVisit: Visit | null;
   onPress: () => void;
   onAddVisit: () => void;
+  onLocationDetected?: (countryCode: string, countryName: string) => void;
   t: (key: string) => string;
 }
 
@@ -56,9 +58,12 @@ const COUNTRY_COORDS: { [key: string]: [number, number] } = {
   LY: [32.8872, 13.1913], TN: [36.8065, 10.1815], DZ: [36.7538, 3.0588],
 };
 
-export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCardProps) {
+export function MiniMapCard({ activeVisit, onPress, onAddVisit, onLocationDetected, t }: MiniMapCardProps) {
   const { colors, isDark } = useTheme();
   const [isOverlayVisible, setIsOverlayVisible] = useState(true);
+  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
+  const [detectedCountry, setDetectedCountry] = useState<{ code: string; name: string; flag: string } | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   
   const activeVisitStatus = useMemo(() => {
     if (!activeVisit) return null;
@@ -66,12 +71,70 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
   }, [activeVisit]);
 
   const country = activeVisit ? getCountryByCode(activeVisit.countryCode) : null;
-  const coords = activeVisit ? COUNTRY_COORDS[activeVisit.countryCode] || [20, 0] : [20, 0];
+  const coords = activeVisit ? COUNTRY_COORDS[activeVisit.countryCode] || [20, 0] : 
+                 detectedCountry ? COUNTRY_COORDS[detectedCountry.code] || [20, 0] : [20, 0];
 
   const getProgressColor = (percentage: number) => {
     if (percentage < 70) return colors.success;
     if (percentage < 90) return colors.warning;
     return colors.danger;
+  };
+
+  // Reverse geocode to find country from coordinates
+  const detectCurrentLocation = async () => {
+    if (Platform.OS === 'web') {
+      setLocationError('Location detection works on mobile devices');
+      return;
+    }
+    
+    setIsDetectingLocation(true);
+    setLocationError(null);
+    
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      
+      if (status !== 'granted') {
+        setLocationError(t('permissionDenied'));
+        setIsDetectingLocation(false);
+        return;
+      }
+      
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      
+      const [reverseGeocode] = await Location.reverseGeocodeAsync({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      });
+      
+      if (reverseGeocode?.isoCountryCode) {
+        const foundCountry = COUNTRIES.find(
+          c => c.code === reverseGeocode.isoCountryCode
+        );
+        
+        if (foundCountry) {
+          setDetectedCountry({
+            code: foundCountry.code,
+            name: foundCountry.name,
+            flag: foundCountry.flag,
+          });
+          
+          if (onLocationDetected) {
+            onLocationDetected(foundCountry.code, foundCountry.name);
+          }
+        } else {
+          setLocationError('Country not found');
+        }
+      } else {
+        setLocationError('Could not determine country');
+      }
+    } catch (error) {
+      console.error('Location detection error:', error);
+      setLocationError('Failed to detect location');
+    } finally {
+      setIsDetectingLocation(false);
+    }
   };
 
   // Generate Leaflet map HTML with 3D-style modern tiles - ALWAYS light mode
@@ -419,23 +482,88 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
         {renderMap()}
       </View>
 
-      <View style={[styles.emptyCard, { backgroundColor: cardBgColor }]}>
-        <View style={[styles.emptyIconBg, { backgroundColor: colors.primary + '15' }]}>
-          <Ionicons name="airplane" size={32} color={colors.primary} />
+      {/* Detected Location Badge */}
+      {detectedCountry && (
+        <View style={styles.topRow} pointerEvents="box-none">
+          <View style={[styles.locationBadge, { backgroundColor: cardBgColor }]}>
+            <Text style={styles.detectedFlag}>{detectedCountry.flag}</Text>
+            <View>
+              <Text style={[styles.detectedLabel, { color: colors.textSecondary }]}>
+                {t('locationDetected')}
+              </Text>
+              <Text style={[styles.detectedCountry, { color: colors.text }]}>
+                {detectedCountry.name}
+              </Text>
+            </View>
+          </View>
         </View>
-        <Text style={[styles.emptyTitle, { color: colors.text }]}>
-          {t('noActiveVisit')}
-        </Text>
-        <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
-          Start tracking your travels
-        </Text>
-        <TouchableOpacity 
-          style={[styles.addBtn, { backgroundColor: colors.primary }]} 
-          onPress={onAddVisit}
-        >
-          <Ionicons name="add" size={20} color="#FFFFFF" />
-          <Text style={styles.addBtnText}>{t('addNewVisit')}</Text>
-        </TouchableOpacity>
+      )}
+
+      <View style={[styles.emptyCard, { backgroundColor: cardBgColor }]}>
+        {detectedCountry ? (
+          <>
+            <View style={[styles.emptyIconBg, { backgroundColor: colors.success + '15' }]}>
+              <Text style={styles.detectedFlagLarge}>{detectedCountry.flag}</Text>
+            </View>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              {detectedCountry.name}
+            </Text>
+            <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
+              {t('locationDetected')}
+            </Text>
+            <TouchableOpacity 
+              style={[styles.addBtn, { backgroundColor: colors.primary }]} 
+              onPress={onAddVisit}
+            >
+              <Ionicons name="add" size={20} color="#FFFFFF" />
+              <Text style={styles.addBtnText}>{t('addNewVisit')}</Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            <View style={[styles.emptyIconBg, { backgroundColor: colors.primary + '15' }]}>
+              <Ionicons name="airplane" size={32} color={colors.primary} />
+            </View>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>
+              {t('noActiveVisit')}
+            </Text>
+            <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
+              Start tracking your travels
+            </Text>
+            
+            {/* GPS Detection Button - Only on native */}
+            {Platform.OS !== 'web' && (
+              <TouchableOpacity 
+                style={[styles.detectBtn, { backgroundColor: colors.success + '15', borderColor: colors.success }]}
+                onPress={detectCurrentLocation}
+                disabled={isDetectingLocation}
+              >
+                {isDetectingLocation ? (
+                  <ActivityIndicator size="small" color={colors.success} />
+                ) : (
+                  <Ionicons name="navigate" size={18} color={colors.success} />
+                )}
+                <Text style={[styles.detectBtnText, { color: colors.success }]}>
+                  {isDetectingLocation ? 'Detecting...' : t('detectLocation')}
+                </Text>
+              </TouchableOpacity>
+            )}
+            
+            {locationError && (
+              <Text style={[styles.errorText, { color: colors.danger }]}>
+                {locationError}
+              </Text>
+            )}
+            
+            <TouchableOpacity 
+              style={[styles.addBtn, { backgroundColor: colors.primary }]} 
+              onPress={onAddVisit}
+            >
+              <Ionicons name="add" size={20} color="#FFFFFF" />
+              <Text style={styles.addBtnText}>{t('addNewVisit')}</Text>
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </View>
   );
@@ -706,6 +834,41 @@ const styles = StyleSheet.create({
   addBtnText: {
     color: '#FFFFFF',
     fontSize: 16,
+    fontWeight: '600',
+  },
+  detectBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
+    marginBottom: 12,
+  },
+  detectBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  errorText: {
+    fontSize: 12,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  detectedFlag: {
+    fontSize: 24,
+    marginRight: 8,
+  },
+  detectedFlagLarge: {
+    fontSize: 36,
+  },
+  detectedLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  detectedCountry: {
+    fontSize: 14,
     fontWeight: '600',
   },
 });
