@@ -1,13 +1,13 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Modal, TextInput } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Modal } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { formatDate } from '../../utils/dateUtils';
 import { Ionicons } from '@expo/vector-icons';
 
-// Only import DateTimePicker for native platforms
-let DateTimePicker: any = null;
+// Use react-native-date-picker for native, which works better with new architecture
+let DatePicker: any = null;
 if (Platform.OS !== 'web') {
-  DateTimePicker = require('@react-native-community/datetimepicker').default;
+  DatePicker = require('react-native-date-picker').default;
 }
 
 interface DatePickerInputProps {
@@ -20,14 +20,6 @@ interface DatePickerInputProps {
   maximumDate?: Date;
 }
 
-// Helper to format date as YYYY-MM-DD for web input
-const formatDateForWebInput = (date: Date): string => {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
 export function DatePickerInput({
   label,
   value,
@@ -37,7 +29,7 @@ export function DatePickerInput({
   minimumDate,
   maximumDate,
 }: DatePickerInputProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const [showPicker, setShowPicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date>(value || new Date());
   
@@ -66,24 +58,17 @@ export function DatePickerInput({
     setShowPicker(true);
   };
 
-  // Native handlers
-  const handleNativeDateChange = (event: any, selectedDate?: Date) => {
-    if (Platform.OS === 'android') {
-      setShowPicker(false);
-      if (event.type === 'dismissed') {
-        return;
-      }
-    }
-    if (selectedDate) {
-      setTempDate(selectedDate);
-      if (Platform.OS === 'android') {
-        onChange(selectedDate);
-      }
-    }
+  // Native handler for react-native-date-picker
+  const handleNativeDateChange = (selectedDate: Date) => {
+    setTempDate(selectedDate);
   };
 
   const handleNativeConfirm = () => {
     onChange(tempDate);
+    setShowPicker(false);
+  };
+
+  const handleNativeCancel = () => {
     setShowPicker(false);
   };
 
@@ -93,25 +78,17 @@ export function DatePickerInput({
     const month = parseInt(webMonth);
     const day = parseInt(webDay);
     
-    console.log('[DatePicker] Confirming date:', { year, month, day });
-    
     if (year && month && day && year >= 1900 && year <= 2100 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
       const newDate = new Date(year, month - 1, day);
-      console.log('[DatePicker] Created date:', newDate);
       // Validate the date is real (e.g., Feb 30 would become Mar 2)
       if (newDate.getMonth() === month - 1 && newDate.getDate() === day) {
         onChange(newDate);
         setShowPicker(false);
-        console.log('[DatePicker] Date set successfully');
-      } else {
-        console.log('[DatePicker] Invalid date - month/day mismatch');
       }
-    } else {
-      console.log('[DatePicker] Validation failed');
     }
   };
 
-  // Generate options for dropdowns
+  // Generate options for web dropdowns
   const years = Array.from({ length: 50 }, (_, i) => {
     const year = new Date().getFullYear() - 10 + i;
     return { label: year.toString(), value: year.toString() };
@@ -276,47 +253,27 @@ export function DatePickerInput({
         </Modal>
       )}
 
-      {/* Android Date Picker */}
-      {Platform.OS === 'android' && showPicker && DateTimePicker && (
-        <DateTimePicker
-          value={tempDate}
+      {/* Native Date Picker using react-native-date-picker */}
+      {Platform.OS !== 'web' && DatePicker && (
+        <DatePicker
+          modal
+          open={showPicker}
+          date={tempDate}
           mode="date"
-          display="default"
-          onChange={handleNativeDateChange}
+          theme={isDark ? 'dark' : 'light'}
           minimumDate={minimumDate}
           maximumDate={maximumDate}
+          onConfirm={(date: Date) => {
+            onChange(date);
+            setShowPicker(false);
+          }}
+          onCancel={() => {
+            setShowPicker(false);
+          }}
+          title="Select Date"
+          confirmText="Done"
+          cancelText="Cancel"
         />
-      )}
-
-      {/* iOS Date Picker */}
-      {Platform.OS === 'ios' && showPicker && DateTimePicker && (
-        <Modal
-          visible={showPicker}
-          transparent
-          animationType="slide"
-        >
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-                <TouchableOpacity onPress={() => setShowPicker(false)}>
-                  <Text style={[styles.modalButton, { color: colors.textSecondary }]}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={handleNativeConfirm}>
-                  <Text style={[styles.modalButton, { color: colors.primary }]}>Done</Text>
-                </TouchableOpacity>
-              </View>
-              <DateTimePicker
-                value={tempDate}
-                mode="date"
-                display="spinner"
-                onChange={handleNativeDateChange}
-                minimumDate={minimumDate}
-                maximumDate={maximumDate}
-                style={styles.picker}
-              />
-            </View>
-          </View>
-        </Modal>
       )}
     </View>
   );
@@ -351,15 +308,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  modalContent: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingBottom: 20,
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
   webModalContent: {
     borderRadius: 16,
     width: '90%',
@@ -380,9 +328,6 @@ const styles = StyleSheet.create({
   modalButton: {
     fontSize: 17,
     fontWeight: '600',
-  },
-  picker: {
-    height: 200,
   },
   webPickerContainer: {
     flexDirection: 'row',
