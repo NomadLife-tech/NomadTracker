@@ -1,19 +1,23 @@
 import React from 'react';
 import { Tabs, usePathname, useRouter } from 'expo-router';
-import { Platform, View, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { Platform, View, TouchableOpacity, StyleSheet, Image, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
 // Logo Header Component
 function LogoHeader() {
   return (
-    <Image
-      source={require('../../assets/images/logo-header.png')}
-      style={styles.headerLogo}
-      resizeMode="contain"
-    />
+    <View style={styles.headerContainer}>
+      <Image
+        source={require('../../assets/images/logo-header.png')}
+        style={styles.headerLogo}
+        resizeMode="cover"
+      />
+    </View>
   );
 }
 
@@ -166,7 +170,12 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   headerLogo: {
-    width: 380,
+    width: SCREEN_WIDTH,
     height: 56,
+  },
+  headerContainer: {
+    width: SCREEN_WIDTH,
+    height: 56,
+    overflow: 'hidden',
   },
 });
