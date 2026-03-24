@@ -74,24 +74,31 @@ export default function AddVisitScreen() {
       return;
     }
 
-    const visit: Visit = {
-      id: uuidv4(),
-      countryCode,
-      countryName,
-      entryDate: entryDate.toISOString(),
-      exitDate: exitDate?.toISOString(),
-      visaType,
-      allowedDays: allowedDays ? parseInt(allowedDays) : 90,
-      passportId: passportId || undefined,
-      visaNumber: visaNumber || undefined,
-      notes: notes || undefined,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    try {
+      const visit: Visit = {
+        id: uuidv4(),
+        countryCode,
+        countryName,
+        entryDate: entryDate.toISOString(),
+        exitDate: exitDate?.toISOString(),
+        visaType,
+        allowedDays: allowedDays ? parseInt(allowedDays) : 90,
+        passportId: passportId || undefined,
+        visaNumber: visaNumber || undefined,
+        notes: notes || undefined,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
 
-    await addVisit(visit);
-    showToast(t('success'), 'success');
-    router.back();
+      console.log('Saving visit:', visit);
+      await addVisit(visit);
+      console.log('Visit saved successfully');
+      showToast(t('success'), 'success');
+      router.back();
+    } catch (error) {
+      console.error('Error saving visit:', error);
+      showToast(t('errorSavingData'), 'error');
+    }
   };
 
   return (
