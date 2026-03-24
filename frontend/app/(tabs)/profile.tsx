@@ -499,14 +499,31 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleClearData = async () => {
-    try {
-      await clearAllData();
-      showToast(t('dataClearedSuccess') || 'All data cleared successfully', 'success');
-    } catch (error) {
-      console.error('Failed to clear data:', error);
-      showToast(t('dataClearFailed') || 'Failed to clear data', 'error');
-    }
+  const handleClearData = () => {
+    Alert.alert(
+      t('clearAllData') || 'Clear All Data',
+      t('confirmClearData') || 'This will permanently delete all your data including visits, passports, and insurance information. This action cannot be undone.',
+      [
+        {
+          text: t('cancel') || 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: t('clearData') || 'Clear Data',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await clearAllData();
+              showToast(t('dataClearedSuccess') || 'All data cleared successfully', 'success');
+            } catch (error) {
+              console.error('Failed to clear data:', error);
+              showToast(t('dataClearFailed') || 'Failed to clear data', 'error');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   const filteredCountries = countrySearch

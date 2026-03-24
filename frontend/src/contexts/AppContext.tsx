@@ -273,27 +273,29 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const clearAllData = useCallback(async () => {
     setIsLoading(true);
     try {
-      // Clear storage
+      // Clear storage and reinitialize with defaults
       await storage.clearAllData();
       
-      // Reset state to defaults
-      setVisits([]);
-      setProfile({
-        id: '1',
-        firstName: '',
-        lastName: '',
-        avatar: '🌍',
-        avatarType: 'preset',
-        passports: [],
-        insurances: [],
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+      // Reload fresh data from storage (which now has defaults)
+      const [freshVisits, freshProfile, freshSettings] = await Promise.all([
+        storage.getVisits(),
+        storage.getProfile(),
+        storage.getSettings(),
+      ]);
+      
+      // Update state with fresh data from storage
+      setVisits(freshVisits);
+      setProfile(freshProfile);
+      setSettings({
+        ...freshSettings,
+        cloudSaveEnabled: false, // Disable cloud sync after clear
       });
-      // Keep current settings but reset some values
-      setSettings(prev => ({
-        ...prev,
+      
+      // Also save the updated settings back
+      await storage.saveSettings({
+        ...freshSettings,
         cloudSaveEnabled: false,
-      }));
+      });
       
       console.log('[AppContext] All data cleared successfully');
     } catch (error) {
