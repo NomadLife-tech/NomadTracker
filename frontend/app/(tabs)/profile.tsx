@@ -260,30 +260,48 @@ export default function ProfileScreen() {
   };
 
   const savePassport = async () => {
-    if (!passportCountry || !passportNumber || !passportIssueDate || !passportExpiryDate) {
-      showToast(t('error'), 'error');
+    // Validation with specific error messages
+    if (!passportCountry) {
+      showToast(t('pleaseSelectCountry') || 'Please select a country', 'error');
+      return;
+    }
+    if (!passportNumber) {
+      showToast(t('pleaseEnterPassportNumber') || 'Please enter passport number', 'error');
+      return;
+    }
+    if (!passportIssueDate) {
+      showToast(t('pleaseSelectIssueDate') || 'Please select issue date', 'error');
+      return;
+    }
+    if (!passportExpiryDate) {
+      showToast(t('pleaseSelectExpiryDate') || 'Please select expiry date', 'error');
       return;
     }
 
-    const passportData: Passport = {
-      id: editingPassport?.id || uuidv4(),
-      type: passportType,
-      countryCode: passportCountry,
-      countryName: passportCountryName,
-      passportNumber,
-      issueDate: passportIssueDate.toISOString(),
-      expiryDate: passportExpiryDate.toISOString(),
-      attachments: passportAttachments,
-    };
+    try {
+      const passportData: Passport = {
+        id: editingPassport?.id || uuidv4(),
+        type: passportType,
+        countryCode: passportCountry,
+        countryName: passportCountryName,
+        passportNumber,
+        issueDate: passportIssueDate.toISOString(),
+        expiryDate: passportExpiryDate.toISOString(),
+        attachments: passportAttachments,
+      };
 
-    const updatedPassports = editingPassport
-      ? profile.passports.map(p => (p.id === editingPassport.id ? passportData : p))
-      : [...profile.passports, passportData];
+      const updatedPassports = editingPassport
+        ? profile.passports.map(p => (p.id === editingPassport.id ? passportData : p))
+        : [...profile.passports, passportData];
 
-    await updateProfile({ ...profile, passports: updatedPassports });
-    setShowPassportModal(false);
-    resetPassportForm();
-    showToast(t('success'), 'success');
+      await updateProfile({ ...profile, passports: updatedPassports });
+      setShowPassportModal(false);
+      resetPassportForm();
+      showToast(t('success'), 'success');
+    } catch (error) {
+      console.error('Error saving passport:', error);
+      showToast(t('errorSavingData') || 'Error saving data', 'error');
+    }
   };
 
   const deletePassport = async (passportId: string) => {
@@ -322,29 +340,39 @@ export default function ProfileScreen() {
   };
 
   const saveInsurance = async () => {
-    if (!insuranceProvider || !insurancePolicyNumber) {
-      showToast(t('error'), 'error');
+    // Validation with specific error messages
+    if (!insuranceProvider) {
+      showToast(t('pleaseEnterProvider') || 'Please enter provider name', 'error');
+      return;
+    }
+    if (!insurancePolicyNumber) {
+      showToast(t('pleaseEnterPolicyNumber') || 'Please enter policy number', 'error');
       return;
     }
 
-    const insuranceData: Insurance = {
-      id: editingInsurance?.id || uuidv4(),
-      type: insuranceType,
-      provider: insuranceProvider,
-      policyNumber: insurancePolicyNumber,
-      phone: insurancePhone || undefined,
-      notes: insuranceNotes || undefined,
-      attachments: insuranceAttachments,
-    };
+    try {
+      const insuranceData: Insurance = {
+        id: editingInsurance?.id || uuidv4(),
+        type: insuranceType,
+        provider: insuranceProvider,
+        policyNumber: insurancePolicyNumber,
+        phone: insurancePhone || undefined,
+        notes: insuranceNotes || undefined,
+        attachments: insuranceAttachments,
+      };
 
-    const updatedInsurances = editingInsurance
-      ? profile.insurances.map(i => (i.id === editingInsurance.id ? insuranceData : i))
-      : [...profile.insurances, insuranceData];
+      const updatedInsurances = editingInsurance
+        ? profile.insurances.map(i => (i.id === editingInsurance.id ? insuranceData : i))
+        : [...profile.insurances, insuranceData];
 
-    await updateProfile({ ...profile, insurances: updatedInsurances });
-    setShowInsuranceModal(false);
-    resetInsuranceForm();
-    showToast(t('success'), 'success');
+      await updateProfile({ ...profile, insurances: updatedInsurances });
+      setShowInsuranceModal(false);
+      resetInsuranceForm();
+      showToast(t('success'), 'success');
+    } catch (error) {
+      console.error('Error saving insurance:', error);
+      showToast(t('errorSavingData') || 'Error saving data', 'error');
+    }
   };
 
   const deleteInsurance = async (insuranceId: string) => {

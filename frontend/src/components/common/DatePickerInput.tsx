@@ -93,13 +93,21 @@ export function DatePickerInput({
     const month = parseInt(webMonth);
     const day = parseInt(webDay);
     
+    console.log('[DatePicker] Confirming date:', { year, month, day });
+    
     if (year && month && day && year >= 1900 && year <= 2100 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
       const newDate = new Date(year, month - 1, day);
+      console.log('[DatePicker] Created date:', newDate);
       // Validate the date is real (e.g., Feb 30 would become Mar 2)
       if (newDate.getMonth() === month - 1 && newDate.getDate() === day) {
         onChange(newDate);
         setShowPicker(false);
+        console.log('[DatePicker] Date set successfully');
+      } else {
+        console.log('[DatePicker] Invalid date - month/day mismatch');
       }
+    } else {
+      console.log('[DatePicker] Validation failed');
     }
   };
 
