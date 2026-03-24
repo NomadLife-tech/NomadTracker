@@ -1,5 +1,5 @@
-import React, { useCallback, useMemo } from 'react';
-import { View, StyleSheet, Platform, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useCallback, useMemo, useRef } from 'react';
+import { View, StyleSheet, Platform, Text, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -7,12 +7,53 @@ import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
 import { isCurrentVisit, formatDate, calculateDaysInCountry } from '../../src/utils/dateUtils';
 import { getCountryByCode } from '../../src/constants/countries';
+import { Visit } from '../../src/types';
+
+// Country coordinates for map pins
+const COUNTRY_COORDS: { [key: string]: [number, number] } = {
+  US: [37.0902, -95.7129], GB: [51.5074, -0.1278], DE: [52.5200, 13.4050],
+  FR: [48.8566, 2.3522], ES: [40.4168, -3.7038], IT: [41.9028, 12.4964],
+  PT: [38.7223, -9.1393], NL: [52.3676, 4.9041], BE: [50.8503, 4.3517],
+  AT: [48.2082, 16.3738], CH: [46.9480, 7.4474], GR: [37.9838, 23.7275],
+  SE: [59.3293, 18.0686], NO: [59.9139, 10.7522], DK: [55.6761, 12.5683],
+  FI: [60.1699, 24.9384], PL: [52.2297, 21.0122], CZ: [50.0755, 14.4378],
+  HU: [47.4979, 19.0402], IE: [53.3498, -6.2603], JP: [35.6762, 139.6503],
+  KR: [37.5665, 126.9780], CN: [39.9042, 116.4074], TW: [25.0330, 121.5654],
+  SG: [1.3521, 103.8198], MY: [3.1390, 101.6869], TH: [13.7563, 100.5018],
+  ID: [-6.2088, 106.8456], VN: [21.0278, 105.8342], PH: [14.5995, 120.9842],
+  IN: [28.6139, 77.2090], AU: [-33.8688, 151.2093], NZ: [-36.8485, 174.7633],
+  CA: [43.6532, -79.3832], MX: [19.4326, -99.1332], BR: [-23.5505, -46.6333],
+  AR: [-34.6037, -58.3816], CL: [-33.4489, -70.6693], CO: [4.7110, -74.0721],
+  PE: [-12.0464, -77.0428], AE: [25.2048, 55.2708], SA: [24.7136, 46.6753],
+  QA: [25.2854, 51.5310], EG: [30.0444, 31.2357], ZA: [-33.9249, 18.4241],
+  KE: [-1.2921, 36.8219], MA: [33.9716, -6.8498], TR: [41.0082, 28.9784],
+  IL: [32.0853, 34.7818], RU: [55.7558, 37.6173], UA: [50.4501, 30.5234],
+  HR: [45.8150, 15.9819], RO: [44.4268, 26.1025], BG: [42.6977, 23.3219],
+  RS: [44.7866, 20.4489], GE: [41.7151, 44.8271], AM: [40.1792, 44.4991],
+  AZ: [40.4093, 49.8671], KZ: [51.1605, 71.4704], UZ: [41.2995, 69.2401],
+  LK: [6.9271, 79.8612], NP: [27.7172, 85.3240], BD: [23.8103, 90.4125],
+  MM: [16.8661, 96.1951], KH: [11.5564, 104.9282], LA: [17.9757, 102.6331],
+  MV: [4.1755, 73.5093], BT: [27.4728, 89.6390], MN: [47.8864, 106.9057],
+  PA: [8.9824, -79.5199], CR: [9.9281, -84.0907], EC: [-0.1807, -78.4678],
+  UY: [-34.9011, -56.1645], PY: [-25.2637, -57.5759], BO: [-16.4897, -68.1193],
+  IS: [64.1466, -21.9426], LU: [49.6116, 6.1319], MT: [35.8989, 14.5146],
+  CY: [35.1856, 33.3823], EE: [59.4370, 24.7536], LV: [56.9496, 24.1052],
+  LT: [54.6872, 25.2797], SK: [48.1486, 17.1077], SI: [46.0569, 14.5058],
+  ME: [42.4304, 19.2594], AL: [41.3275, 19.8187], MK: [41.9981, 21.4254],
+  BA: [43.8563, 18.4131], MD: [47.0105, 28.8638], BY: [53.9006, 27.5590],
+  AF: [34.5553, 69.2075], PK: [33.6844, 73.0479], NG: [9.0765, 7.3986],
+  GH: [5.6037, -0.1870], ET: [8.9806, 38.7578], TZ: [-6.7924, 39.2083],
+  VE: [10.4806, -66.9036], CU: [23.1136, -82.3666], PR: [18.4655, -66.1057],
+  JM: [18.1096, -77.2975], DO: [18.4861, -69.9312], HT: [18.5944, -72.3074],
+  TT: [10.6918, -61.2225], BB: [13.1939, -59.5432], BS: [25.0343, -77.3963],
+};
 
 export default function MapScreen() {
   const { colors, isDark } = useTheme();
   const { visits, refreshVisits, t } = useApp();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const iframeRef = useRef<HTMLIFrameElement>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -20,82 +61,149 @@ export default function MapScreen() {
     }, [])
   );
 
-  // Group visits by country
+  // Group visits by country with latest visit info
   const countryVisits = useMemo(() => {
-    const grouped: { [key: string]: typeof visits } = {};
+    const grouped: { [key: string]: { visits: Visit[]; latestVisit: Visit; hasActive: boolean; totalDays: number } } = {};
     visits.forEach(visit => {
       if (!grouped[visit.countryCode]) {
-        grouped[visit.countryCode] = [];
+        grouped[visit.countryCode] = {
+          visits: [],
+          latestVisit: visit,
+          hasActive: false,
+          totalDays: 0,
+        };
       }
-      grouped[visit.countryCode].push(visit);
+      grouped[visit.countryCode].visits.push(visit);
+      grouped[visit.countryCode].totalDays += calculateDaysInCountry(visit.entryDate, visit.exitDate);
+      if (isCurrentVisit(visit)) {
+        grouped[visit.countryCode].hasActive = true;
+      }
+      // Track latest visit
+      if (new Date(visit.entryDate) > new Date(grouped[visit.countryCode].latestVisit.entryDate)) {
+        grouped[visit.countryCode].latestVisit = visit;
+      }
     });
     return grouped;
   }, [visits]);
 
+  // Handle message from iframe for navigation
+  const handleMessage = useCallback((event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data);
+      if (data.type === 'visitClick' && data.visitId) {
+        router.push(`/visit/${data.visitId}`);
+      }
+    } catch (e) {
+      // Ignore non-JSON messages
+    }
+  }, [router]);
+
+  // Set up message listener on web
+  React.useEffect(() => {
+    if (Platform.OS === 'web') {
+      window.addEventListener('message', handleMessage);
+      return () => window.removeEventListener('message', handleMessage);
+    }
+  }, [handleMessage]);
+
+  // Generate interactive map HTML
   const mapHtml = useMemo(() => {
-    const tileUrl = isDark
-      ? 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-      : 'https://{s}.basemaps.cartocdn.com/voyager/{z}/{x}/{y}{r}.png';
+    // Modern map tiles with excellent dark/light mode support
+    const lightTileUrl = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+    const darkTileUrl = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
+    const tileUrl = isDark ? darkTileUrl : lightTileUrl;
 
-    // Country coordinates (approximate centers)
-    const countryCoords: { [key: string]: [number, number] } = {
-      US: [37.0902, -95.7129], GB: [55.3781, -3.4360], DE: [51.1657, 10.4515],
-      FR: [46.2276, 2.2137], ES: [40.4637, -3.7492], IT: [41.8719, 12.5674],
-      PT: [39.3999, -8.2245], NL: [52.1326, 5.2913], BE: [50.5039, 4.4699],
-      AT: [47.5162, 14.5501], CH: [46.8182, 8.2275], GR: [39.0742, 21.8243],
-      SE: [60.1282, 18.6435], NO: [60.4720, 8.4689], DK: [56.2639, 9.5018],
-      FI: [61.9241, 25.7482], PL: [51.9194, 19.1451], CZ: [49.8175, 15.4730],
-      HU: [47.1625, 19.5033], IE: [53.1424, -7.6921], JP: [36.2048, 138.2529],
-      KR: [35.9078, 127.7669], CN: [35.8617, 104.1954], TW: [23.6978, 120.9605],
-      SG: [1.3521, 103.8198], MY: [4.2105, 101.9758], TH: [15.8700, 100.9925],
-      ID: [-0.7893, 113.9213], VN: [14.0583, 108.2772], PH: [12.8797, 121.7740],
-      IN: [20.5937, 78.9629], AU: [-25.2744, 133.7751], NZ: [-40.9006, 174.8860],
-      CA: [56.1304, -106.3468], MX: [23.6345, -102.5528], BR: [-14.2350, -51.9253],
-      AR: [-38.4161, -63.6167], CL: [-35.6751, -71.5430], CO: [4.5709, -74.2973],
-      PE: [-9.1900, -75.0152], AE: [23.4241, 53.8478], SA: [23.8859, 45.0792],
-      QA: [25.3548, 51.1839], EG: [26.8206, 30.8025], ZA: [-30.5595, 22.9375],
-      KE: [-0.0236, 37.9062], MA: [31.7917, -7.0926], TR: [38.9637, 35.2433],
-      IL: [31.0461, 34.8516], RU: [61.5240, 105.3188], UA: [48.3794, 31.1656],
-      HR: [45.1000, 15.2000], RO: [45.9432, 24.9668], BG: [42.7339, 25.4858],
-      RS: [44.0165, 21.0059], GE: [42.3154, 43.3569], AM: [40.0691, 45.0382],
-      AZ: [40.1431, 47.5769], KZ: [48.0196, 66.9237], UZ: [41.3775, 64.5853],
-      LK: [7.8731, 80.7718], NP: [28.3949, 84.1240], BD: [23.6850, 90.3563],
-      MM: [21.9162, 95.9560], KH: [12.5657, 104.9910], LA: [19.8563, 102.4955],
-      MV: [3.2028, 73.2207], BT: [27.5142, 90.4336], MN: [46.8625, 103.8467],
-      PA: [8.5380, -80.7821], CR: [9.7489, -83.7534], EC: [-1.8312, -78.1834],
-      UY: [-32.5228, -55.7658], PY: [-23.4425, -58.4438], BO: [-16.2902, -63.5887],
-      IS: [64.9631, -19.0208], LU: [49.8153, 6.1296], MT: [35.9375, 14.3754],
-      CY: [35.1264, 33.4299], EE: [58.5953, 25.0136], LV: [56.8796, 24.6032],
-      LT: [55.1694, 23.8813], SK: [48.6690, 19.6990], SI: [46.1512, 14.9955],
-      ME: [42.7087, 19.3744], AL: [41.1533, 20.1683], MK: [41.5124, 21.7453],
-      BA: [43.9159, 17.6791], MD: [47.4116, 28.3699], BY: [53.7098, 27.9534],
-    };
+    // Theme colors
+    const bgColor = isDark ? '#1C1C1E' : '#F2F2F7';
+    const cardBg = isDark ? '#2C2C2E' : '#FFFFFF';
+    const textColor = isDark ? '#FFFFFF' : '#1C1C1E';
+    const textSecondary = isDark ? '#8E8E93' : '#6C6C70';
+    const primaryColor = '#007AFF';
+    const successColor = '#34C759';
+    const borderColor = isDark ? '#3A3A3C' : '#E5E5EA';
 
-    const markers = Object.entries(countryVisits).map(([code, cvs]) => {
+    // Generate markers for each country with visits
+    const markersJs = Object.entries(countryVisits).map(([code, data]) => {
       const country = getCountryByCode(code);
-      const coords = countryCoords[code] || [0, 0];
-      const hasActive = cvs.some(v => isCurrentVisit(v));
-      const latestVisit = cvs.sort((a, b) => 
-        new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime()
-      )[0];
+      const coords = COUNTRY_COORDS[code];
+      if (!coords || !country) return '';
       
+      const { visits: countryVisitsList, latestVisit, hasActive, totalDays } = data;
+      const visitCount = countryVisitsList.length;
+      const pinColor = hasActive ? successColor : primaryColor;
+      const pinGlow = hasActive ? 'rgba(52, 199, 89, 0.4)' : 'rgba(0, 122, 255, 0.3)';
+      
+      // Build visits list for popup
+      const visitsHtml = countryVisitsList
+        .sort((a, b) => new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime())
+        .slice(0, 5)
+        .map(v => {
+          const days = calculateDaysInCountry(v.entryDate, v.exitDate);
+          const isActive = isCurrentVisit(v);
+          return `
+            <div class="visit-item" onclick="window.parent.postMessage(JSON.stringify({type:'visitClick',visitId:'${v.id}'}), '*')">
+              <div class="visit-dates">
+                <span class="visit-date">${formatDate(v.entryDate, 'MMM d, yyyy')}</span>
+                ${v.exitDate ? `<span class="visit-arrow">→</span><span class="visit-date">${formatDate(v.exitDate, 'MMM d, yyyy')}</span>` : '<span class="visit-active">Active</span>'}
+              </div>
+              <div class="visit-meta">
+                <span class="visit-days">${days} day${days !== 1 ? 's' : ''}</span>
+                ${v.visaType ? `<span class="visit-visa">${v.visaType}</span>` : ''}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      const moreVisitsHtml = visitCount > 5 ? `<div class="more-visits">+ ${visitCount - 5} more visits</div>` : '';
+
       return `
-        L.marker([${coords[0]}, ${coords[1]}], {
-          icon: L.divIcon({
-            className: 'custom-marker',
-            html: '<div style="font-size: 24px;">${country?.flag || '🏳️'}</div>',
-            iconSize: [30, 30],
-            iconAnchor: [15, 15],
-          })
-        }).addTo(map).bindPopup(
-          '<div style="font-size: 14px; min-width: 150px;">' +
-          '<strong>${country?.flag} ${country?.name}</strong><br/>' +
-          '<span style="color: #666;">${cvs.length} visit${cvs.length > 1 ? 's' : ''}</span><br/>' +
-          '<span style="font-size: 12px;">Last: ${formatDate(latestVisit.entryDate, 'MMM d, yyyy')}</span>' +
-          '</div>'
-        );
+        (function() {
+          var marker = L.marker([${coords[0]}, ${coords[1]}], {
+            icon: L.divIcon({
+              className: 'custom-pin',
+              html: '<div class="pin-container ${hasActive ? 'active' : ''}"><div class="pin-glow"></div><div class="pin-icon">${country.flag}</div><div class="pin-badge">${visitCount}</div></div>',
+              iconSize: [50, 50],
+              iconAnchor: [25, 50],
+              popupAnchor: [0, -50],
+            })
+          }).addTo(map);
+          
+          marker.bindPopup(\`
+            <div class="popup-content">
+              <div class="popup-header">
+                <span class="popup-flag">${country.flag}</span>
+                <div class="popup-title">
+                  <span class="popup-country">${country.name}</span>
+                  <span class="popup-stats">${visitCount} visit${visitCount !== 1 ? 's' : ''} • ${totalDays} days</span>
+                </div>
+                ${hasActive ? '<div class="popup-active-badge">Currently Here</div>' : ''}
+              </div>
+              <div class="popup-visits">
+                ${visitsHtml}
+                ${moreVisitsHtml}
+              </div>
+            </div>
+          \`, {
+            className: 'modern-popup',
+            maxWidth: 320,
+            minWidth: 280,
+          });
+        })();
       `;
-    }).join('');
+    }).join('\n');
+
+    // Calculate bounds to fit all markers
+    let boundsJs = 'map.setView([20, 0], 2);';
+    const validCoords = Object.keys(countryVisits)
+      .map(code => COUNTRY_COORDS[code])
+      .filter(c => c);
+    
+    if (validCoords.length === 1) {
+      boundsJs = `map.setView([${validCoords[0][0]}, ${validCoords[0][1]}], 5);`;
+    } else if (validCoords.length > 1) {
+      const boundsArray = validCoords.map(c => `[${c[0]}, ${c[1]}]`).join(',');
+      boundsJs = `map.fitBounds([${boundsArray}], { padding: [50, 50], maxZoom: 6 });`;
+    }
 
     return `
       <!DOCTYPE html>
@@ -105,96 +213,311 @@ export default function MapScreen() {
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
         <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
         <style>
-          body { margin: 0; padding: 0; }
-          #map { width: 100%; height: 100vh; }
-          .custom-marker { background: none; border: none; }
-          .leaflet-popup-content-wrapper { border-radius: 12px; }
-          .leaflet-control-zoom a { 
-            background: ${isDark ? '#2C2C2E' : '#FFFFFF'} !important;
-            color: ${isDark ? '#FFFFFF' : '#1C1C1E'} !important;
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { 
+            margin: 0; 
+            padding: 0; 
+            background: ${bgColor};
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          }
+          #map { 
+            width: 100%; 
+            height: 100vh; 
+          }
+          
+          /* Modern Pin Styles */
+          .custom-pin { background: none !important; border: none !important; }
+          .pin-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+          .pin-glow {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(0, 122, 255, 0.3);
+            animation: pulse 2s ease-in-out infinite;
+            top: -5px;
+          }
+          .pin-container.active .pin-glow {
+            background: rgba(52, 199, 89, 0.4);
+          }
+          @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.3); opacity: 0.4; }
+          }
+          .pin-icon {
+            font-size: 28px;
+            z-index: 2;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+          }
+          .pin-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: ${primaryColor};
+            color: white;
+            font-size: 11px;
+            font-weight: 700;
+            min-width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            z-index: 3;
+          }
+          .pin-container.active .pin-badge {
+            background: ${successColor};
+          }
+          
+          /* Modern Popup Styles */
+          .modern-popup .leaflet-popup-content-wrapper {
+            background: ${cardBg};
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0,0,0,${isDark ? '0.5' : '0.15'});
+            border: 1px solid ${borderColor};
+            padding: 0;
+            overflow: hidden;
+          }
+          .modern-popup .leaflet-popup-content {
+            margin: 0;
+            width: 100% !important;
+          }
+          .modern-popup .leaflet-popup-tip {
+            background: ${cardBg};
+            border: 1px solid ${borderColor};
+            border-top: none;
+            border-left: none;
+          }
+          .leaflet-popup-close-button {
+            color: ${textSecondary} !important;
+            font-size: 20px !important;
+            right: 12px !important;
+            top: 12px !important;
+          }
+          
+          .popup-content {
+            padding: 0;
+          }
+          .popup-header {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            gap: 12px;
+            border-bottom: 1px solid ${borderColor};
+            background: ${isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)'};
+          }
+          .popup-flag {
+            font-size: 36px;
+          }
+          .popup-title {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+          }
+          .popup-country {
+            font-size: 18px;
+            font-weight: 700;
+            color: ${textColor};
+          }
+          .popup-stats {
+            font-size: 13px;
+            color: ${textSecondary};
+          }
+          .popup-active-badge {
+            background: ${successColor};
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 12px;
+            white-space: nowrap;
+          }
+          
+          .popup-visits {
+            max-height: 250px;
+            overflow-y: auto;
+          }
+          .visit-item {
+            padding: 12px 16px;
+            border-bottom: 1px solid ${borderColor};
+            cursor: pointer;
+            transition: background 0.2s;
+          }
+          .visit-item:hover {
+            background: ${isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)'};
+          }
+          .visit-item:last-child {
+            border-bottom: none;
+          }
+          .visit-dates {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+          }
+          .visit-date {
+            font-size: 14px;
+            font-weight: 600;
+            color: ${textColor};
+          }
+          .visit-arrow {
+            color: ${textSecondary};
+            font-size: 12px;
+          }
+          .visit-active {
+            background: ${successColor}20;
+            color: ${successColor};
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 8px;
+          }
+          .visit-meta {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+          }
+          .visit-days {
+            font-size: 12px;
+            color: ${textSecondary};
+          }
+          .visit-visa {
+            font-size: 11px;
+            color: ${primaryColor};
+            background: ${primaryColor}15;
+            padding: 2px 8px;
+            border-radius: 6px;
+          }
+          .more-visits {
+            padding: 12px 16px;
+            text-align: center;
+            color: ${primaryColor};
+            font-size: 13px;
+            font-weight: 600;
+            background: ${isDark ? 'rgba(0,122,255,0.1)' : 'rgba(0,122,255,0.05)'};
+          }
+          
+          /* Map Controls */
+          .leaflet-control-zoom {
+            border: none !important;
+            box-shadow: 0 2px 8px rgba(0,0,0,${isDark ? '0.4' : '0.15'}) !important;
+            border-radius: 12px !important;
+            overflow: hidden;
+          }
+          .leaflet-control-zoom a {
+            background: ${cardBg} !important;
+            color: ${textColor} !important;
+            border: none !important;
+            width: 36px !important;
+            height: 36px !important;
+            line-height: 36px !important;
+            font-size: 18px !important;
+          }
+          .leaflet-control-zoom a:hover {
+            background: ${isDark ? '#3A3A3C' : '#E5E5EA'} !important;
+          }
+          .leaflet-control-zoom-in {
+            border-bottom: 1px solid ${borderColor} !important;
+            border-radius: 12px 12px 0 0 !important;
+          }
+          .leaflet-control-zoom-out {
+            border-radius: 0 0 12px 12px !important;
+          }
+          
+          .leaflet-control-attribution {
+            background: ${cardBg}cc !important;
+            color: ${textSecondary} !important;
+            font-size: 10px !important;
+            padding: 4px 8px !important;
+            border-radius: 8px !important;
+            margin: 8px !important;
+          }
+          .leaflet-control-attribution a {
+            color: ${primaryColor} !important;
           }
         </style>
       </head>
       <body>
         <div id="map"></div>
         <script>
-          var map = L.map('map', { zoomControl: true }).setView([30, 0], 2);
+          var map = L.map('map', { 
+            zoomControl: true,
+            attributionControl: true,
+          });
+          
           L.tileLayer('${tileUrl}', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+            attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
             subdomains: 'abcd',
             maxZoom: 19,
           }).addTo(map);
-          ${markers}
+          
+          ${markersJs}
+          
+          ${boundsJs}
         </script>
       </body>
       </html>
     `;
-  }, [countryVisits, isDark]);
+  }, [countryVisits, isDark, colors]);
 
-  // On web, show a list-based view instead since WebView doesn't work
-  if (Platform.OS === 'web') {
+  // Empty state
+  if (Object.keys(countryVisits).length === 0) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-        {/* Header */}
-        <View style={[styles.webHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          <Ionicons name="map" size={28} color={colors.primary} />
-          <Text style={[styles.webTitle, { color: colors.text }]}>{t('visitedCountries')}</Text>
-        </View>
-
-        {Object.keys(countryVisits).length > 0 ? (
-          <ScrollView contentContainerStyle={styles.webContent}>
-            {Object.entries(countryVisits).map(([code, cvs]) => {
-              const country = getCountryByCode(code);
-              const hasActive = cvs.some(v => isCurrentVisit(v));
-              const totalDays = cvs.reduce((sum, v) => sum + calculateDaysInCountry(v.entryDate, v.exitDate), 0);
-              const latestVisit = cvs.sort((a, b) => 
-                new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime()
-              )[0];
-
-              return (
-                <TouchableOpacity
-                  key={code}
-                  style={[styles.countryCard, { backgroundColor: colors.card }]}
-                  onPress={() => router.push('/list')}
-                >
-                  <Text style={styles.cardFlag}>{country?.flag}</Text>
-                  <View style={styles.cardInfo}>
-                    <View style={styles.cardHeader}>
-                      <Text style={[styles.cardCountry, { color: colors.text }]}>{country?.name}</Text>
-                      {hasActive && (
-                        <View style={[styles.activeBadge, { backgroundColor: colors.success + '20' }]}>
-                          <Text style={[styles.activeText, { color: colors.success }]}>{t('active')}</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={[styles.cardVisits, { color: colors.textSecondary }]}>
-                      {cvs.length} visit{cvs.length > 1 ? 's' : ''} • {totalDays} {t('days')}
-                    </Text>
-                    <Text style={[styles.cardDate, { color: colors.textSecondary }]}>
-                      Last: {formatDate(latestVisit.entryDate, 'MMM d, yyyy')}
-                    </Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
-                </TouchableOpacity>
-              );
-            })}
-            <View style={{ height: 100 }} />
-          </ScrollView>
-        ) : (
-          <View style={styles.emptyContainer}>
-            <Ionicons name="airplane" size={64} color={colors.textSecondary} />
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('noVisitsFound')}</Text>
-            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              {t('tapCountryForDetails')}
-            </Text>
-            <TouchableOpacity
-              style={[styles.addButton, { backgroundColor: colors.primary }]}
-              onPress={() => router.push('/visit/add')}
-            >
-              <Text style={styles.addButtonText}>{t('addNewVisit')}</Text>
-            </TouchableOpacity>
+        <View style={styles.emptyContainer}>
+          <View style={[styles.emptyIconContainer, { backgroundColor: colors.primary + '15' }]}>
+            <Ionicons name="earth" size={64} color={colors.primary} />
           </View>
-        )}
+          <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('noVisitsFound')}</Text>
+          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+            Add your first visit to see it on the map
+          </Text>
+          <TouchableOpacity
+            style={[styles.addButton, { backgroundColor: colors.primary }]}
+            onPress={() => router.push('/visit/add')}
+          >
+            <Ionicons name="add" size={20} color="#FFFFFF" />
+            <Text style={styles.addButtonText}>{t('addNewVisit')}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  // Web: Use iframe
+  if (Platform.OS === 'web') {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <iframe
+          ref={iframeRef}
+          srcDoc={mapHtml}
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            marginTop: insets.top,
+          }}
+          title="Travel Map"
+        />
+        {/* Legend Overlay */}
+        <View style={[styles.legendContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
+            <Text style={[styles.legendText, { color: colors.textSecondary }]}>Currently visiting</Text>
+          </View>
+          <View style={styles.legendItem}>
+            <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
+            <Text style={[styles.legendText, { color: colors.textSecondary }]}>Past visits</Text>
+          </View>
+        </View>
       </View>
     );
   }
@@ -210,7 +533,28 @@ export default function MapScreen() {
         scrollEnabled={true}
         javaScriptEnabled={true}
         domStorageEnabled={true}
+        onMessage={(event: { nativeEvent: { data: string } }) => {
+          try {
+            const data = JSON.parse(event.nativeEvent.data);
+            if (data.type === 'visitClick' && data.visitId) {
+              router.push(`/visit/${data.visitId}`);
+            }
+          } catch (e) {
+            // Ignore
+          }
+        }}
       />
+      {/* Legend Overlay */}
+      <View style={[styles.legendContainer, styles.legendContainerNative, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>Currently visiting</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>Past visits</Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -222,90 +566,76 @@ const styles = StyleSheet.create({
   webview: {
     flex: 1,
   },
-  webHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    gap: 12,
-    borderBottomWidth: 1,
-  },
-  webTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-  },
-  webContent: {
-    padding: 16,
-  },
-  countryCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 12,
-    gap: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  cardFlag: {
-    fontSize: 40,
-  },
-  cardInfo: {
-    flex: 1,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  cardCountry: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  activeBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  activeText: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  cardVisits: {
-    fontSize: 14,
-    marginTop: 4,
-  },
-  cardDate: {
-    fontSize: 12,
-    marginTop: 2,
-  },
   emptyContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: 40,
   },
+  emptyIconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
   emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    marginTop: 16,
+    fontSize: 22,
+    fontWeight: '700',
+    marginTop: 8,
   },
   emptyText: {
-    fontSize: 14,
+    fontSize: 15,
     marginTop: 8,
     textAlign: 'center',
+    lineHeight: 22,
   },
   addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 12,
-    marginTop: 20,
+    paddingVertical: 14,
+    borderRadius: 14,
+    marginTop: 24,
+    gap: 8,
   },
   addButtonText: {
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 16,
+  },
+  legendContainer: {
+    position: 'absolute',
+    bottom: 100,
+    left: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  legendContainerNative: {
+    bottom: 120,
+  },
+  legendItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  legendDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  legendText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
