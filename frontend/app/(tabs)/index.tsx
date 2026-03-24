@@ -351,6 +351,8 @@ export default function DashboardScreen() {
                 <TouchableOpacity
                   style={[styles.addVisaButton, { backgroundColor: colors.primary }]}
                   onPress={() => router.push('/visit/add')}
+                  activeOpacity={0.8}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
                   <Ionicons name="add" size={18} color="#FFFFFF" />
                   <Text style={styles.addVisaButtonText}>{t('addNewVisit')}</Text>

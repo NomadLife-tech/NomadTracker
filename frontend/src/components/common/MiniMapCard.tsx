@@ -514,6 +514,8 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, onLocationDetect
             <TouchableOpacity 
               style={[styles.addBtn, { backgroundColor: colors.primary }]} 
               onPress={onAddVisit}
+              activeOpacity={0.8}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Ionicons name="add" size={20} color="#FFFFFF" />
               <Text style={styles.addBtnText}>{t('addNewVisit')}</Text>
@@ -558,6 +560,8 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, onLocationDetect
             <TouchableOpacity 
               style={[styles.addBtn, { backgroundColor: colors.primary }]} 
               onPress={onAddVisit}
+              activeOpacity={0.8}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Ionicons name="add" size={20} color="#FFFFFF" />
               <Text style={styles.addBtnText}>{t('addNewVisit')}</Text>
@@ -571,7 +575,7 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, onLocationDetect
 
 const styles = StyleSheet.create({
   container: {
-    height: 320,
+    height: 360,
     borderRadius: 24,
     overflow: 'hidden',
     marginBottom: 16,
@@ -793,12 +797,11 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -140 }, { translateY: -100 }],
-    width: 280,
+    bottom: 14,
+    left: 14,
+    right: 14,
     borderRadius: 24,
-    padding: 28,
+    padding: 24,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },

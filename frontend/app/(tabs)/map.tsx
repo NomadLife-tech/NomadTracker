@@ -689,6 +689,7 @@ export default function MapScreen() {
         style={[styles.fab, styles.fabNative, { backgroundColor: colors.primary }]}
         onPress={() => router.push('/visit/add')}
         activeOpacity={0.8}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
         <Ionicons name="add" size={28} color="#FFFFFF" />
       </TouchableOpacity>
@@ -874,6 +875,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+    zIndex: 1000,
   },
   fabNative: {
     bottom: 120,
