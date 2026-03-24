@@ -234,6 +234,10 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Map
     activeLabel: 'Active',
     currentlyHere: 'Currently Here',
+    currentlyVisiting: 'Currently visiting',
+    pastVisits: 'Past visits',
+    moreVisits: 'more visits',
+    addFirstVisitMap: 'Add your first visit to see it on the map',
     travelMap: 'Travel Map',
     miniMap: 'Mini Map',
     // Visit Form
@@ -450,6 +454,10 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Map
     activeLabel: 'Activo',
     currentlyHere: 'Aquí ahora',
+    currentlyVisiting: 'Visitando actualmente',
+    pastVisits: 'Visitas pasadas',
+    moreVisits: 'más visitas',
+    addFirstVisitMap: 'Agrega tu primera visita para verla en el mapa',
     travelMap: 'Mapa de viajes',
     miniMap: 'Mini mapa',
     // Visit Form
@@ -674,6 +682,10 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Map
     activeLabel: 'Actif',
     currentlyHere: 'Actuellement ici',
+    currentlyVisiting: 'Visite en cours',
+    pastVisits: 'Visites passées',
+    moreVisits: 'visites supplémentaires',
+    addFirstVisitMap: 'Ajoutez votre première visite pour la voir sur la carte',
     travelMap: 'Carte de voyage',
     miniMap: 'Mini carte',
     // Visit Form
@@ -898,6 +910,10 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Map
     activeLabel: 'Aktiv',
     currentlyHere: 'Derzeit hier',
+    currentlyVisiting: 'Aktueller Besuch',
+    pastVisits: 'Vergangene Besuche',
+    moreVisits: 'weitere Besuche',
+    addFirstVisitMap: 'Fügen Sie Ihren ersten Besuch hinzu, um ihn auf der Karte zu sehen',
     travelMap: 'Reisekarte',
     miniMap: 'Minikarte',
     // Visit Form
@@ -1122,6 +1138,10 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Map
     activeLabel: 'Ativo',
     currentlyHere: 'Aqui agora',
+    currentlyVisiting: 'Visitando atualmente',
+    pastVisits: 'Visitas passadas',
+    moreVisits: 'mais visitas',
+    addFirstVisitMap: 'Adicione sua primeira visita para vê-la no mapa',
     travelMap: 'Mapa de viagens',
     miniMap: 'Mini mapa',
     // Visit Form
@@ -1346,6 +1366,10 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Map
     activeLabel: '活跃',
     currentlyHere: '当前位置',
+    currentlyVisiting: '当前访问中',
+    pastVisits: '过去访问',
+    moreVisits: '更多访问',
+    addFirstVisitMap: '添加您的第一次访问以在地图上查看',
     travelMap: '旅行地图',
     miniMap: '小地图',
     // Visit Form
@@ -1570,6 +1594,10 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Map
     activeLabel: 'アクティブ',
     currentlyHere: '現在地',
+    currentlyVisiting: '現在訪問中',
+    pastVisits: '過去の訪問',
+    moreVisits: '他の訪問',
+    addFirstVisitMap: '最初の訪問を追加して地図に表示',
     travelMap: '旅行マップ',
     miniMap: 'ミニマップ',
     // Visit Form
@@ -1794,6 +1822,10 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Map
     activeLabel: '활성',
     currentlyHere: '현재 위치',
+    currentlyVisiting: '현재 방문 중',
+    pastVisits: '지난 방문',
+    moreVisits: '추가 방문',
+    addFirstVisitMap: '첫 번째 방문을 추가하여 지도에서 확인하세요',
     travelMap: '여행 지도',
     miniMap: '미니 지도',
     // Visit Form

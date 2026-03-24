@@ -122,6 +122,17 @@ export default function MapScreen() {
     const successColor = '#34C759';
     const borderColor = isDark ? '#3A3A3C' : '#E5E5EA';
 
+    // Translations for popup content
+    const i18n = {
+      visits: t('visits') || 'visits',
+      visit: t('visit') || 'visit',
+      days: t('days') || 'days',
+      day: t('day') || 'day',
+      active: t('active') || 'Active',
+      currentlyHere: t('currentlyHere') || 'Currently Here',
+      moreVisits: t('moreVisits') || 'more visits',
+    };
+
     // Generate markers for each country with visits
     const markersJs = Object.entries(countryVisits).map(([code, data]) => {
       const country = getCountryByCode(code);
@@ -140,21 +151,28 @@ export default function MapScreen() {
         .map(v => {
           const days = calculateDaysInCountry(v.entryDate, v.exitDate);
           const isActive = isCurrentVisit(v);
+          const daysLabel = days === 1 ? i18n.day : i18n.days;
           return `
             <div class="visit-item" onclick="window.parent.postMessage(JSON.stringify({type:'visitClick',visitId:'${v.id}'}), '*')">
               <div class="visit-dates">
                 <span class="visit-date">${formatDate(v.entryDate, 'MMM d, yyyy')}</span>
-                ${v.exitDate ? `<span class="visit-arrow">→</span><span class="visit-date">${formatDate(v.exitDate, 'MMM d, yyyy')}</span>` : '<span class="visit-active">Active</span>'}
+                ${v.exitDate ? `<span class="visit-arrow">→</span><span class="visit-date">${formatDate(v.exitDate, 'MMM d, yyyy')}</span>` : `<span class="visit-active">${i18n.active}</span>`}
               </div>
               <div class="visit-meta">
-                <span class="visit-days">${days} day${days !== 1 ? 's' : ''}</span>
+                <span class="visit-days">${days} ${daysLabel}</span>
                 ${v.visaType ? `<span class="visit-visa">${v.visaType}</span>` : ''}
               </div>
             </div>
           `;
         }).join('');
 
-      const moreVisitsHtml = visitCount > 5 ? `<div class="more-visits">+ ${visitCount - 5} more visits</div>` : '';
+      const moreCount = visitCount - 5;
+      const moreVisitsHtml = visitCount > 5 ? `<div class="more-visits">+ ${moreCount} ${i18n.moreVisits}</div>` : '';
+
+      // Stats text with proper pluralization
+      const visitsLabel = visitCount === 1 ? i18n.visit : i18n.visits;
+      const daysLabel = totalDays === 1 ? i18n.day : i18n.days;
+      const statsText = `${visitCount} ${visitsLabel} • ${totalDays} ${daysLabel}`;
 
       return `
         (function() {
@@ -174,9 +192,9 @@ export default function MapScreen() {
                 <span class="popup-flag">${country.flag}</span>
                 <div class="popup-title">
                   <span class="popup-country">${country.name}</span>
-                  <span class="popup-stats">${visitCount} visit${visitCount !== 1 ? 's' : ''} • ${totalDays} days</span>
+                  <span class="popup-stats">${statsText}</span>
                 </div>
-                ${hasActive ? '<div class="popup-active-badge">Currently Here</div>' : ''}
+                ${hasActive ? `<div class="popup-active-badge">${i18n.currentlyHere}</div>` : ''}
               </div>
               <div class="popup-visits">
                 ${visitsHtml}
@@ -478,7 +496,7 @@ export default function MapScreen() {
           </View>
           <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('noVisitsFound')}</Text>
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            Add your first visit to see it on the map
+            {t('addFirstVisitMap') || 'Add your first visit to see it on the map'}
           </Text>
           <TouchableOpacity
             style={[styles.addButton, { backgroundColor: colors.primary }]}
@@ -511,11 +529,11 @@ export default function MapScreen() {
         <View style={[styles.legendContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
-            <Text style={[styles.legendText, { color: colors.textSecondary }]}>Currently visiting</Text>
+            <Text style={[styles.legendText, { color: colors.textSecondary }]}>{t('currentlyVisiting') || 'Currently visiting'}</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
-            <Text style={[styles.legendText, { color: colors.textSecondary }]}>Past visits</Text>
+            <Text style={[styles.legendText, { color: colors.textSecondary }]}>{t('pastVisits') || 'Past visits'}</Text>
           </View>
         </View>
       </View>
@@ -548,11 +566,11 @@ export default function MapScreen() {
       <View style={[styles.legendContainer, styles.legendContainerNative, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
-          <Text style={[styles.legendText, { color: colors.textSecondary }]}>Currently visiting</Text>
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>{t('currentlyVisiting') || 'Currently visiting'}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
-          <Text style={[styles.legendText, { color: colors.textSecondary }]}>Past visits</Text>
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>{t('pastVisits') || 'Past visits'}</Text>
         </View>
       </View>
     </View>
