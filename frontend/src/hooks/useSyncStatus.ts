@@ -1,35 +1,73 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { syncQueue, SyncOperation } from '../services/syncQueue';
 
+export interface SyncStatus {
+  enabled: boolean;
+  isProcessing: boolean;
+  pending: number;
+  failed: number;
+  syncing: number;
+  total: number;
+  queue: SyncOperation[];
+}
+
 export function useSyncStatus() {
-  const [queue, setQueue] = useState<SyncOperation[]>([]);
-  const [pendingCount, setPendingCount] = useState(0);
-  const [failedCount, setFailedCount] = useState(0);
+  const [status, setStatus] = useState<SyncStatus>({
+    enabled: false,
+    isProcessing: false,
+    pending: 0,
+    failed: 0,
+    syncing: 0,
+    total: 0,
+    queue: [],
+  });
 
   useEffect(() => {
-    // Initial load
-    setQueue(syncQueue.getQueue());
-    setPendingCount(syncQueue.getPendingCount());
-    setFailedCount(syncQueue.getFailedCount());
+    // Subscribe to queue changes
+    const unsubscribe = syncQueue.subscribe((queue) => {
+      const queueStatus = syncQueue.getStatus();
+      setStatus({
+        ...queueStatus,
+        queue,
+      });
+    });
 
-    // Subscribe to changes
-    const unsubscribe = syncQueue.subscribe((newQueue) => {
-      setQueue(newQueue);
-      setPendingCount(newQueue.filter((op) => op.status === 'pending').length);
-      setFailedCount(newQueue.filter((op) => op.status === 'failed').length);
+    // Get initial status
+    const initialStatus = syncQueue.getStatus();
+    setStatus({
+      ...initialStatus,
+      queue: syncQueue.getQueue(),
     });
 
     return unsubscribe;
   }, []);
 
+  const retryFailed = useCallback(async () => {
+    return syncQueue.retryFailed();
+  }, []);
+
+  const clearFailed = useCallback(async () => {
+    return syncQueue.clearFailed();
+  }, []);
+
+  const clearAll = useCallback(async () => {
+    return syncQueue.clearAll();
+  }, []);
+
+  const processQueue = useCallback(async () => {
+    return syncQueue.processQueue();
+  }, []);
+
+  const setEnabled = useCallback((enabled: boolean) => {
+    syncQueue.setEnabled(enabled);
+  }, []);
+
   return {
-    queue,
-    pendingCount,
-    failedCount,
-    isSyncing: queue.some((op) => op.status === 'syncing'),
-    hasPending: pendingCount > 0,
-    hasFailed: failedCount > 0,
-    retryFailed: () => syncQueue.retryFailed(),
-    clearFailed: () => syncQueue.clearFailed(),
+    ...status,
+    retryFailed,
+    clearFailed,
+    clearAll,
+    processQueue,
+    setEnabled,
   };
 }

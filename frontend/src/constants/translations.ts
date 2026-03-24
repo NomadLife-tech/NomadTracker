@@ -410,9 +410,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     currentStreak: 'Actual',
     longestStreak: 'Más larga',
     totalDaysAbroad: 'Días totales',
-    allTime: 'siempre',
-    day: 'día',
-    days: 'días',
     countryHeatmap: 'Mapa de calor',
     lessTime: 'Menos',
     moreTime: 'Más',
@@ -471,8 +468,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     retry: 'Reintentar',
     dismiss: 'Descartar',
     // Toast Messages
-    profileSaved: 'Perfil guardado',
-    settingsSaved: 'Configuración guardada',
     visitAdded: 'Visita agregada',
     visitUpdated: 'Visita actualizada',
     visitDeleted: 'Visita eliminada',
@@ -480,9 +475,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Misc
     startTrackingTravels: 'Empieza a registrar tus viajes',
     noDataAvailable: 'Sin datos disponibles',
-    loading: 'Cargando...',
-    permissionDenied: 'Permiso denegado',
-    locationDetected: 'Ubicación detectada',
   },
   fr: {
     dashboard: 'Tableau de bord',
@@ -642,9 +634,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     currentStreak: 'Actuelle',
     longestStreak: 'Plus longue',
     totalDaysAbroad: 'Jours totaux',
-    allTime: 'toujours',
-    day: 'jour',
-    days: 'jours',
     countryHeatmap: 'Carte de chaleur',
     lessTime: 'Moins',
     moreTime: 'Plus',
@@ -703,8 +692,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     retry: 'Réessayer',
     dismiss: 'Ignorer',
     // Toast Messages
-    profileSaved: 'Profil enregistré',
-    settingsSaved: 'Paramètres enregistrés',
     visitAdded: 'Visite ajoutée',
     visitUpdated: 'Visite mise à jour',
     visitDeleted: 'Visite supprimée',
@@ -712,7 +699,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Misc
     startTrackingTravels: 'Commencez à suivre vos voyages',
     noDataAvailable: 'Aucune donnée disponible',
-    loading: 'Chargement...',
   },
   de: {
     dashboard: 'Dashboard',
@@ -872,7 +858,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     currentStreak: 'Aktuell',
     longestStreak: 'Längste',
     totalDaysAbroad: 'Gesamttage',
-    allTime: 'gesamt',
     countryHeatmap: 'Länder-Heatmap',
     lessTime: 'Weniger',
     moreTime: 'Mehr',
@@ -938,7 +923,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Misc
     startTrackingTravels: 'Beginnen Sie mit der Reiseverfolgung',
     noDataAvailable: 'Keine Daten verfügbar',
-    loading: 'Laden...',
   },
   pt: {
     dashboard: 'Painel',
@@ -1098,9 +1082,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     currentStreak: 'Atual',
     longestStreak: 'Mais longa',
     totalDaysAbroad: 'Dias totais',
-    allTime: 'sempre',
-    day: 'dia',
-    days: 'dias',
     countryHeatmap: 'Mapa de calor',
     lessTime: 'Menos',
     moreTime: 'Mais',
@@ -1159,8 +1140,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     retry: 'Tentar novamente',
     dismiss: 'Dispensar',
     // Toast Messages
-    profileSaved: 'Perfil salvo',
-    settingsSaved: 'Configurações salvas',
     visitAdded: 'Visita adicionada',
     visitUpdated: 'Visita atualizada',
     visitDeleted: 'Visita removida',
@@ -1168,7 +1147,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Misc
     startTrackingTravels: 'Comece a rastrear suas viagens',
     noDataAvailable: 'Sem dados disponíveis',
-    loading: 'Carregando...',
   },
   zh: {
     dashboard: '仪表板',
@@ -1328,8 +1306,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     currentStreak: '当前',
     longestStreak: '最长',
     totalDaysAbroad: '总天数',
-    allTime: '所有时间',
-    days: '天',
     countryHeatmap: '国家热力图',
     lessTime: '较少',
     moreTime: '较多',
@@ -1388,8 +1364,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     retry: '重试',
     dismiss: '忽略',
     // Toast Messages
-    profileSaved: '个人资料已保存',
-    settingsSaved: '设置已保存',
     visitAdded: '访问已添加',
     visitUpdated: '访问已更新',
     visitDeleted: '访问已删除',
@@ -1397,7 +1371,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Misc
     startTrackingTravels: '开始记录您的旅行',
     noDataAvailable: '暂无数据',
-    loading: '加载中...',
   },
   ja: {
     dashboard: 'ダッシュボード',
@@ -1557,9 +1530,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     currentStreak: '現在',
     longestStreak: '最長',
     totalDaysAbroad: '総日数',
-    allTime: '全期間',
-    day: '日',
-    days: '日間',
     countryHeatmap: '国別ヒートマップ',
     lessTime: '少ない',
     moreTime: '多い',
@@ -1618,8 +1588,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     retry: '再試行',
     dismiss: '無視',
     // Toast Messages
-    profileSaved: 'プロフィールを保存しました',
-    settingsSaved: '設定を保存しました',
     visitAdded: '訪問を追加しました',
     visitUpdated: '訪問を更新しました',
     visitDeleted: '訪問を削除しました',
@@ -1627,7 +1595,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Misc
     startTrackingTravels: '旅行の記録を開始',
     noDataAvailable: 'データがありません',
-    loading: '読み込み中...',
   },
   ko: {
     dashboard: '대시보드',
@@ -1787,7 +1754,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     currentStreak: '현재',
     longestStreak: '최장',
     totalDaysAbroad: '총 일수',
-    allTime: '전체',
     countryHeatmap: '국가 히트맵',
     lessTime: '적음',
     moreTime: '많음',

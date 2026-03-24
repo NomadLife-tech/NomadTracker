@@ -7,6 +7,7 @@ import {
   requestNotificationPermissions, 
   scheduleVisaNotifications 
 } from '../services/notificationService';
+import { syncQueue } from '../services/syncQueue';
 
 interface AppContextType {
   // Data
@@ -103,6 +104,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const updatedVisits = await storage.addVisit(visit);
     setVisits(updatedVisits);
     
+    // Enqueue sync operation if cloud sync is enabled
+    if (settings.cloudSaveEnabled) {
+      await syncQueue.enqueue({
+        type: 'CREATE',
+        entity: 'visit',
+        data: visit,
+        timestamp: new Date(),
+      });
+    }
+    
     // Reschedule notifications when visits change
     if (Platform.OS !== 'web' && settings.visaAlertsEnabled) {
       try {
@@ -118,6 +129,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const updatedVisits = await storage.updateVisit(visit);
     setVisits(updatedVisits);
     
+    // Enqueue sync operation if cloud sync is enabled
+    if (settings.cloudSaveEnabled) {
+      await syncQueue.enqueue({
+        type: 'UPDATE',
+        entity: 'visit',
+        data: visit,
+        timestamp: new Date(),
+      });
+    }
+    
     // Reschedule notifications when visits change
     if (Platform.OS !== 'web' && settings.visaAlertsEnabled) {
       try {
@@ -132,6 +153,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const deleteVisit = useCallback(async (visitId: string) => {
     const updatedVisits = await storage.deleteVisit(visitId);
     setVisits(updatedVisits);
+    
+    // Enqueue sync operation if cloud sync is enabled
+    if (settings.cloudSaveEnabled) {
+      await syncQueue.enqueue({
+        type: 'DELETE',
+        entity: 'visit',
+        data: { id: visitId },
+        timestamp: new Date(),
+      });
+    }
     
     // Reschedule notifications when visits change
     if (Platform.OS !== 'web' && settings.visaAlertsEnabled) {
@@ -164,6 +195,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateSettings = useCallback(async (newSettings: AppSettings) => {
     await storage.saveSettings(newSettings);
     setSettings(newSettings);
+    
+    // Enable/disable sync queue based on cloud sync setting
+    syncQueue.setEnabled(newSettings.cloudSaveEnabled);
     
     // Reschedule notifications when settings change
     if (Platform.OS !== 'web') {

@@ -5,13 +5,15 @@ import { UserProfile, Passport, Insurance } from '../types';
 import { syncQueue } from '../services/syncQueue';
 
 const DEFAULT_PROFILE: UserProfile = {
+  id: '',
   firstName: '',
   lastName: '',
   avatar: '🌍',
   avatarType: 'preset',
-  homeCountry: '',
   passports: [],
   insurances: [],
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
 };
 
 interface ProfileState {

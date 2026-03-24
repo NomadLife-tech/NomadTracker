@@ -10,9 +10,9 @@ interface SyncStatusCardProps {
 
 export function SyncStatusCard({ t }: SyncStatusCardProps) {
   const { colors } = useTheme();
-  const { pendingCount, failedCount, isSyncing, retryFailed, clearFailed } = useSyncStatus();
+  const { pending, failed, isProcessing, retryFailed, clearFailed } = useSyncStatus();
 
-  if (pendingCount === 0 && failedCount === 0) {
+  if (pending === 0 && failed === 0) {
     return null;
   }
 
@@ -20,27 +20,27 @@ export function SyncStatusCard({ t }: SyncStatusCardProps) {
     <View style={[styles.container, { backgroundColor: colors.card }]}>
       <View style={styles.header}>
         <Ionicons 
-          name={isSyncing ? 'sync' : failedCount > 0 ? 'warning' : 'cloud-upload'} 
+          name={isProcessing ? 'sync' : failed > 0 ? 'warning' : 'cloud-upload'} 
           size={20} 
-          color={failedCount > 0 ? colors.warning : colors.primary} 
+          color={failed > 0 ? colors.warning : colors.primary} 
         />
         <Text style={[styles.title, { color: colors.text }]}>
           {t('syncStatus')}
         </Text>
       </View>
 
-      {pendingCount > 0 && (
+      {pending > 0 && (
         <View style={styles.statusRow}>
           <Text style={[styles.statusText, { color: colors.textSecondary }]}>
-            {isSyncing ? t('syncing') : `${pendingCount} ${t('pendingChanges')}`}
+            {isProcessing ? t('syncing') : `${pending} ${t('pendingChanges')}`}
           </Text>
         </View>
       )}
 
-      {failedCount > 0 && (
+      {failed > 0 && (
         <View style={styles.failedSection}>
           <Text style={[styles.failedText, { color: colors.danger }]}>
-            {failedCount} {t('failedSync')}
+            {failed} {t('failedSync')}
           </Text>
           <View style={styles.actions}>
             <TouchableOpacity

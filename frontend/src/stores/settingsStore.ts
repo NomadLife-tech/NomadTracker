@@ -6,7 +6,6 @@ import { AppSettings, SupportedLanguage } from '../types';
 const DEFAULT_SETTINGS: AppSettings = {
   darkMode: false,
   language: 'en',
-  notifications: true,
   visaAlertsEnabled: true,
   visaAlertDays: [30, 15, 7],
   customAlertDays: undefined,
@@ -23,7 +22,6 @@ interface SettingsState {
   updateSettings: (updates: Partial<AppSettings>) => void;
   setDarkMode: (enabled: boolean) => void;
   setLanguage: (language: SupportedLanguage) => void;
-  setNotifications: (enabled: boolean) => void;
   setVisaAlerts: (enabled: boolean) => void;
   setVisaAlertDays: (days: number[]) => void;
   setCloudSave: (enabled: boolean) => void;
@@ -54,12 +52,6 @@ export const useSettingsStore = create<SettingsState>()(
       setLanguage: (language) => {
         set((state) => ({
           settings: { ...state.settings, language },
-        }));
-      },
-
-      setNotifications: (enabled) => {
-        set((state) => ({
-          settings: { ...state.settings, notifications: enabled },
         }));
       },
 
