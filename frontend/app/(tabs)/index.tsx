@@ -18,6 +18,12 @@ import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
 import { MiniMapCard } from '../../src/components/common/MiniMapCard';
 import { 
+  TravelStreaksCard,
+  CountryHeatmap,
+  GoalTrackerCard,
+  YearComparisonCard,
+} from '../../src/components/statistics';
+import { 
   isCurrentVisit, 
   calculateSchengenDays,
   getSchengenBreakdown,
@@ -27,6 +33,13 @@ import {
   formatDate,
   countsAgainstSchengen,
 } from '../../src/utils/dateUtils';
+import {
+  calculateTravelStreaks,
+  calculateCountryHeatmap,
+  calculateYearComparisons,
+  calculateGoalProgress,
+  getYearsWithVisits,
+} from '../../src/utils/statisticsUtils';
 import { getCountryByCode } from '../../src/constants/countries';
 
 const screenWidth = Dimensions.get('window').width;
@@ -42,6 +55,7 @@ export default function DashboardScreen() {
   const [showVisitsModal, setShowVisitsModal] = useState(false);
   const [showCountriesModal, setShowCountriesModal] = useState(false);
   const [showSchengenModal, setShowSchengenModal] = useState(false);
+  const [countryGoalTarget, setCountryGoalTarget] = useState(50);
 
   useFocusEffect(
     useCallback(() => {
@@ -76,6 +90,24 @@ export default function DashboardScreen() {
     if (!hasSchengenVisits) return null;
     return calculateSchengenDays(visits);
   }, [visits, hasSchengenVisits]);
+
+  // Statistics - New Dashboard Enhancements
+  const travelStreaks = useMemo(() => {
+    return calculateTravelStreaks(visits);
+  }, [visits]);
+
+  const countryHeatmapData = useMemo(() => {
+    return calculateCountryHeatmap(visits);
+  }, [visits]);
+
+  const goalProgress = useMemo(() => {
+    return calculateGoalProgress(visits, countryGoalTarget);
+  }, [visits, countryGoalTarget]);
+
+  const yearComparisons = useMemo(() => {
+    const years = getYearsWithVisits(visits);
+    return calculateYearComparisons(visits, years.slice(0, 5));
+  }, [visits]);
 
   // Active visas (visits with exit date in the future or no exit date)
   const activeVisas = useMemo(() => {
@@ -349,6 +381,22 @@ export default function DashboardScreen() {
             )}
           </View>
         )}
+
+        {/* Travel Streaks Card */}
+        <TravelStreaksCard streaks={travelStreaks} t={t} />
+
+        {/* Country Goal Tracker */}
+        <GoalTrackerCard 
+          progress={goalProgress} 
+          onTargetChange={setCountryGoalTarget} 
+          t={t} 
+        />
+
+        {/* Country Heatmap */}
+        <CountryHeatmap data={countryHeatmapData} t={t} />
+
+        {/* Year Over Year Comparison */}
+        <YearComparisonCard comparisons={yearComparisons} t={t} />
 
         {/* Days per Country Pie Chart */}
         <View style={[styles.card, { backgroundColor: colors.card }]}>
