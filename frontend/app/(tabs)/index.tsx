@@ -69,13 +69,36 @@ export default function DashboardScreen() {
 
   // Schengen status
   const hasSchengenVisits = useMemo(() => {
-    return visits.some(v => isSchengenCountry(v.countryCode));
+    return visits.some(v => isSchengenCountry(v.countryCode) && countsAgainstSchengen(v.visaType));
   }, [visits]);
 
   const schengenStatus = useMemo(() => {
     if (!hasSchengenVisits) return null;
     return calculateSchengenDays(visits);
   }, [visits, hasSchengenVisits]);
+
+  // Active visas (visits with exit date in the future or no exit date)
+  const activeVisas = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return visits
+      .filter(v => {
+        // Has visa type
+        if (!v.visaType) return false;
+        
+        // Either no exit date (still active) or exit date in future
+        if (!v.exitDate) return true;
+        const exitDate = new Date(v.exitDate);
+        exitDate.setHours(0, 0, 0, 0);
+        return exitDate >= today;
+      })
+      .sort((a, b) => {
+        // Sort by entry date descending (most recent first)
+        return new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime();
+      })
+      .slice(0, 5); // Limit to 5 most recent
+  }, [visits]);
 
   const schengenBreakdown = useMemo(() => {
     if (!hasSchengenVisits) return [];
@@ -184,7 +207,7 @@ export default function DashboardScreen() {
           </View>
         </View>
 
-        {/* Schengen Calculator */}
+        {/* Schengen Calculator - Only shown when user has Schengen travel */}
         {hasSchengenVisits && schengenStatus && (
           <View style={[styles.card, { backgroundColor: colors.card }]}>
             <View style={styles.cardHeader}>
@@ -248,6 +271,82 @@ export default function DashboardScreen() {
                 {formatDate(schengenStatus.periodStartDate, 'MMM d')} - {formatDate(schengenStatus.periodEndDate, 'MMM d, yyyy')}
               </Text>
             </View>
+          </View>
+        )}
+
+        {/* Active Visas Table - Shown when no Schengen travel */}
+        {!hasSchengenVisits && (
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
+            <View style={styles.cardHeader}>
+              <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>
+                {t('activeVisas')}
+              </Text>
+            </View>
+            {activeVisas.length > 0 ? (
+              <View style={styles.activeVisasTable}>
+                {/* Table Header */}
+                <View style={[styles.tableHeader, { borderBottomColor: colors.border }]}>
+                  <Text style={[styles.tableHeaderCell, styles.tableCountryCell, { color: colors.textSecondary }]}>
+                    {t('country')}
+                  </Text>
+                  <Text style={[styles.tableHeaderCell, styles.tableVisaCell, { color: colors.textSecondary }]}>
+                    {t('visaType')}
+                  </Text>
+                  <Text style={[styles.tableHeaderCell, styles.tableDateCell, { color: colors.textSecondary }]}>
+                    {t('validUntil')}
+                  </Text>
+                </View>
+                {/* Table Rows */}
+                {activeVisas.map((visa, index) => {
+                  const country = getCountryByCode(visa.countryCode);
+                  const isActive = isCurrentVisit(visa);
+                  return (
+                    <TouchableOpacity
+                      key={visa.id}
+                      style={[
+                        styles.tableRow,
+                        { borderBottomColor: colors.border },
+                        index === activeVisas.length - 1 && { borderBottomWidth: 0 },
+                        isActive && { backgroundColor: colors.success + '08' },
+                      ]}
+                      onPress={() => router.push(`/visit/${visa.id}`)}
+                    >
+                      <View style={[styles.tableCell, styles.tableCountryCell]}>
+                        <Text style={styles.tableFlag}>{country?.flag}</Text>
+                        <Text style={[styles.tableCountryName, { color: colors.text }]} numberOfLines={1}>
+                          {country?.name}
+                        </Text>
+                        {isActive && (
+                          <View style={[styles.activeBadge, { backgroundColor: colors.success }]}>
+                            <Text style={styles.activeBadgeText}>{t('live')}</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={[styles.tableCell, styles.tableVisaCell, { color: colors.text }]} numberOfLines={1}>
+                        {visa.visaType}
+                      </Text>
+                      <Text style={[styles.tableCell, styles.tableDateCell, { color: colors.textSecondary }]}>
+                        {visa.exitDate ? formatDate(visa.exitDate, 'MMM d, yyyy') : '—'}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            ) : (
+              <View style={styles.emptyActiveVisas}>
+                <Ionicons name="document-text-outline" size={40} color={colors.textSecondary} />
+                <Text style={[styles.emptyActiveVisasText, { color: colors.textSecondary }]}>
+                  {t('noActiveVisas')}
+                </Text>
+                <TouchableOpacity
+                  style={[styles.addVisaButton, { backgroundColor: colors.primary }]}
+                  onPress={() => router.push('/visit/add')}
+                >
+                  <Ionicons name="add" size={18} color="#FFFFFF" />
+                  <Text style={styles.addVisaButtonText}>{t('addNewVisit')}</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         )}
 
@@ -791,5 +890,87 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 16,
     paddingTop: 12,
+  },
+  // Active Visas Table Styles
+  activeVisasTable: {
+    marginTop: 8,
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+  },
+  tableHeaderCell: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    borderBottomWidth: 1,
+    alignItems: 'center',
+  },
+  tableCell: {
+    fontSize: 14,
+  },
+  tableCountryCell: {
+    flex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  tableVisaCell: {
+    flex: 1.5,
+  },
+  tableDateCell: {
+    flex: 1.2,
+    textAlign: 'right',
+  },
+  tableFlag: {
+    fontSize: 20,
+  },
+  tableCountryName: {
+    fontWeight: '600',
+    flex: 1,
+  },
+  activeBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 4,
+  },
+  activeBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  emptyActiveVisas: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 32,
+    gap: 12,
+  },
+  emptyActiveVisasText: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  addVisaButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    gap: 6,
+    marginTop: 8,
+  },
+  addVisaButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });
