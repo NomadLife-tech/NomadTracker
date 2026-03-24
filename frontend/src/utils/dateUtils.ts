@@ -113,34 +113,70 @@ export function isCurrentVisit(visit: Visit): boolean {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   
-  // Parse entry date - extract just the date part to avoid timezone issues
-  const entryParts = visit.entryDate.split('T')[0].split('-');
-  const entryDate = new Date(
-    parseInt(entryParts[0]), 
-    parseInt(entryParts[1]) - 1, 
-    parseInt(entryParts[2])
-  );
+  // Parse entry date - handle both ISO string and date-only formats
+  let entryDate: Date;
+  try {
+    // If it's an ISO string like "2025-03-24T00:00:00.000Z"
+    if (visit.entryDate.includes('T')) {
+      const entryParts = visit.entryDate.split('T')[0].split('-');
+      entryDate = new Date(
+        parseInt(entryParts[0]), 
+        parseInt(entryParts[1]) - 1, 
+        parseInt(entryParts[2])
+      );
+    } else {
+      // If it's a date-only string like "2025-03-24"
+      const entryParts = visit.entryDate.split('-');
+      entryDate = new Date(
+        parseInt(entryParts[0]), 
+        parseInt(entryParts[1]) - 1, 
+        parseInt(entryParts[2])
+      );
+    }
+  } catch (e) {
+    console.error('[isCurrentVisit] Error parsing entry date:', visit.entryDate, e);
+    return false;
+  }
   
   // Entry date must be today or in the past
   if (entryDate > today) {
+    console.log(`[isCurrentVisit] ${visit.countryName}: Entry date ${visit.entryDate} is in the future`);
     return false;
   }
   
   // If no exit date, the visit is ongoing
   if (!visit.exitDate) {
+    console.log(`[isCurrentVisit] ${visit.countryName}: No exit date, visit is ACTIVE`);
     return true;
   }
   
-  // Parse exit date - extract just the date part
-  const exitParts = visit.exitDate.split('T')[0].split('-');
-  const exitDate = new Date(
-    parseInt(exitParts[0]), 
-    parseInt(exitParts[1]) - 1, 
-    parseInt(exitParts[2])
-  );
+  // Parse exit date - handle both ISO string and date-only formats
+  let exitDate: Date;
+  try {
+    if (visit.exitDate.includes('T')) {
+      const exitParts = visit.exitDate.split('T')[0].split('-');
+      exitDate = new Date(
+        parseInt(exitParts[0]), 
+        parseInt(exitParts[1]) - 1, 
+        parseInt(exitParts[2])
+      );
+    } else {
+      const exitParts = visit.exitDate.split('-');
+      exitDate = new Date(
+        parseInt(exitParts[0]), 
+        parseInt(exitParts[1]) - 1, 
+        parseInt(exitParts[2])
+      );
+    }
+  } catch (e) {
+    console.error('[isCurrentVisit] Error parsing exit date:', visit.exitDate, e);
+    return false;
+  }
   
   // If exit date is today or in the future, still active
-  return exitDate >= today;
+  const isActive = exitDate >= today;
+  console.log(`[isCurrentVisit] ${visit.countryName}: Entry=${visit.entryDate}, Exit=${visit.exitDate}, isActive=${isActive}`);
+  return isActive;
 }
 
 // Get visa status with all calculated fields
