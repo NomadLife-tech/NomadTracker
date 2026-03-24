@@ -260,33 +260,15 @@ export default function ProfileScreen() {
   };
 
   const savePassport = async () => {
-    // Validation with specific error messages
-    if (!passportCountry) {
-      showToast(t('pleaseSelectCountry') || 'Please select a country', 'error');
-      return;
-    }
-    if (!passportNumber) {
-      showToast(t('pleaseEnterPassportNumber') || 'Please enter passport number', 'error');
-      return;
-    }
-    if (!passportIssueDate) {
-      showToast(t('pleaseSelectIssueDate') || 'Please select issue date', 'error');
-      return;
-    }
-    if (!passportExpiryDate) {
-      showToast(t('pleaseSelectExpiryDate') || 'Please select expiry date', 'error');
-      return;
-    }
-
     try {
       const passportData: Passport = {
         id: editingPassport?.id || uuidv4(),
         type: passportType,
-        countryCode: passportCountry,
-        countryName: passportCountryName,
-        passportNumber,
-        issueDate: passportIssueDate.toISOString(),
-        expiryDate: passportExpiryDate.toISOString(),
+        countryCode: passportCountry || '',
+        countryName: passportCountryName || '',
+        passportNumber: passportNumber || '',
+        issueDate: passportIssueDate ? passportIssueDate.toISOString() : '',
+        expiryDate: passportExpiryDate ? passportExpiryDate.toISOString() : '',
         attachments: passportAttachments,
       };
 
@@ -340,22 +322,12 @@ export default function ProfileScreen() {
   };
 
   const saveInsurance = async () => {
-    // Validation with specific error messages
-    if (!insuranceProvider) {
-      showToast(t('pleaseEnterProvider') || 'Please enter provider name', 'error');
-      return;
-    }
-    if (!insurancePolicyNumber) {
-      showToast(t('pleaseEnterPolicyNumber') || 'Please enter policy number', 'error');
-      return;
-    }
-
     try {
       const insuranceData: Insurance = {
         id: editingInsurance?.id || uuidv4(),
         type: insuranceType,
-        provider: insuranceProvider,
-        policyNumber: insurancePolicyNumber,
+        provider: insuranceProvider || '',
+        policyNumber: insurancePolicyNumber || '',
         phone: insurancePhone || undefined,
         notes: insuranceNotes || undefined,
         attachments: insuranceAttachments,
