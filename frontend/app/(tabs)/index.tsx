@@ -21,9 +21,11 @@ import {
   isCurrentVisit, 
   calculateSchengenDays,
   getSchengenBreakdown,
+  getSchengenExemptVisits,
   getDaysByCountryForYear,
   isSchengenCountry,
   formatDate,
+  countsAgainstSchengen,
 } from '../../src/utils/dateUtils';
 import { getCountryByCode } from '../../src/constants/countries';
 
@@ -78,6 +80,12 @@ export default function DashboardScreen() {
   const schengenBreakdown = useMemo(() => {
     if (!hasSchengenVisits) return [];
     return getSchengenBreakdown(visits);
+  }, [visits, hasSchengenVisits]);
+
+  // Exempt visits (national visas, digital nomad, etc.)
+  const schengenExemptVisits = useMemo(() => {
+    if (!hasSchengenVisits) return [];
+    return getSchengenExemptVisits(visits);
   }, [visits, hasSchengenVisits]);
 
   // Pie chart data - formatted for react-native-chart-kit
@@ -382,26 +390,71 @@ export default function DashboardScreen() {
                 <Ionicons name="close" size={24} color={colors.text} />
               </TouchableOpacity>
             </View>
-            <FlatList
-              data={schengenBreakdown}
-              keyExtractor={(item) => item.countryCode}
-              renderItem={({ item }) => (
-                <View style={[styles.modalItem, { borderBottomColor: colors.border }]}>
-                  <Text style={styles.modalFlag}>{getCountryByCode(item.countryCode)?.flag}</Text>
-                  <View style={styles.modalItemInfo}>
-                    <Text style={[styles.modalItemTitle, { color: colors.text }]}>{item.countryName}</Text>
-                    <Text style={[styles.modalItemSub, { color: colors.textSecondary }]}>
-                      {item.days} {t('days')} ({item.visits.length} visits)
+            
+            <ScrollView style={{ maxHeight: '80%' }}>
+              {/* Counting Visits Section */}
+              {schengenBreakdown.length > 0 && (
+                <View style={styles.schengenSection}>
+                  <View style={styles.sectionHeader}>
+                    <Ionicons name="time-outline" size={18} color={colors.danger} />
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                      Counts Against 90/180
                     </Text>
                   </View>
+                  {schengenBreakdown.map((item, index) => (
+                    <View key={`counting-${index}`} style={[styles.schengenItem, { borderBottomColor: colors.border }]}>
+                      <Text style={styles.modalFlag}>{getCountryByCode(item.countryCode)?.flag}</Text>
+                      <View style={styles.modalItemInfo}>
+                        <Text style={[styles.modalItemTitle, { color: colors.text }]}>{item.countryName}</Text>
+                        <Text style={[styles.visaTypeTag, { backgroundColor: colors.danger + '20', color: colors.danger }]}>
+                          {item.visaType}
+                        </Text>
+                      </View>
+                      <View style={styles.daysCount}>
+                        <Text style={[styles.daysNumber, { color: colors.danger }]}>{item.days}</Text>
+                        <Text style={[styles.daysLabel, { color: colors.textSecondary }]}>days</Text>
+                      </View>
+                    </View>
+                  ))}
                 </View>
               )}
-              ListEmptyComponent={
+
+              {/* Exempt Visits Section */}
+              {schengenExemptVisits.length > 0 && (
+                <View style={styles.schengenSection}>
+                  <View style={styles.sectionHeader}>
+                    <Ionicons name="checkmark-circle-outline" size={18} color={colors.success} />
+                    <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                      Exempt (National/Long-Stay Visa)
+                    </Text>
+                  </View>
+                  {schengenExemptVisits.map((item, index) => (
+                    <View key={`exempt-${index}`} style={[styles.schengenItem, { borderBottomColor: colors.border }]}>
+                      <Text style={styles.modalFlag}>{getCountryByCode(item.countryCode)?.flag}</Text>
+                      <View style={styles.modalItemInfo}>
+                        <Text style={[styles.modalItemTitle, { color: colors.text }]}>{item.countryName}</Text>
+                        <Text style={[styles.visaTypeTag, { backgroundColor: colors.success + '20', color: colors.success }]}>
+                          {item.visaType}
+                        </Text>
+                      </View>
+                      <View style={styles.daysCount}>
+                        <Text style={[styles.daysNumber, { color: colors.success }]}>{item.days}</Text>
+                        <Text style={[styles.daysLabel, { color: colors.textSecondary }]}>days</Text>
+                      </View>
+                    </View>
+                  ))}
+                  <Text style={[styles.exemptNote, { color: colors.textSecondary }]}>
+                    These days do not count against your 90/180 Schengen limit
+                  </Text>
+                </View>
+              )}
+
+              {schengenBreakdown.length === 0 && schengenExemptVisits.length === 0 && (
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                   No Schengen visits
                 </Text>
-              }
-            />
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -611,5 +664,55 @@ const styles = StyleSheet.create({
   modalItemSub: {
     fontSize: 13,
     marginTop: 2,
+  },
+  schengenSection: {
+    paddingBottom: 16,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  schengenItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    gap: 12,
+  },
+  visaTypeTag: {
+    fontSize: 11,
+    fontWeight: '600',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginTop: 4,
+    overflow: 'hidden',
+  },
+  daysCount: {
+    alignItems: 'center',
+  },
+  daysNumber: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  daysLabel: {
+    fontSize: 10,
+    textTransform: 'uppercase',
+  },
+  exemptNote: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingHorizontal: 16,
+    paddingTop: 12,
   },
 });

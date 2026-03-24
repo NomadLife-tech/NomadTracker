@@ -12,6 +12,95 @@ export function isSchengenCountry(countryCode: string): boolean {
   return SCHENGEN_COUNTRIES.includes(countryCode);
 }
 
+/**
+ * Determines if a visa type counts against Schengen 90/180 day limit.
+ * 
+ * COUNTS AGAINST SCHENGEN (Short-stay / Tourist):
+ * - Schengen C (Short Stay) visas
+ * - Visa Free entries
+ * - Tourist visas in Schengen countries
+ * - Transit visas
+ * 
+ * DOES NOT COUNT (National/Long-stay visas):
+ * - National D Visa (long-stay)
+ * - Digital Nomad Visa
+ * - Work Permit / Work Visa
+ * - EU Blue Card
+ * - Student Visa
+ * - Residence Permit
+ * - Freelance Visa
+ * - Golden Visa
+ * - Any visa with duration > 90 days that is not short-stay
+ */
+export function countsAgainstSchengen(visaType: string): boolean {
+  const visaTypeLower = visaType.toLowerCase();
+  
+  // These visa types DO NOT count against Schengen 90/180
+  const exemptVisaPatterns = [
+    'national d',
+    'd visa',
+    'long stay',
+    'long-stay',
+    'digital nomad',
+    'nomad residence',
+    'nomad permit',
+    'work permit',
+    'work visa',
+    'eu blue card',
+    'blue card',
+    'student visa',
+    'student permit',
+    'residence permit',
+    'residence visa',
+    'freelance',
+    'golden visa',
+    'talent passport',
+    'startup',
+    'entrepreneur',
+    'investor',
+    'remotely from',
+    'remote work',
+    'employee card',
+    'red-white-red',
+    'zivno',
+    'vls-ts', // French long-stay visa
+    'type d',
+    'working holiday',
+  ];
+  
+  // Check if visa type matches any exempt pattern
+  for (const pattern of exemptVisaPatterns) {
+    if (visaTypeLower.includes(pattern)) {
+      return false; // Does NOT count against Schengen
+    }
+  }
+  
+  // These visa types DO count against Schengen 90/180
+  const countingVisaPatterns = [
+    'schengen c',
+    'schengen (short',
+    'short stay',
+    'short-stay',
+    'visa free',
+    'visa-free',
+    'tourist',
+    'transit',
+    'type c',
+    'c visa',
+  ];
+  
+  // Check if it's a counting visa type
+  for (const pattern of countingVisaPatterns) {
+    if (visaTypeLower.includes(pattern)) {
+      return true; // DOES count against Schengen
+    }
+  }
+  
+  // Default: if in Schengen country and no specific visa type identified,
+  // assume it counts (conservative approach for tracking)
+  return true;
+}
+
 // Calculate days spent in country (inclusive of entry day)
 export function calculateDaysInCountry(entryDate: string, exitDate?: string): number {
   const entry = parseISO(entryDate);
@@ -47,17 +136,22 @@ export function getVisaStatus(visit: Visit): VisaStatus {
 }
 
 // Schengen 90/180 rolling calculator
+// Now based on VISA TYPE, not just country
 export function calculateSchengenDays(visits: Visit[]): SchengenStatus {
   const today = startOfDay(new Date());
   const periodEndDate = today;
   const periodStartDate = subDays(today, 179); // 180-day rolling window
   
-  // Filter Schengen visits
-  const schengenVisits = visits.filter(v => isSchengenCountry(v.countryCode));
+  // Filter visits that:
+  // 1. Are in Schengen countries AND
+  // 2. Have a visa type that counts against Schengen 90/180
+  const countingVisits = visits.filter(v => 
+    isSchengenCountry(v.countryCode) && countsAgainstSchengen(v.visaType)
+  );
   
   let totalDays = 0;
   
-  schengenVisits.forEach(visit => {
+  countingVisits.forEach(visit => {
     const entryDate = startOfDay(parseISO(visit.entryDate));
     const exitDate = visit.exitDate ? startOfDay(parseISO(visit.exitDate)) : today;
     
@@ -79,16 +173,20 @@ export function calculateSchengenDays(visits: Visit[]): SchengenStatus {
   };
 }
 
-// Get Schengen visits breakdown by country
-export function getSchengenBreakdown(visits: Visit[]): { countryCode: string; countryName: string; days: number; visits: Visit[] }[] {
+// Get Schengen visits breakdown by country (only counting visits)
+export function getSchengenBreakdown(visits: Visit[]): { countryCode: string; countryName: string; days: number; visits: Visit[]; visaType: string }[] {
   const today = startOfDay(new Date());
   const periodEndDate = today;
   const periodStartDate = subDays(today, 179);
   
-  const schengenVisits = visits.filter(v => isSchengenCountry(v.countryCode));
-  const breakdown: { [key: string]: { countryCode: string; countryName: string; days: number; visits: Visit[] } } = {};
+  // Only include visits that count against Schengen
+  const countingVisits = visits.filter(v => 
+    isSchengenCountry(v.countryCode) && countsAgainstSchengen(v.visaType)
+  );
   
-  schengenVisits.forEach(visit => {
+  const breakdown: { [key: string]: { countryCode: string; countryName: string; days: number; visits: Visit[]; visaType: string } } = {};
+  
+  countingVisits.forEach(visit => {
     const entryDate = startOfDay(parseISO(visit.entryDate));
     const exitDate = visit.exitDate ? startOfDay(parseISO(visit.exitDate)) : today;
     
@@ -98,20 +196,56 @@ export function getSchengenBreakdown(visits: Visit[]): { countryCode: string; co
     if (isBefore(overlapStart, overlapEnd) || overlapStart.getTime() === overlapEnd.getTime()) {
       const days = differenceInDays(overlapEnd, overlapStart) + 1;
       
-      if (!breakdown[visit.countryCode]) {
-        breakdown[visit.countryCode] = {
+      // Group by country + visa type for more granular tracking
+      const key = `${visit.countryCode}-${visit.visaType}`;
+      if (!breakdown[key]) {
+        breakdown[key] = {
           countryCode: visit.countryCode,
           countryName: visit.countryName,
           days: 0,
           visits: [],
+          visaType: visit.visaType,
         };
       }
-      breakdown[visit.countryCode].days += days;
-      breakdown[visit.countryCode].visits.push(visit);
+      breakdown[key].days += days;
+      breakdown[key].visits.push(visit);
     }
   });
   
   return Object.values(breakdown).sort((a, b) => b.days - a.days);
+}
+
+// Get exempt visits in Schengen countries (for display purposes)
+export function getSchengenExemptVisits(visits: Visit[]): { countryCode: string; countryName: string; days: number; visaType: string; reason: string }[] {
+  const today = startOfDay(new Date());
+  const periodEndDate = today;
+  const periodStartDate = subDays(today, 179);
+  
+  // Get visits in Schengen countries that DON'T count
+  const exemptVisits = visits.filter(v => 
+    isSchengenCountry(v.countryCode) && !countsAgainstSchengen(v.visaType)
+  );
+  
+  return exemptVisits.map(visit => {
+    const entryDate = startOfDay(parseISO(visit.entryDate));
+    const exitDate = visit.exitDate ? startOfDay(parseISO(visit.exitDate)) : today;
+    
+    const overlapStart = isAfter(entryDate, periodStartDate) ? entryDate : periodStartDate;
+    const overlapEnd = isBefore(exitDate, periodEndDate) ? exitDate : periodEndDate;
+    
+    let days = 0;
+    if (isBefore(overlapStart, overlapEnd) || overlapStart.getTime() === overlapEnd.getTime()) {
+      days = differenceInDays(overlapEnd, overlapStart) + 1;
+    }
+    
+    return {
+      countryCode: visit.countryCode,
+      countryName: visit.countryName,
+      days,
+      visaType: visit.visaType,
+      reason: 'National/Long-stay visa',
+    };
+  });
 }
 
 // Get visits that overlap with a specific date
