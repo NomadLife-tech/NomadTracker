@@ -321,7 +321,7 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, onLocationDetect
             srcDoc={mapHtml}
             style={iframeStyle}
             title="Mini Map"
-            sandbox="allow-scripts"
+            sandbox="allow-scripts allow-same-origin"
           />
         </View>
       );
