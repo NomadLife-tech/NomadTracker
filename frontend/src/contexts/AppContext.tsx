@@ -170,31 +170,36 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [settings]);
 
   const deleteVisit = useCallback(async (visitId: string) => {
-    const updatedVisits = await storage.deleteVisit(visitId);
-    setVisits(updatedVisits);
-    
-    // Enqueue sync operation if cloud sync is enabled
-    if (settings.cloudSaveEnabled) {
-      try {
-        await syncQueue.enqueue({
-          type: 'DELETE',
-          entity: 'visit',
-          data: { id: visitId },
-          timestamp: new Date(),
-        });
-      } catch (err) {
-        console.warn('[Sync] Failed to enqueue:', err);
+    try {
+      const updatedVisits = await storage.deleteVisit(visitId);
+      setVisits(updatedVisits);
+      
+      // Enqueue sync operation if cloud sync is enabled
+      if (settings.cloudSaveEnabled) {
+        try {
+          await syncQueue.enqueue({
+            type: 'DELETE',
+            entity: 'visit',
+            data: { id: visitId },
+            timestamp: new Date(),
+          });
+        } catch (err) {
+          console.warn('[Sync] Failed to enqueue:', err);
+        }
       }
-    }
-    
-    // Reschedule notifications when visits change
-    if (Platform.OS !== 'web' && settings.visaAlertsEnabled) {
-      try {
-        await scheduleVisaNotifications(updatedVisits, settings);
-        console.log('[Notifications] Rescheduled after deleting visit');
-      } catch (error) {
-        console.warn('[Notifications] Failed to reschedule:', error);
+      
+      // Reschedule notifications when visits change
+      if (Platform.OS !== 'web' && settings.visaAlertsEnabled) {
+        try {
+          await scheduleVisaNotifications(updatedVisits, settings);
+          console.log('[Notifications] Rescheduled after deleting visit');
+        } catch (error) {
+          console.warn('[Notifications] Failed to reschedule:', error);
+        }
       }
+    } catch (error) {
+      console.error('[AppContext] Failed to delete visit:', error);
+      throw error;
     }
   }, [settings]);
 

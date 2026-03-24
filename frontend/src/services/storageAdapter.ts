@@ -18,6 +18,7 @@ const webStorage = {
       localStorage.setItem(key, value);
     } catch (e) {
       console.error('webStorage setItem error:', e);
+      throw e; // Re-throw so caller can handle the error
     }
   },
   removeItem: async (key: string): Promise<void> => {
@@ -25,6 +26,7 @@ const webStorage = {
       localStorage.removeItem(key);
     } catch (e) {
       console.error('webStorage removeItem error:', e);
+      throw e; // Re-throw so caller can handle the error
     }
   },
   multiRemove: async (keys: string[]): Promise<void> => {
@@ -32,6 +34,7 @@ const webStorage = {
       keys.forEach(k => localStorage.removeItem(k));
     } catch (e) {
       console.error('webStorage multiRemove error:', e);
+      throw e; // Re-throw so caller can handle the error
     }
   },
   clear: async (): Promise<void> => {
@@ -46,6 +49,7 @@ const webStorage = {
       keysToRemove.forEach(k => localStorage.removeItem(k));
     } catch (e) {
       console.error('webStorage clear error:', e);
+      throw e; // Re-throw so caller can handle the error
     }
   },
   getAllKeys: async (): Promise<string[]> => {
@@ -81,7 +85,7 @@ const nativeStorage = {
       await AsyncStorage.setItem(key, value);
     } catch (e) {
       console.error('[Storage] nativeStorage setItem error:', e);
-      // Don't throw - allow app to continue with in-memory state
+      throw e; // Re-throw so caller can handle the error properly
     }
   },
   removeItem: async (key: string): Promise<void> => {
@@ -89,6 +93,7 @@ const nativeStorage = {
       await AsyncStorage.removeItem(key);
     } catch (e) {
       console.error('nativeStorage removeItem error:', e);
+      throw e; // Re-throw so caller can handle the error
     }
   },
   multiRemove: async (keys: string[]): Promise<void> => {
@@ -96,6 +101,7 @@ const nativeStorage = {
       await AsyncStorage.multiRemove(keys);
     } catch (e) {
       console.error('nativeStorage multiRemove error:', e);
+      throw e; // Re-throw so caller can handle the error
     }
   },
   clear: async (): Promise<void> => {
@@ -105,6 +111,7 @@ const nativeStorage = {
       await AsyncStorage.multiRemove(appKeys);
     } catch (e) {
       console.error('nativeStorage clear error:', e);
+      throw e; // Re-throw so caller can handle the error
     }
   },
   getAllKeys: async (): Promise<string[]> => {
