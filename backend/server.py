@@ -125,7 +125,7 @@ async def create_status_check(input: StatusCheckCreate):
 
 @api_router.get("/status", response_model=List[StatusCheck])
 async def get_status_checks(limit: int = 100, skip: int = 0):
-    status_checks = await db.status_checks.find().skip(skip).limit(limit).to_list(limit)
+    status_checks = await db.status_checks.find({}, {'_id': 0}).skip(skip).limit(limit).to_list(limit)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
 
@@ -195,33 +195,20 @@ async def get_synced_data(device_id: str, since: Optional[str] = None):
     Optionally filter by timestamp to get only changes since last sync.
     """
     try:
-        # Get visits
+        # Get visits with projection to exclude _id
         visits_collection = f"{device_id}_visits"
-        visits = await db[visits_collection].find().to_list(1000)
+        visits = await db[visits_collection].find({}, {'_id': 0}).to_list(1000)
         
-        # Get profile
+        # Get profile with projection
         profile_collection = f"{device_id}_profiles"
-        profile = await db[profile_collection].find_one()
+        profile = await db[profile_collection].find_one({}, {'_id': 0})
         
-        # Get settings
+        # Get settings with projection
         settings_collection = f"{device_id}_settingss"  # Note: entity name is 'settings' so collection is 'settingss'
-        settings = await db[settings_collection].find_one()
-        
-        # Clean up MongoDB _id fields
-        cleaned_visits = []
-        for v in visits:
-            if '_id' in v:
-                del v['_id']
-            cleaned_visits.append(v)
-        
-        if profile and '_id' in profile:
-            del profile['_id']
-            
-        if settings and '_id' in settings:
-            del settings['_id']
+        settings = await db[settings_collection].find_one({}, {'_id': 0})
         
         return UserDataResponse(
-            visits=cleaned_visits,
+            visits=visits,
             profile=profile,
             settings=settings
         )
@@ -294,14 +281,10 @@ async def delete_visit(device_id: str, visit_id: str):
 
 
 @api_router.get("/visits/{device_id}")
-async def get_visits(device_id: str):
-    """Get all visits for a device."""
+async def get_visits(device_id: str, skip: int = 0, limit: int = 100):
+    """Get all visits for a device with pagination."""
     collection_name = f"{device_id}_visits"
-    visits = await db[collection_name].find().to_list(1000)
-    # Clean up MongoDB _id fields
-    for v in visits:
-        if '_id' in v:
-            del v['_id']
+    visits = await db[collection_name].find({}, {'_id': 0}).skip(skip).limit(limit).to_list(limit)
     return {"visits": visits}
 
 
