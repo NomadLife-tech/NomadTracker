@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef } from 'react';
-import { View, StyleSheet, Platform, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, StyleSheet, Platform, Text, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,8 @@ import { useApp } from '../../src/contexts/AppContext';
 import { isCurrentVisit, formatDate, calculateDaysInCountry } from '../../src/utils/dateUtils';
 import { getCountryByCode } from '../../src/constants/countries';
 import { Visit } from '../../src/types';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 // Heatmap color scale (blue to red based on days)
 const getHeatmapColor = (days: number, maxDays: number): string => {
@@ -521,26 +523,47 @@ export default function MapScreen() {
     `;
   }, [countryVisits, isDark, colors]);
 
-  // Empty state
+  // Empty state with elegant design
   if (Object.keys(countryVisits).length === 0) {
     return (
-      <View style={[styles.container, styles.emptyWrapper, { backgroundColor: colors.background }]}>
-        <View style={styles.emptyContainer}>
-          <View style={[styles.emptyIconContainer, { backgroundColor: colors.primary + '15' }]}>
-            <Ionicons name="earth" size={64} color={colors.primary} />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Subtle background pattern */}
+        <View style={[styles.emptyBackgroundPattern, { backgroundColor: isDark ? '#1a1a2e' : '#f0f7ff' }]}>
+          <View style={styles.patternGrid}>
+            {Array.from({ length: 12 }).map((_, i) => (
+              <View key={i} style={[styles.patternDot, { backgroundColor: isDark ? '#2a2a4e30' : '#007AFF10' }]} />
+            ))}
           </View>
-          <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('noVisitsFound')}</Text>
-          <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            {t('addFirstVisitMap') || 'Add your first visit to see it on the map'}
-          </Text>
-          <TouchableOpacity
-            style={[styles.addButton, { backgroundColor: colors.primary }]}
-            onPress={() => router.push('/visit/add')}
-          >
-            <Ionicons name="add" size={20} color="#FFFFFF" />
-            <Text style={styles.addButtonText}>{t('addNewVisit')}</Text>
-          </TouchableOpacity>
         </View>
+        
+        {/* Overlay content */}
+        <View style={styles.emptyOverlay}>
+          <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
+            <View style={[styles.emptyIconContainer, { backgroundColor: colors.primary + '15' }]}>
+              <Ionicons name="airplane" size={48} color={colors.primary} />
+            </View>
+            <Text style={[styles.emptyTitle, { color: colors.text }]}>{t('noVisitsFound')}</Text>
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+              {t('addFirstVisitMap') || 'Start tracking your travels by adding your first visit'}
+            </Text>
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: colors.primary }]}
+              onPress={() => router.push('/visit/add')}
+            >
+              <Ionicons name="add" size={20} color="#FFFFFF" />
+              <Text style={styles.addButtonText}>{t('addNewVisit')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        
+        {/* FAB still available */}
+        <TouchableOpacity
+          style={[styles.fab, { backgroundColor: colors.primary }]}
+          onPress={() => router.push('/visit/add')}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="add" size={28} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
     );
   }
@@ -603,16 +626,24 @@ export default function MapScreen() {
           />
         </View>
         {/* Legend Overlay */}
-        <View style={[styles.legendContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.legendContainer, { backgroundColor: colors.card + 'F0', borderColor: colors.border }]}>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
-            <Text style={[styles.legendText, { color: colors.textSecondary }]}>{t('currentlyVisiting') || 'Currently visiting'}</Text>
+            <Text style={[styles.legendText, { color: colors.textSecondary }]}>{t('currentlyVisiting') || 'Active'}</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
-            <Text style={[styles.legendText, { color: colors.textSecondary }]}>{t('pastVisits') || 'Past visits'}</Text>
+            <Text style={[styles.legendText, { color: colors.textSecondary }]}>{t('pastVisits') || 'Past'}</Text>
           </View>
         </View>
+        {/* Floating Action Button */}
+        <TouchableOpacity
+          style={[styles.fab, { backgroundColor: colors.primary }]}
+          onPress={() => router.push('/visit/add')}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="add" size={28} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
     );
   }
@@ -643,16 +674,24 @@ export default function MapScreen() {
         />
       </View>
       {/* Legend Overlay */}
-      <View style={[styles.legendContainer, styles.legendContainerNative, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={[styles.legendContainer, styles.legendContainerNative, { backgroundColor: colors.card + 'F0', borderColor: colors.border }]}>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: colors.success }]} />
-          <Text style={[styles.legendText, { color: colors.textSecondary }]}>{t('currentlyVisiting') || 'Currently visiting'}</Text>
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>{t('currentlyVisiting') || 'Active'}</Text>
         </View>
         <View style={styles.legendItem}>
           <View style={[styles.legendDot, { backgroundColor: colors.primary }]} />
-          <Text style={[styles.legendText, { color: colors.textSecondary }]}>{t('pastVisits') || 'Past visits'}</Text>
+          <Text style={[styles.legendText, { color: colors.textSecondary }]}>{t('pastVisits') || 'Past'}</Text>
         </View>
       </View>
+      {/* Floating Action Button */}
+      <TouchableOpacity
+        style={[styles.fab, styles.fabNative, { backgroundColor: colors.primary }]}
+        onPress={() => router.push('/visit/add')}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="add" size={28} color="#FFFFFF" />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -713,28 +752,58 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
   },
-  // Empty State Styles
-  emptyWrapper: {
-    justifyContent: 'center',
+  // Empty State Styles - Improved
+  emptyBackgroundPattern: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
-  emptyContainer: {
+  patternGrid: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-around',
+    alignContent: 'space-around',
+    padding: 40,
+  },
+  patternDot: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
+  emptyOverlay: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 40,
+    padding: 24,
+  },
+  emptyCard: {
+    alignItems: 'center',
+    padding: 32,
+    borderRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 8,
+    maxWidth: 320,
+    width: '100%',
   },
   emptyIconContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 96,
+    height: 96,
+    borderRadius: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 22,
     fontWeight: '700',
     marginTop: 8,
+    textAlign: 'center',
   },
   emptyText: {
     fontSize: 15,
@@ -756,16 +825,17 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 16,
   },
+  // Legend Overlay
   legendContainer: {
     position: 'absolute',
     bottom: 100,
     left: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
     borderWidth: 1,
     flexDirection: 'row',
-    gap: 16,
+    gap: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -778,15 +848,34 @@ const styles = StyleSheet.create({
   legendItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
   },
   legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   legendText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
+  },
+  // Floating Action Button
+  fab: {
+    position: 'absolute',
+    bottom: 100,
+    right: 16,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  fabNative: {
+    bottom: 120,
   },
 });
