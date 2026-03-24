@@ -105,18 +105,12 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleDeletePhoto = async () => {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const handleDeletePhoto = () => {
     if (Platform.OS === 'web') {
-      // Use window.confirm for web
-      const confirmed = window.confirm(t('confirmDeletePhoto'));
-      if (confirmed) {
-        await updateProfile({
-          ...profile,
-          avatar: '🌍',
-          avatarType: 'preset',
-        });
-        showToast(t('success'), 'success');
-      }
+      // Show custom confirmation modal for web
+      setShowDeleteConfirm(true);
     } else {
       // Use Alert for native
       Alert.alert(
@@ -127,18 +121,21 @@ export default function ProfileScreen() {
           {
             text: t('delete'),
             style: 'destructive',
-            onPress: async () => {
-              await updateProfile({
-                ...profile,
-                avatar: '🌍',
-                avatarType: 'preset',
-              });
-              showToast(t('success'), 'success');
-            },
+            onPress: () => confirmDeletePhoto(),
           },
         ]
       );
     }
+  };
+
+  const confirmDeletePhoto = async () => {
+    await updateProfile({
+      ...profile,
+      avatar: '🌍',
+      avatarType: 'preset',
+    });
+    setShowDeleteConfirm(false);
+    showToast(t('success'), 'success');
   };
 
   const handleTakePhoto = async () => {
@@ -737,6 +734,35 @@ export default function ProfileScreen() {
                   <Text style={styles.avatarOptionEmoji}>{emoji}</Text>
                 </TouchableOpacity>
               ))}
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete Photo Confirmation Modal */}
+      <Modal visible={showDeleteConfirm} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.confirmModal, { backgroundColor: colors.card }]}>
+            <View style={styles.confirmIconContainer}>
+              <Ionicons name="trash" size={32} color={colors.danger} />
+            </View>
+            <Text style={[styles.confirmTitle, { color: colors.text }]}>{t('deletePhoto')}</Text>
+            <Text style={[styles.confirmMessage, { color: colors.textSecondary }]}>
+              {t('confirmDeletePhoto')}
+            </Text>
+            <View style={styles.confirmButtons}>
+              <TouchableOpacity
+                style={[styles.confirmButton, styles.cancelButton, { borderColor: colors.border }]}
+                onPress={() => setShowDeleteConfirm(false)}
+              >
+                <Text style={[styles.cancelButtonText, { color: colors.text }]}>{t('cancel')}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.confirmButton, styles.deleteButton, { backgroundColor: colors.danger }]}
+                onPress={confirmDeletePhoto}
+              >
+                <Text style={styles.deleteButtonText}>{t('delete')}</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -1551,5 +1577,64 @@ const styles = StyleSheet.create({
   attachButtonText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  confirmModal: {
+    margin: 20,
+    borderRadius: 20,
+    padding: 24,
+    alignItems: 'center',
+    alignSelf: 'center',
+    width: '90%',
+    maxWidth: 340,
+    marginTop: 'auto',
+    marginBottom: 'auto',
+  },
+  confirmIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255, 59, 48, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  confirmTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  confirmMessage: {
+    fontSize: 15,
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 22,
+  },
+  confirmButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  confirmButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cancelButton: {
+    borderWidth: 1,
+  },
+  cancelButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  deleteButton: {
+    // backgroundColor set dynamically
+  },
+  deleteButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
