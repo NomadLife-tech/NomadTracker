@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useRef } from 'react';
-import { View, StyleSheet, Platform, Text, TouchableOpacity } from 'react-native';
+import { View, StyleSheet, Platform, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +8,17 @@ import { useApp } from '../../src/contexts/AppContext';
 import { isCurrentVisit, formatDate, calculateDaysInCountry } from '../../src/utils/dateUtils';
 import { getCountryByCode } from '../../src/constants/countries';
 import { Visit } from '../../src/types';
+
+// Heatmap color scale (blue to red based on days)
+const getHeatmapColor = (days: number, maxDays: number): string => {
+  const ratio = Math.min(days / Math.max(maxDays, 1), 1);
+  // Color gradient: Blue (#3B82F6) -> Cyan (#06B6D4) -> Green (#10B981) -> Yellow (#F59E0B) -> Orange (#F97316) -> Red (#EF4444)
+  if (ratio < 0.2) return '#3B82F6'; // Blue - few days
+  if (ratio < 0.4) return '#06B6D4'; // Cyan
+  if (ratio < 0.6) return '#10B981'; // Green
+  if (ratio < 0.8) return '#F59E0B'; // Yellow/Orange
+  return '#EF4444'; // Red - most days
+};
 
 // Country coordinates for map pins
 const COUNTRY_COORDS: { [key: string]: [number, number] } = {
@@ -85,6 +96,23 @@ export default function MapScreen() {
     });
     return grouped;
   }, [visits]);
+
+  // Compute stats for heatmap header
+  const { sortedCountries, totalDays, maxDays } = useMemo(() => {
+    const countries = Object.entries(countryVisits)
+      .map(([code, data]) => ({
+        code,
+        ...data,
+        country: getCountryByCode(code),
+      }))
+      .filter(c => c.country)
+      .sort((a, b) => b.totalDays - a.totalDays);
+    
+    const total = countries.reduce((sum, c) => sum + c.totalDays, 0);
+    const max = countries.length > 0 ? countries[0].totalDays : 0;
+    
+    return { sortedCountries: countries, totalDays: total, maxDays: max };
+  }, [countryVisits]);
 
   // Handle message from iframe for navigation
   const handleMessage = useCallback((event: MessageEvent) => {
@@ -517,20 +545,85 @@ export default function MapScreen() {
     );
   }
 
+  // Render Stats Header component
+  const renderStatsHeader = () => {
+    if (sortedCountries.length === 0) return null;
+    
+    return (
+      <View style={[styles.statsHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        {/* Summary Stats */}
+        <View style={styles.statsSummary}>
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, { color: colors.primary }]}>{sortedCountries.length}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('countries')}</Text>
+          </View>
+          <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, { color: colors.success }]}>{totalDays}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('days')}</Text>
+          </View>
+          <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
+          <View style={styles.statItem}>
+            <Text style={[styles.statValue, { color: colors.warning }]}>{visits.length}</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('visits')}</Text>
+          </View>
+        </View>
+        
+        {/* Heatmap Scroll */}
+        <View style={styles.heatmapContainer}>
+          <Text style={[styles.heatmapLabel, { color: colors.textSecondary }]}>
+            {t('daysPerCountry') || 'Days per country'}
+          </Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.heatmapScroll}
+          >
+            {sortedCountries.map((item) => {
+              const heatColor = getHeatmapColor(item.totalDays, maxDays);
+              return (
+                <TouchableOpacity
+                  key={item.code}
+                  style={[styles.heatmapCard, { backgroundColor: heatColor + '20', borderColor: heatColor }]}
+                  onPress={() => {
+                    // Could scroll to country on map or show details
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.heatmapFlag}>{item.country?.flag}</Text>
+                  <Text style={[styles.heatmapDays, { color: heatColor }]}>{item.totalDays}</Text>
+                  <Text style={[styles.heatmapCountry, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {item.country?.name.length > 8 ? item.country?.name.substring(0, 7) + '…' : item.country?.name}
+                  </Text>
+                  {item.hasActive && (
+                    <View style={[styles.heatmapActiveDot, { backgroundColor: colors.success }]} />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </View>
+    );
+  };
+
   // Web: Use iframe
   if (Platform.OS === 'web') {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <iframe
-          ref={iframeRef}
-          srcDoc={mapHtml}
-          style={{
-            width: '100%',
-            height: '100%',
-            border: 'none',
-          }}
-          title="Travel Map"
-        />
+        {renderStatsHeader()}
+        <View style={styles.mapContainer}>
+          <iframe
+            ref={iframeRef}
+            srcDoc={mapHtml}
+            style={{
+              width: '100%',
+              height: '100%',
+              border: 'none',
+            }}
+            title="Travel Map"
+          />
+        </View>
         {/* Legend Overlay */}
         <View style={[styles.legendContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={styles.legendItem}>
@@ -551,23 +644,26 @@ export default function MapScreen() {
   
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <WebView
-        style={styles.webview}
-        source={{ html: mapHtml }}
-        scrollEnabled={true}
-        javaScriptEnabled={true}
-        domStorageEnabled={true}
-        onMessage={(event: { nativeEvent: { data: string } }) => {
-          try {
-            const data = JSON.parse(event.nativeEvent.data);
-            if (data.type === 'visitClick' && data.visitId) {
-              router.push(`/visit/${data.visitId}`);
+      {renderStatsHeader()}
+      <View style={styles.mapContainer}>
+        <WebView
+          style={styles.webview}
+          source={{ html: mapHtml }}
+          scrollEnabled={true}
+          javaScriptEnabled={true}
+          domStorageEnabled={true}
+          onMessage={(event: { nativeEvent: { data: string } }) => {
+            try {
+              const data = JSON.parse(event.nativeEvent.data);
+              if (data.type === 'visitClick' && data.visitId) {
+                router.push(`/visit/${data.visitId}`);
+              }
+            } catch (e) {
+              // Ignore
             }
-          } catch (e) {
-            // Ignore
-          }
-        }}
-      />
+          }}
+        />
+      </View>
       {/* Legend Overlay */}
       <View style={[styles.legendContainer, styles.legendContainerNative, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={styles.legendItem}>
@@ -587,9 +683,90 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  mapContainer: {
+    flex: 1,
+  },
   webview: {
     flex: 1,
   },
+  // Stats Header Styles
+  statsHeader: {
+    paddingTop: 8,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+  },
+  statsSummary: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    gap: 16,
+  },
+  statItem: {
+    alignItems: 'center',
+    minWidth: 60,
+  },
+  statValue: {
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  statLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    textTransform: 'uppercase',
+    marginTop: 2,
+  },
+  statDivider: {
+    width: 1,
+    height: 32,
+  },
+  heatmapContainer: {
+    marginTop: 8,
+  },
+  heatmapLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  heatmapScroll: {
+    paddingHorizontal: 12,
+    gap: 8,
+  },
+  heatmapCard: {
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    minWidth: 64,
+    position: 'relative',
+  },
+  heatmapFlag: {
+    fontSize: 20,
+  },
+  heatmapDays: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  heatmapCountry: {
+    fontSize: 10,
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  heatmapActiveDot: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  // Empty State Styles
   emptyWrapper: {
     justifyContent: 'center',
   },
