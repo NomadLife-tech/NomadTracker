@@ -57,14 +57,14 @@ export default function ProfileScreen() {
   // Visa Alert Settings state
   const [visaAlertsEnabled, setVisaAlertsEnabled] = useState(settings.visaAlertsEnabled ?? true);
   const [selectedAlertDays, setSelectedAlertDays] = useState<number[]>(settings.visaAlertDays ?? [30, 15, 7]);
-  const [customAlertDays, setCustomAlertDays] = useState<string>(settings.customAlertDays?.toString() ?? '');
+  const [customAlertDays, setCustomAlertDays] = useState<string>(settings.customAlertDays?.toString() ?? '0');
   const [alertFrequency, setAlertFrequency] = useState<AppSettings['alertFrequency']>(settings.alertFrequency ?? 'daily');
 
   // Sync state with settings when settings change
   useEffect(() => {
     setVisaAlertsEnabled(settings.visaAlertsEnabled ?? true);
     setSelectedAlertDays(settings.visaAlertDays ?? [30, 15, 7]);
-    setCustomAlertDays(settings.customAlertDays?.toString() ?? '');
+    setCustomAlertDays(settings.customAlertDays?.toString() ?? '0');
     setAlertFrequency(settings.alertFrequency ?? 'daily');
   }, [settings]);
 

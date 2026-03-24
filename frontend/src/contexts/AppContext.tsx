@@ -52,7 +52,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     language: 'en',
     visaAlertsEnabled: true,
     visaAlertDays: [30, 15, 7],
-    customAlertDays: undefined,
+    customAlertDays: 0,
     alertFrequency: 'daily',
   });
   const [isLoading, setIsLoading] = useState(true);
