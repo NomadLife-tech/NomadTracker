@@ -87,7 +87,7 @@ export default function CalendarScreen() {
 
   // Custom day component with flag emoji
   const renderDay = (date: any, state: any) => {
-    if (!date) return <View style={styles.emptyDay} />;
+    if (!date) return <View style={[styles.emptyDay, { backgroundColor: colors.card }]} />;
     
     const dateStr = date.dateString;
     const marking = markedDates[dateStr];
@@ -99,6 +99,7 @@ export default function CalendarScreen() {
       <TouchableOpacity
         style={[
           styles.dayContainer,
+          { backgroundColor: colors.card },
           isSelected && [styles.selectedDay, { backgroundColor: colors.primary }],
         ]}
         onPress={() => handleDayPress({ dateString: dateStr })}
@@ -148,6 +149,7 @@ export default function CalendarScreen() {
       </View>
 
       <Calendar
+        key={isDark ? 'dark' : 'light'}
         style={[styles.calendar, { backgroundColor: colors.card }]}
         theme={{
           calendarBackground: colors.card,
@@ -164,15 +166,54 @@ export default function CalendarScreen() {
           textDayHeaderFontWeight: '600',
           textMonthFontSize: 18,
           textDayHeaderFontSize: 13,
+          contentStyle: {
+            backgroundColor: colors.card,
+          },
           'stylesheet.calendar.main': {
             container: {
               backgroundColor: colors.card,
+              paddingLeft: 0,
+              paddingRight: 0,
+            },
+            monthView: {
+              backgroundColor: colors.card,
             },
             week: {
-              marginVertical: 2,
+              marginTop: 2,
+              marginBottom: 2,
               flexDirection: 'row',
               justifyContent: 'space-around',
               backgroundColor: colors.card,
+            },
+            dayContainer: {
+              flex: 1,
+              alignItems: 'center',
+              backgroundColor: colors.card,
+            },
+          },
+          'stylesheet.calendar.header': {
+            header: {
+              backgroundColor: colors.card,
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              paddingLeft: 10,
+              paddingRight: 10,
+              alignItems: 'center',
+            },
+            week: {
+              marginTop: 7,
+              flexDirection: 'row',
+              justifyContent: 'space-around',
+              backgroundColor: colors.card,
+            },
+            dayHeader: {
+              marginTop: 2,
+              marginBottom: 7,
+              width: 32,
+              textAlign: 'center',
+              fontSize: 13,
+              fontWeight: '600',
+              color: colors.textSecondary,
             },
           },
           'stylesheet.day.basic': {
@@ -182,6 +223,13 @@ export default function CalendarScreen() {
               alignItems: 'center',
               justifyContent: 'center',
               backgroundColor: colors.card,
+            },
+            text: {
+              marginTop: 4,
+              fontSize: 16,
+              fontWeight: '500',
+              color: colors.text,
+              backgroundColor: 'transparent',
             },
           },
         }}
