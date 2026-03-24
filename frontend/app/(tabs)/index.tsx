@@ -193,32 +193,46 @@ export default function DashboardScreen() {
               </Text>
             </View>
             <View style={styles.schengenContent}>
-              <View style={styles.schengenRow}>
-                <TouchableOpacity
-                  style={[styles.schengenItem, { backgroundColor: colors.warning + '15' }]}
-                  onPress={() => setShowSchengenModal(true)}
-                >
-                  <Text style={[styles.schengenValue, { color: colors.warning }]}>
-                    {schengenStatus.daysUsedInPeriod}
-                  </Text>
-                  <Text style={[styles.schengenLabel, { color: colors.textSecondary }]}>
-                    {t('daysUsed')}
-                  </Text>
+              {/* Row 1: Days Used */}
+              <TouchableOpacity
+                style={[styles.schengenItemFull, { backgroundColor: colors.warning + '15' }]}
+                onPress={() => setShowSchengenModal(true)}
+              >
+                <View style={styles.schengenItemRow}>
+                  <View style={styles.schengenItemLeft}>
+                    <Text style={[styles.schengenValue, { color: colors.warning }]}>
+                      {schengenStatus.daysUsedInPeriod}
+                    </Text>
+                    <Text style={[styles.schengenLabel, { color: colors.textSecondary }]}>
+                      {t('daysUsed')}
+                    </Text>
+                  </View>
                   <View style={[styles.detailsBadge, { backgroundColor: colors.primary + '20' }]}>
                     <Text style={[styles.detailsBadgeText, { color: colors.primary }]}>
                       {t('details')}
                     </Text>
                   </View>
-                </TouchableOpacity>
-                <View style={[styles.schengenItem, { backgroundColor: colors.success + '15' }]}>
-                  <Text style={[styles.schengenValue, { color: colors.success }]}>
-                    {schengenStatus.daysRemainingInPeriod}
-                  </Text>
-                  <Text style={[styles.schengenLabel, { color: colors.textSecondary }]}>
-                    {t('daysRemaining')}
+                </View>
+              </TouchableOpacity>
+
+              {/* Row 2: Days Remaining */}
+              <View style={[styles.schengenItemFull, { backgroundColor: colors.success + '15' }]}>
+                <View style={styles.schengenItemRow}>
+                  <View style={styles.schengenItemLeft}>
+                    <Text style={[styles.schengenValue, { color: colors.success }]}>
+                      {schengenStatus.daysRemainingInPeriod}
+                    </Text>
+                    <Text style={[styles.schengenLabel, { color: colors.textSecondary }]}>
+                      {t('daysRemaining')}
+                    </Text>
+                  </View>
+                  <Text style={[styles.schengenOutOf, { color: colors.textSecondary }]}>
+                    / 90
                   </Text>
                 </View>
               </View>
+
+              {/* Row 3: Progress Bar */}
               <View style={[styles.progressContainer, { backgroundColor: colors.border }]}>
                 <View
                   style={[
@@ -542,6 +556,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
   },
+  schengenItemFull: {
+    padding: 16,
+    borderRadius: 12,
+  },
+  schengenItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  schengenItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   schengenItem: {
     flex: 1,
     padding: 16,
@@ -553,13 +581,15 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   schengenLabel: {
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: 14,
+  },
+  schengenOutOf: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   detailsBadge: {
-    marginTop: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 8,
   },
   detailsBadgeText: {
