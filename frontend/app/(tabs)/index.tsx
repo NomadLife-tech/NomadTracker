@@ -20,7 +20,6 @@ import { MiniMapCard } from '../../src/components/common/MiniMapCard';
 import { 
   TravelStreaksCard,
   CountryHeatmap,
-  GoalTrackerCard,
 } from '../../src/components/statistics';
 import { 
   isCurrentVisit, 
@@ -35,7 +34,6 @@ import {
 import {
   calculateTravelStreaks,
   calculateCountryHeatmap,
-  calculateGoalProgress,
 } from '../../src/utils/statisticsUtils';
 import { getCountryByCode } from '../../src/constants/countries';
 
@@ -52,7 +50,6 @@ export default function DashboardScreen() {
   const [showVisitsModal, setShowVisitsModal] = useState(false);
   const [showCountriesModal, setShowCountriesModal] = useState(false);
   const [showSchengenModal, setShowSchengenModal] = useState(false);
-  const [countryGoalTarget, setCountryGoalTarget] = useState(50);
 
   useFocusEffect(
     useCallback(() => {
@@ -96,10 +93,6 @@ export default function DashboardScreen() {
   const countryHeatmapData = useMemo(() => {
     return calculateCountryHeatmap(visits);
   }, [visits]);
-
-  const goalProgress = useMemo(() => {
-    return calculateGoalProgress(visits, countryGoalTarget);
-  }, [visits, countryGoalTarget]);
 
   // Active visas (visits with exit date in the future or no exit date)
   const activeVisas = useMemo(() => {
@@ -376,13 +369,6 @@ export default function DashboardScreen() {
 
         {/* Travel Streaks Card */}
         <TravelStreaksCard streaks={travelStreaks} t={t} />
-
-        {/* Country Goal Tracker */}
-        <GoalTrackerCard 
-          progress={goalProgress} 
-          onTargetChange={setCountryGoalTarget} 
-          t={t} 
-        />
 
         {/* Country Heatmap */}
         <CountryHeatmap data={countryHeatmapData} t={t} />
