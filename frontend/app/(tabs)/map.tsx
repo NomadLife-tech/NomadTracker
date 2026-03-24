@@ -545,31 +545,12 @@ export default function MapScreen() {
     );
   }
 
-  // Render Stats Header component
+  // Render Stats Header component - compact Days per Country only
   const renderStatsHeader = () => {
     if (sortedCountries.length === 0) return null;
     
     return (
       <View style={[styles.statsHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        {/* Summary Stats */}
-        <View style={styles.statsSummary}>
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.primary }]}>{sortedCountries.length}</Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('countries')}</Text>
-          </View>
-          <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.success }]}>{totalDays}</Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('days')}</Text>
-          </View>
-          <View style={[styles.statDivider, { backgroundColor: colors.border }]} />
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.warning }]}>{visits.length}</Text>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{t('visits')}</Text>
-          </View>
-        </View>
-        
-        {/* Heatmap Scroll */}
         <View style={styles.heatmapContainer}>
           <Text style={[styles.heatmapLabel, { color: colors.textSecondary }]}>
             {t('daysPerCountry') || 'Days per country'}
@@ -592,9 +573,6 @@ export default function MapScreen() {
                 >
                   <Text style={styles.heatmapFlag}>{item.country?.flag}</Text>
                   <Text style={[styles.heatmapDays, { color: heatColor }]}>{item.totalDays}</Text>
-                  <Text style={[styles.heatmapCountry, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {item.country?.name.length > 8 ? item.country?.name.substring(0, 7) + '…' : item.country?.name}
-                  </Text>
                   {item.hasActive && (
                     <View style={[styles.heatmapActiveDot, { backgroundColor: colors.success }]} />
                   )}
@@ -689,82 +667,51 @@ const styles = StyleSheet.create({
   webview: {
     flex: 1,
   },
-  // Stats Header Styles
+  // Stats Header Styles - Compact
   statsHeader: {
-    paddingTop: 8,
-    paddingBottom: 12,
+    paddingTop: 4,
+    paddingBottom: 6,
     borderBottomWidth: 1,
   },
-  statsSummary: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    gap: 16,
-  },
-  statItem: {
-    alignItems: 'center',
-    minWidth: 60,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  statLabel: {
-    fontSize: 11,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    marginTop: 2,
-  },
-  statDivider: {
-    width: 1,
-    height: 32,
-  },
   heatmapContainer: {
-    marginTop: 8,
+    marginTop: 0,
   },
   heatmapLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    paddingHorizontal: 16,
-    marginBottom: 8,
+    paddingHorizontal: 12,
+    marginBottom: 4,
   },
   heatmapScroll: {
-    paddingHorizontal: 12,
-    gap: 8,
+    paddingHorizontal: 8,
+    gap: 6,
   },
   heatmapCard: {
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    minWidth: 64,
+    paddingVertical: 4,
+    paddingHorizontal: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    minWidth: 44,
     position: 'relative',
   },
   heatmapFlag: {
-    fontSize: 20,
+    fontSize: 14,
   },
   heatmapDays: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: '700',
-    marginTop: 2,
-  },
-  heatmapCountry: {
-    fontSize: 10,
-    fontWeight: '500',
     marginTop: 1,
   },
   heatmapActiveDot: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    top: 2,
+    right: 2,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   // Empty State Styles
   emptyWrapper: {
