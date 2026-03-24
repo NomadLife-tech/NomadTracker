@@ -115,7 +115,7 @@ export default function CalendarScreen() {
             </Text>
             <Text style={[
               styles.dayNumber,
-              isSelected && styles.selectedDayText,
+              { color: isSelected ? '#FFFFFF' : colors.textSecondary },
               isToday && !isSelected && { color: colors.primary },
               isDisabled && { color: colors.textSecondary + '40' },
             ]}>
@@ -151,13 +151,39 @@ export default function CalendarScreen() {
         style={[styles.calendar, { backgroundColor: colors.card }]}
         theme={{
           calendarBackground: colors.card,
+          backgroundColor: colors.card,
           textSectionTitleColor: colors.textSecondary,
           arrowColor: colors.primary,
           monthTextColor: colors.text,
+          dayTextColor: colors.text,
+          textDisabledColor: colors.textSecondary + '40',
+          todayTextColor: colors.primary,
+          selectedDayBackgroundColor: colors.primary,
+          selectedDayTextColor: '#FFFFFF',
           textMonthFontWeight: '700',
           textDayHeaderFontWeight: '600',
           textMonthFontSize: 18,
           textDayHeaderFontSize: 13,
+          'stylesheet.calendar.main': {
+            container: {
+              backgroundColor: colors.card,
+            },
+            week: {
+              marginVertical: 2,
+              flexDirection: 'row',
+              justifyContent: 'space-around',
+              backgroundColor: colors.card,
+            },
+          },
+          'stylesheet.day.basic': {
+            base: {
+              width: 44,
+              height: 44,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: colors.card,
+            },
+          },
         }}
         dayComponent={({ date, state }) => renderDay(date, state)}
         onDayPress={handleDayPress}
@@ -315,7 +341,6 @@ const styles = StyleSheet.create({
   dayNumber: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#666',
   },
   normalDayContent: {
     alignItems: 'center',
