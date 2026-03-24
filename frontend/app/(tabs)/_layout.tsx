@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   headerLogo: {
-    width: 220,
-    height: 40,
+    width: 380,
+    height: 56,
   },
 });
