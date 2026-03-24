@@ -271,17 +271,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Clear all data
   const clearAllData = useCallback(async () => {
+    console.log('[AppContext] clearAllData called');
     setIsLoading(true);
     try {
       // Clear storage and reinitialize with defaults
+      console.log('[AppContext] Calling storage.clearAllData()...');
       await storage.clearAllData();
+      console.log('[AppContext] storage.clearAllData() completed');
       
       // Reload fresh data from storage (which now has defaults)
+      console.log('[AppContext] Reloading fresh data from storage...');
       const [freshVisits, freshProfile, freshSettings] = await Promise.all([
         storage.getVisits(),
         storage.getProfile(),
         storage.getSettings(),
       ]);
+      
+      console.log('[AppContext] Fresh data loaded:', {
+        visitsCount: freshVisits.length,
+        profilePassports: freshProfile.passports?.length || 0,
+        profileInsurances: freshProfile.insurances?.length || 0,
+      });
       
       // Update state with fresh data from storage
       setVisits(freshVisits);
@@ -299,7 +309,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       
       console.log('[AppContext] All data cleared successfully');
     } catch (error) {
-      console.error('Failed to clear data:', error);
+      console.error('[AppContext] Failed to clear data:', error);
       throw error;
     } finally {
       setIsLoading(false);

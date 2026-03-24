@@ -144,8 +144,46 @@ export async function importAllData(jsonString: string): Promise<boolean> {
   }
 }
 
-// Clear all data
+// Clear all data - explicitly remove each key
 export async function clearAllData(): Promise<void> {
-  await universalStorage.clear();
-  await initializeStorage();
+  console.log('[Storage] Starting clearAllData...');
+  
+  // Explicitly remove each key instead of relying on clear()
+  try {
+    await universalStorage.removeItem(STORAGE_KEYS.VERSION);
+    console.log('[Storage] Removed VERSION key');
+  } catch (e) {
+    console.error('[Storage] Error removing VERSION:', e);
+  }
+  
+  try {
+    await universalStorage.removeItem(STORAGE_KEYS.VISITS);
+    console.log('[Storage] Removed VISITS key');
+  } catch (e) {
+    console.error('[Storage] Error removing VISITS:', e);
+  }
+  
+  try {
+    await universalStorage.removeItem(STORAGE_KEYS.PROFILE);
+    console.log('[Storage] Removed PROFILE key');
+  } catch (e) {
+    console.error('[Storage] Error removing PROFILE:', e);
+  }
+  
+  try {
+    await universalStorage.removeItem(STORAGE_KEYS.SETTINGS);
+    console.log('[Storage] Removed SETTINGS key');
+  } catch (e) {
+    console.error('[Storage] Error removing SETTINGS:', e);
+  }
+  
+  console.log('[Storage] All keys removed, re-initializing...');
+  
+  // Re-initialize with defaults
+  await universalStorage.setItem(STORAGE_KEYS.VERSION, CURRENT_VERSION);
+  await universalStorage.setItem(STORAGE_KEYS.VISITS, JSON.stringify([]));
+  await universalStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(getDefaultProfile()));
+  await universalStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(getDefaultSettings()));
+  
+  console.log('[Storage] clearAllData completed successfully');
 }
