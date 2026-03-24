@@ -13,7 +13,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { PieChart } from 'react-native-chart-kit';
+import { PieChart } from 'react-native-gifted-charts';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
 import { MiniMapCard } from '../../src/components/common/MiniMapCard';
@@ -93,16 +93,34 @@ export default function DashboardScreen() {
     return getDaysByCountryForYear(visits, selectedYear);
   }, [visits, selectedYear]);
 
-  // Transform data for PieChart component
+  // Transform data for modern 3D Pie Chart (gifted-charts format)
   const pieChartData = useMemo(() => {
-    return rawPieData.map((item) => ({
-      name: item.country,
-      population: item.days,
-      color: item.color,
-      legendFontColor: colors.textSecondary,
-      legendFontSize: 12,
+    // Enhanced colors with gradients for 3D effect
+    const enhancedColors = [
+      { front: '#FF6B6B', gradient: '#FF8E8E' },
+      { front: '#4ECDC4', gradient: '#7EDDD6' },
+      { front: '#45B7D1', gradient: '#75CCE0' },
+      { front: '#96CEB4', gradient: '#B5DEC9' },
+      { front: '#FFEAA7', gradient: '#FFF3C4' },
+      { front: '#DDA0DD', gradient: '#E8C0E8' },
+      { front: '#98D8C8', gradient: '#B8E8DC' },
+      { front: '#F7DC6F', gradient: '#FAE99F' },
+    ];
+    
+    return rawPieData.map((item, index) => ({
+      value: item.days,
+      color: enhancedColors[index % enhancedColors.length].front,
+      gradientCenterColor: enhancedColors[index % enhancedColors.length].gradient,
+      text: `${item.days}`,
+      textColor: '#FFFFFF',
+      textSize: 12,
+      shiftTextX: 0,
+      focused: index === 0,
+      // Store additional data for legend
+      countryCode: item.countryCode,
+      countryName: item.country,
     }));
-  }, [rawPieData, colors.textSecondary]);
+  }, [rawPieData]);
 
   // Calculate total days for the year
   const totalDaysInYear = useMemo(() => {
@@ -252,43 +270,49 @@ export default function DashboardScreen() {
 
           {pieChartData.length > 0 ? (
             <View style={styles.pieChartWrapper}>
-              {/* Total Days Badge */}
-              <View style={styles.totalDaysBadge}>
-                <Text style={[styles.totalDaysValue, { color: colors.text }]}>{totalDaysInYear}</Text>
-                <Text style={[styles.totalDaysLabel, { color: colors.textSecondary }]}>Total Days</Text>
+              {/* Modern 3D Pie Chart */}
+              <View style={styles.chartContainer}>
+                <PieChart
+                  data={pieChartData}
+                  donut
+                  showGradient
+                  sectionAutoFocus
+                  focusOnPress
+                  radius={90}
+                  innerRadius={55}
+                  innerCircleColor={colors.card}
+                  centerLabelComponent={() => (
+                    <View style={styles.centerLabel}>
+                      <Text style={[styles.centerValue, { color: colors.text }]}>{totalDaysInYear}</Text>
+                      <Text style={[styles.centerTitle, { color: colors.textSecondary }]}>Days</Text>
+                    </View>
+                  )}
+                  showText
+                  textColor="#FFFFFF"
+                  textSize={11}
+                  fontWeight="600"
+                  showValuesAsLabels
+                  labelsPosition="outward"
+                />
               </View>
 
-              {/* Pie Chart */}
-              <PieChart
-                data={pieChartData}
-                width={screenWidth - 64}
-                height={180}
-                chartConfig={{
-                  color: (opacity = 1) => `rgba(0, 0, 0, ${opacity})`,
-                  labelColor: (opacity = 1) => colors.textSecondary,
-                }}
-                accessor="population"
-                backgroundColor="transparent"
-                paddingLeft="0"
-                absolute={false}
-                hasLegend={false}
-                center={[(screenWidth - 64) / 4, 0]}
-              />
-
-              {/* Custom Legend */}
+              {/* Custom Legend with Flags */}
               <View style={styles.legendContainer}>
-                {rawPieData.map((item) => (
-                  <View key={item.countryCode} style={styles.legendItem}>
-                    <View style={[styles.legendColor, { backgroundColor: item.color }]} />
-                    <Text style={styles.legendFlag}>{getCountryByCode(item.countryCode)?.flag}</Text>
-                    <Text style={[styles.legendCountry, { color: colors.text }]} numberOfLines={1}>
-                      {item.country}
-                    </Text>
-                    <Text style={[styles.legendDays, { color: colors.textSecondary }]}>
-                      {item.days}d
-                    </Text>
-                  </View>
-                ))}
+                {rawPieData.map((item, index) => {
+                  const enhancedColors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8', '#F7DC6F'];
+                  return (
+                    <View key={item.countryCode} style={styles.legendItem}>
+                      <View style={[styles.legendColor, { backgroundColor: enhancedColors[index % enhancedColors.length] }]} />
+                      <Text style={styles.legendFlag}>{getCountryByCode(item.countryCode)?.flag}</Text>
+                      <Text style={[styles.legendCountry, { color: colors.text }]} numberOfLines={1}>
+                        {item.country}
+                      </Text>
+                      <Text style={[styles.legendDays, { color: colors.textSecondary }]}>
+                        {item.days}d
+                      </Text>
+                    </View>
+                  );
+                })}
               </View>
             </View>
           ) : (
@@ -563,7 +587,30 @@ const styles = StyleSheet.create({
   },
   pieChartWrapper: {
     alignItems: 'center',
-    marginTop: 8,
+    marginTop: 16,
+  },
+  chartContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  centerLabel: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  centerValue: {
+    fontSize: 28,
+    fontWeight: '800',
+  },
+  centerTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    marginTop: -2,
   },
   totalDaysBadge: {
     position: 'absolute',
