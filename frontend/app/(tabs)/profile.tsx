@@ -79,6 +79,25 @@ export default function ProfileScreen() {
     await updateProfile({ ...profile, [field]: value });
   };
 
+  const handleSaveProfile = async () => {
+    try {
+      await updateProfile(profile);
+      showToast(t('profileSaved'), 'success');
+    } catch (error) {
+      showToast(t('error'), 'error');
+    }
+  };
+
+  const handleSaveSettings = async () => {
+    try {
+      // Settings are already being saved via setDarkMode and setLanguage
+      // This button provides explicit confirmation to the user
+      showToast(t('settingsSaved'), 'success');
+    } catch (error) {
+      showToast(t('error'), 'error');
+    }
+  };
+
   const handleAvatarSelect = async (avatar: string) => {
     await updateProfile({ ...profile, avatar, avatarType: 'preset' });
     setShowAvatarModal(false);
@@ -543,6 +562,15 @@ export default function ProfileScreen() {
               placeholderTextColor={colors.textSecondary}
             />
           </View>
+
+          {/* Save Profile Button */}
+          <TouchableOpacity
+            style={[styles.saveButton, { backgroundColor: colors.primary }]}
+            onPress={handleSaveProfile}
+          >
+            <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+            <Text style={styles.saveButtonText}>{t('saveProfile')}</Text>
+          </TouchableOpacity>
         </View>
 
         {/* App Settings */}
@@ -574,6 +602,15 @@ export default function ProfileScreen() {
               </Text>
               <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </View>
+          </TouchableOpacity>
+
+          {/* Save App Settings Button */}
+          <TouchableOpacity
+            style={[styles.saveButton, { backgroundColor: colors.success }]}
+            onPress={handleSaveSettings}
+          >
+            <Ionicons name="settings" size={20} color="#FFFFFF" />
+            <Text style={styles.saveButtonText}>{t('saveSettings')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -1374,6 +1411,20 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   dataButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 14,
+    borderRadius: 12,
+    marginTop: 16,
+    gap: 8,
+  },
+  saveButtonText: {
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 16,
