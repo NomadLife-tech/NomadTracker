@@ -9,6 +9,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -117,8 +119,9 @@ async function scheduleOneTimeNotification(
       sound: true,
     },
     trigger: {
+      type: 'date',
       date: notificationDate,
-    },
+    } as Notifications.NotificationTriggerInput,
   });
 }
 
@@ -145,8 +148,9 @@ async function scheduleDailyNotifications(
         sound: dayCount === 0, // Only sound on first notification
       },
       trigger: {
+        type: 'date',
         date: currentDate,
-      },
+      } as Notifications.NotificationTriggerInput,
     });
 
     currentDate.setDate(currentDate.getDate() + 1);
@@ -177,8 +181,9 @@ async function scheduleWeeklyNotifications(
         sound: true,
       },
       trigger: {
+        type: 'date',
         date: currentDate,
-      },
+      } as Notifications.NotificationTriggerInput,
     });
 
     currentDate.setDate(currentDate.getDate() + 7);
