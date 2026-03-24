@@ -386,7 +386,7 @@ export default function ProfileScreen() {
       if (Platform.OS !== 'web') {
         try {
           const base64Data = await FileSystem.readAsStringAsync(file.uri, {
-            encoding: FileSystem.EncodingType.Base64,
+            encoding: 'base64' as any,
           });
           uri = `data:${file.mimeType};base64,${base64Data}`;
         } catch (e) {
