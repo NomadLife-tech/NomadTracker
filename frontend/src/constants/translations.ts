@@ -29,6 +29,8 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     clearAllData: 'Clear All Data',
     confirmClearData: 'This will permanently delete all your data. This cannot be undone.',
     clearData: 'Clear Data',
+    dataClearedSuccess: 'All data cleared successfully',
+    dataClearFailed: 'Failed to clear data',
     activeVisits: 'Active Visits',
     activeVisas: 'Active Visas',
     noActiveVisas: 'No active visas to display',

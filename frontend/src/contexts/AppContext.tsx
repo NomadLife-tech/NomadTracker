@@ -36,6 +36,7 @@ interface AppContextType {
   
   // Data management
   refreshAll: () => Promise<void>;
+  clearAllData: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -268,6 +269,41 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Clear all data
+  const clearAllData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      // Clear storage
+      await storage.clearAllData();
+      
+      // Reset state to defaults
+      setVisits([]);
+      setProfile({
+        id: '1',
+        firstName: '',
+        lastName: '',
+        avatar: '🌍',
+        avatarType: 'preset',
+        passports: [],
+        insurances: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      // Keep current settings but reset some values
+      setSettings(prev => ({
+        ...prev,
+        cloudSaveEnabled: false,
+      }));
+      
+      console.log('[AppContext] All data cleared successfully');
+    } catch (error) {
+      console.error('Failed to clear data:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   const value: AppContextType = {
     visits,
     profile,
@@ -284,6 +320,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setLanguage,
     t,
     refreshAll,
+    clearAllData,
   };
 
   return (
