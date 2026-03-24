@@ -106,12 +106,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     // Enqueue sync operation if cloud sync is enabled
     if (settings.cloudSaveEnabled) {
-      await syncQueue.enqueue({
-        type: 'CREATE',
-        entity: 'visit',
-        data: visit,
-        timestamp: new Date(),
-      });
+      try {
+        await syncQueue.enqueue({
+          type: 'CREATE',
+          entity: 'visit',
+          data: visit,
+          timestamp: new Date(),
+        });
+      } catch (err) {
+        console.warn('[Sync] Failed to enqueue:', err);
+      }
     }
     
     // Reschedule notifications when visits change
@@ -131,12 +135,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     // Enqueue sync operation if cloud sync is enabled
     if (settings.cloudSaveEnabled) {
-      await syncQueue.enqueue({
-        type: 'UPDATE',
-        entity: 'visit',
-        data: visit,
-        timestamp: new Date(),
-      });
+      try {
+        await syncQueue.enqueue({
+          type: 'UPDATE',
+          entity: 'visit',
+          data: visit,
+          timestamp: new Date(),
+        });
+      } catch (err) {
+        console.warn('[Sync] Failed to enqueue:', err);
+      }
     }
     
     // Reschedule notifications when visits change
@@ -156,12 +164,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     
     // Enqueue sync operation if cloud sync is enabled
     if (settings.cloudSaveEnabled) {
-      await syncQueue.enqueue({
-        type: 'DELETE',
-        entity: 'visit',
-        data: { id: visitId },
-        timestamp: new Date(),
-      });
+      try {
+        await syncQueue.enqueue({
+          type: 'DELETE',
+          entity: 'visit',
+          data: { id: visitId },
+          timestamp: new Date(),
+        });
+      } catch (err) {
+        console.warn('[Sync] Failed to enqueue:', err);
+      }
     }
     
     // Reschedule notifications when visits change

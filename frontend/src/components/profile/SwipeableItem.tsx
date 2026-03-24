@@ -22,7 +22,8 @@ export function SwipeableItem({ children, onDelete, onPress }: SwipeableItemProp
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > 10;
+        // Only capture swipe gestures, not taps
+        return Math.abs(gestureState.dx) > 15 && Math.abs(gestureState.dy) < 10;
       },
       onPanResponderMove: (_, gestureState) => {
         if (gestureState.dx < 0) {
@@ -52,14 +53,26 @@ export function SwipeableItem({ children, onDelete, onPress }: SwipeableItemProp
     }).start();
   };
 
+  const handlePress = () => {
+    console.log('[SwipeableItem] Press detected');
+    if (onPress) {
+      onPress();
+    }
+  };
+
+  const handleDelete = () => {
+    console.log('[SwipeableItem] Delete pressed');
+    closeSwipe();
+    if (onDelete) {
+      onDelete();
+    }
+  };
+
   return (
     <View style={styles.container}>
       <TouchableOpacity
         style={[styles.deleteAction, { backgroundColor: colors.danger }]}
-        onPress={() => {
-          closeSwipe();
-          onDelete();
-        }}
+        onPress={handleDelete}
       >
         <Ionicons name="trash" size={22} color="#FFFFFF" />
       </TouchableOpacity>
@@ -69,7 +82,7 @@ export function SwipeableItem({ children, onDelete, onPress }: SwipeableItemProp
       >
         <TouchableOpacity
           style={[styles.item, { backgroundColor: colors.background }]}
-          onPress={onPress}
+          onPress={handlePress}
           activeOpacity={0.7}
         >
           {children}

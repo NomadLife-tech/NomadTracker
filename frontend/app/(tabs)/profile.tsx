@@ -287,9 +287,15 @@ export default function ProfileScreen() {
   };
 
   const deletePassport = async (passportId: string) => {
-    const updatedPassports = profile.passports.filter(p => p.id !== passportId);
-    await updateProfile({ ...profile, passports: updatedPassports });
-    showToast(t('success'), 'success');
+    try {
+      console.log('[Profile] Deleting passport:', passportId);
+      const updatedPassports = profile.passports.filter(p => p.id !== passportId);
+      await updateProfile({ ...profile, passports: updatedPassports });
+      showToast(t('success'), 'success');
+    } catch (error) {
+      console.error('Error deleting passport:', error);
+      showToast(t('errorSavingData') || 'Error deleting data', 'error');
+    }
   };
 
   // ─────────────────────────────────────────────────────────────────────
@@ -348,9 +354,15 @@ export default function ProfileScreen() {
   };
 
   const deleteInsurance = async (insuranceId: string) => {
-    const updatedInsurances = profile.insurances.filter(i => i.id !== insuranceId);
-    await updateProfile({ ...profile, insurances: updatedInsurances });
-    showToast(t('success'), 'success');
+    try {
+      console.log('[Profile] Deleting insurance:', insuranceId);
+      const updatedInsurances = profile.insurances.filter(i => i.id !== insuranceId);
+      await updateProfile({ ...profile, insurances: updatedInsurances });
+      showToast(t('success'), 'success');
+    } catch (error) {
+      console.error('Error deleting insurance:', error);
+      showToast(t('errorSavingData') || 'Error deleting data', 'error');
+    }
   };
 
   // ─────────────────────────────────────────────────────────────────────
