@@ -15,7 +15,6 @@ import {
   Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -99,11 +98,11 @@ export default function ProfileScreen() {
   const [insuranceNotes, setInsuranceNotes] = useState('');
   const [insuranceAttachments, setInsuranceAttachments] = useState<Attachment[]>([]);
 
-  useFocusEffect(
-    useCallback(() => {
-      refreshAll();
-    }, [])
-  );
+  // Removed useFocusEffect that was causing race condition:
+  // - When user saves data, state updates correctly
+  // - But useFocusEffect would immediately call refreshAll() 
+  // - This overwrote the just-saved state with old data from storage
+  // - AppContext already handles data loading on init, no need for refresh on focus
 
   // ─────────────────────────────────────────────────────────────────────
   // Profile Handlers

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,7 @@ import {
   Dimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { PieChart } from 'react-native-gifted-charts';
 import { useTheme } from '../../src/contexts/ThemeContext';
@@ -49,11 +49,8 @@ export default function DashboardScreen() {
   const [showCountriesModal, setShowCountriesModal] = useState(false);
   const [showSchengenModal, setShowSchengenModal] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      refreshAll();
-    }, [])
-  );
+  // Note: Removed useFocusEffect with refreshAll() that caused race condition
+  // AppContext already manages state updates properly
 
   const onRefresh = async () => {
     setRefreshing(true);

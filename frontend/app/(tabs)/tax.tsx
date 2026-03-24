@@ -1,7 +1,6 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
@@ -16,11 +15,8 @@ export default function TaxScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-  useFocusEffect(
-    useCallback(() => {
-      refreshVisits();
-    }, [])
-  );
+  // Note: Removed useFocusEffect with refreshVisits() that caused race condition
+  // AppContext already manages state updates properly
 
   const onRefresh = async () => {
     setRefreshing(true);

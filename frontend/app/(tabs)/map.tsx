@@ -1,7 +1,7 @@
-import React, { useCallback, useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { View, StyleSheet, Platform, Text, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
@@ -68,11 +68,8 @@ export default function MapScreen() {
   const router = useRouter();
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  useFocusEffect(
-    useCallback(() => {
-      refreshVisits();
-    }, [])
-  );
+  // Note: Removed useFocusEffect with refreshVisits() that caused race condition
+  // AppContext already manages state updates properly
 
   // Group visits by country with latest visit info
   const countryVisits = useMemo(() => {

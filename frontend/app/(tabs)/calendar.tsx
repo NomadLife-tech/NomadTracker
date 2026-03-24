@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Calendar } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/contexts/ThemeContext';
@@ -19,11 +19,8 @@ export default function CalendarScreen() {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      refreshVisits();
-    }, [])
-  );
+  // Note: Removed useFocusEffect with refreshVisits() that caused race condition
+  // AppContext already manages state updates properly
 
   // Generate marked dates with flag info for custom rendering
   const markedDates = useMemo(() => {
