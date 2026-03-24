@@ -69,7 +69,11 @@ export default function AddVisitScreen() {
     : COUNTRIES;
 
   const handleSave = async () => {
+    console.log('handleSave called');
+    console.log('Form state:', { countryCode, entryDate, visaType });
+    
     if (!countryCode || !entryDate || !visaType) {
+      console.log('Validation failed - missing required fields');
       showToast(t('error'), 'error');
       return;
     }
@@ -90,9 +94,9 @@ export default function AddVisitScreen() {
         updatedAt: new Date().toISOString(),
       };
 
-      console.log('Saving visit:', visit);
+      console.log('Saving visit:', JSON.stringify(visit));
       await addVisit(visit);
-      console.log('Visit saved successfully');
+      console.log('Visit saved successfully, navigating back');
       showToast(t('success'), 'success');
       router.back();
     } catch (error) {

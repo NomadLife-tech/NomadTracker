@@ -119,9 +119,9 @@ async function scheduleOneTimeNotification(
       sound: true,
     },
     trigger: {
-      type: 'date',
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: notificationDate,
-    } as Notifications.NotificationTriggerInput,
+    },
   });
 }
 
@@ -148,9 +148,9 @@ async function scheduleDailyNotifications(
         sound: dayCount === 0, // Only sound on first notification
       },
       trigger: {
-        type: 'date',
-        date: currentDate,
-      } as Notifications.NotificationTriggerInput,
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: new Date(currentDate),
+      },
     });
 
     currentDate.setDate(currentDate.getDate() + 1);
@@ -181,9 +181,9 @@ async function scheduleWeeklyNotifications(
         sound: true,
       },
       trigger: {
-        type: 'date',
-        date: currentDate,
-      } as Notifications.NotificationTriggerInput,
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: new Date(currentDate),
+      },
     });
 
     currentDate.setDate(currentDate.getDate() + 7);
