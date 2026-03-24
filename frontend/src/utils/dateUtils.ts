@@ -108,12 +108,24 @@ export function calculateDaysInCountry(entryDate: string, exitDate?: string): nu
   return differenceInDays(exit, entry) + 1; // +1 to include entry day
 }
 
-// Check if visit is currently active
+// Check if visit is currently active (user is currently in the country)
 export function isCurrentVisit(visit: Visit): boolean {
-  if (visit.exitDate) {
+  const today = startOfDay(new Date());
+  const entryDate = startOfDay(new Date(visit.entryDate));
+  
+  // Entry date must be today or in the past
+  if (entryDate > today) {
     return false;
   }
-  return true;
+  
+  // If no exit date, the visit is ongoing
+  if (!visit.exitDate) {
+    return true;
+  }
+  
+  // If exit date is today or in the future, still active
+  const exitDate = startOfDay(new Date(visit.exitDate));
+  return exitDate >= today;
 }
 
 // Get visa status with all calculated fields
