@@ -143,6 +143,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     visaExpirationAlerts: 'Visa Expiration Alerts',
     enableAlerts: 'Enable Alerts',
     alertDaysBefore: 'Alert Days Before Expiration',
+    customRange: 'Custom Range',
     customDays: 'Custom Days',
     enterDays: 'Enter days',
     daysBefore: 'days before expiration',

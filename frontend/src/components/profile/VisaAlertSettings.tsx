@@ -1,10 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Switch, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../contexts/ThemeContext';
 import { AppSettings } from '../../types';
 
-const ALERT_DAY_OPTIONS = [90, 60, 30, 15, 10, 7];
+const ALERT_DAY_OPTIONS = [90, 60, 30, 15, 10, 7, 5, 3, 2, 1];
 
 interface VisaAlertSettingsProps {
   visaAlertsEnabled: boolean;
@@ -93,6 +93,25 @@ export function VisaAlertSettings({
                 </TouchableOpacity>
               ))}
             </View>
+            
+            {/* Custom Range Input */}
+            <View style={styles.customRangeContainer}>
+              <Text style={[styles.customRangeLabel, { color: colors.textSecondary }]}>
+                {t('customRange') || 'Custom Range'}
+              </Text>
+              <View style={[styles.customInputWrapper, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                <TextInput
+                  style={[styles.customInput, { color: colors.text }]}
+                  value={customAlertDays}
+                  onChangeText={onCustomDaysChange}
+                  keyboardType="number-pad"
+                  placeholder="0"
+                  placeholderTextColor={colors.textSecondary}
+                  maxLength={3}
+                />
+                <Text style={[styles.customInputSuffix, { color: colors.textSecondary }]}>d</Text>
+              </View>
+            </View>
           </View>
 
           {/* Alert Frequency */}
@@ -173,5 +192,39 @@ const styles = StyleSheet.create({
   dayChipText: {
     fontSize: 14,
     fontWeight: '600',
+  },
+  customRangeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(128, 128, 128, 0.2)',
+  },
+  customRangeLabel: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  customInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    minWidth: 70,
+  },
+  customInput: {
+    fontSize: 16,
+    fontWeight: '600',
+    minWidth: 36,
+    textAlign: 'center',
+    paddingVertical: 2,
+  },
+  customInputSuffix: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 2,
   },
 });
