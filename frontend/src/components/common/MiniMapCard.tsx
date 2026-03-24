@@ -57,7 +57,7 @@ const COUNTRY_COORDS: { [key: string]: [number, number] } = {
 };
 
 export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCardProps) {
-  const { colors, isDarkMode } = useTheme();
+  const { colors, isDark } = useTheme();
   const [isOverlayVisible, setIsOverlayVisible] = useState(true);
   
   const activeVisitStatus = useMemo(() => {
@@ -277,8 +277,8 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
   };
 
   // Dark mode compliant overlay colors
-  const cardBgColor = isDarkMode ? 'rgba(28, 28, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)';
-  const badgeBgColor = isDarkMode ? 'rgba(28, 28, 30, 0.9)' : 'rgba(255, 255, 255, 0.9)';
+  const cardBgColor = isDark ? 'rgba(28, 28, 30, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+  const badgeBgColor = isDark ? 'rgba(28, 28, 30, 0.9)' : 'rgba(255, 255, 255, 0.9)';
 
   if (activeVisit && activeVisitStatus) {
     return (
