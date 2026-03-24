@@ -29,9 +29,11 @@ export function InsuranceCard({ insurance, onEdit, onDelete, t }: InsuranceCardP
           />
         </View>
         <View style={styles.info}>
-          <Text style={[styles.title, { color: colors.text }]}>{insurance.provider}</Text>
+          <Text style={[styles.title, { color: colors.text }]}>
+            {insurance.provider || t('insurance') || 'Insurance'}
+          </Text>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            {t(insurance.type)} • {insurance.policyNumber}
+            {t(insurance.type)}{insurance.policyNumber ? ` • ${insurance.policyNumber}` : ''}
           </Text>
           {insurance.phone && (
             <View style={styles.phoneRow}>

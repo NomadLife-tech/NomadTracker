@@ -16,22 +16,34 @@ interface PassportCardProps {
 
 export function PassportCard({ passport, onEdit, onDelete, t }: PassportCardProps) {
   const { colors } = useTheme();
-  const country = getCountryByCode(passport.countryCode);
+  const country = passport.countryCode ? getCountryByCode(passport.countryCode) : null;
   
-  // Calculate expiry status
-  const expiryDate = new Date(passport.expiryDate);
+  // Safely calculate expiry status - handle empty or invalid dates
+  const hasValidExpiryDate = passport.expiryDate && passport.expiryDate.length > 0;
+  const expiryDate = hasValidExpiryDate ? new Date(passport.expiryDate) : null;
+  const isValidDate = expiryDate && !isNaN(expiryDate.getTime());
+  
   const today = new Date();
-  const daysUntilExpiry = Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  const isExpiringSoon = daysUntilExpiry <= 180 && daysUntilExpiry > 0;
-  const isExpired = daysUntilExpiry <= 0;
+  const daysUntilExpiry = isValidDate 
+    ? Math.ceil((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+  const isExpiringSoon = daysUntilExpiry !== null && daysUntilExpiry <= 180 && daysUntilExpiry > 0;
+  const isExpired = daysUntilExpiry !== null && daysUntilExpiry <= 0;
+
+  // Format expiry date safely
+  const formattedExpiryDate = isValidDate 
+    ? formatDate(passport.expiryDate, 'MMM d, yyyy')
+    : null;
 
   return (
     <SwipeableItem onDelete={onDelete} onPress={onEdit}>
       <View style={styles.content}>
-        <Text style={styles.flag}>{country?.flag}</Text>
+        <Text style={styles.flag}>{country?.flag || '🌍'}</Text>
         <View style={styles.info}>
           <View style={styles.header}>
-            <Text style={[styles.title, { color: colors.text }]}>{country?.name}</Text>
+            <Text style={[styles.title, { color: colors.text }]}>
+              {country?.name || passport.countryName || t('noCountry') || 'Passport'}
+            </Text>
             {isExpired && (
               <View style={[styles.badge, { backgroundColor: colors.danger }]}>
                 <Text style={styles.badgeText}>{t('expired')}</Text>
@@ -44,14 +56,16 @@ export function PassportCard({ passport, onEdit, onDelete, t }: PassportCardProp
             )}
           </View>
           <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-            {t(passport.type)} • {passport.passportNumber}
+            {t(passport.type)}{passport.passportNumber ? ` • ${passport.passportNumber}` : ''}
           </Text>
-          <View style={styles.expiryRow}>
-            <Ionicons name="calendar-outline" size={12} color={colors.textSecondary} />
-            <Text style={[styles.expiryText, { color: colors.textSecondary }]}>
-              {t('expires')}: {formatDate(passport.expiryDate, 'MMM d, yyyy')}
-            </Text>
-          </View>
+          {formattedExpiryDate && (
+            <View style={styles.expiryRow}>
+              <Ionicons name="calendar-outline" size={12} color={colors.textSecondary} />
+              <Text style={[styles.expiryText, { color: colors.textSecondary }]}>
+                {t('expires')}: {formattedExpiryDate}
+              </Text>
+            </View>
+          )}
         </View>
         <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
       </View>
