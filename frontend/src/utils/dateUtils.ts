@@ -295,9 +295,25 @@ export function generateCalendarMarks(visits: Visit[]): Record<string, any> {
 }
 
 // Format date for display
-export function formatDate(date: string | Date, formatStr: string = 'MMM d, yyyy'): string {
-  const d = typeof date === 'string' ? parseISO(date) : date;
-  return format(d, formatStr);
+export function formatDate(date: string | Date | undefined | null, formatStr: string = 'MMM d, yyyy'): string {
+  // Handle undefined, null, or empty string
+  if (!date || (typeof date === 'string' && date.trim() === '')) {
+    return '';
+  }
+  
+  try {
+    const d = typeof date === 'string' ? parseISO(date) : date;
+    
+    // Check if the date is valid
+    if (!d || isNaN(d.getTime())) {
+      return '';
+    }
+    
+    return format(d, formatStr);
+  } catch (error) {
+    console.warn('[formatDate] Invalid date:', date);
+    return '';
+  }
 }
 
 // Calculate tax residency days per country per year
