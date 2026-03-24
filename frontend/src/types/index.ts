@@ -14,6 +14,17 @@ export interface Visit {
   updatedAt: string;
 }
 
+// Attachment - File attachment with metadata
+export interface Attachment {
+  id: string;
+  name: string;
+  type: 'pdf' | 'jpg' | 'png';
+  mimeType: string;
+  size: number;                   // File size in bytes
+  uri: string;                    // Local URI or base64 data
+  createdAt: string;
+}
+
 // Passport - Travel document
 export interface Passport {
   id: string;
@@ -23,7 +34,8 @@ export interface Passport {
   passportNumber: string;
   issueDate: string;
   expiryDate: string;
-  documentAttachment?: string;   // base64 encoded image
+  attachments?: Attachment[];     // Multiple attachments (PDF, JPG, PNG)
+  documentAttachment?: string;    // Legacy: base64 encoded image
 }
 
 // Insurance - Health/travel coverage
@@ -34,7 +46,8 @@ export interface Insurance {
   policyNumber: string;
   phone?: string;
   notes?: string;
-  attachment?: string;           // base64 encoded image
+  attachments?: Attachment[];     // Multiple attachments (PDF, JPG, PNG)
+  attachment?: string;            // Legacy: base64 encoded image
 }
 
 // User Profile

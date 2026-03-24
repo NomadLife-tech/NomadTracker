@@ -13,15 +13,19 @@ import {
   PanResponder,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
+import * as FileSystem from 'expo-file-system';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
 import { useToast } from '../../src/contexts/ToastContext';
-import { Passport, Insurance, SupportedLanguage } from '../../src/types';
+import { Passport, Insurance, SupportedLanguage, Attachment } from '../../src/types';
 import { COUNTRIES, getCountryByCode } from '../../src/constants/countries';
 import { LANGUAGE_NAMES } from '../../src/constants/translations';
 import { DatePickerInput } from '../../src/components/common/DatePickerInput';
@@ -60,6 +64,10 @@ export default function ProfileScreen() {
   const [insurancePolicyNumber, setInsurancePolicyNumber] = useState('');
   const [insurancePhone, setInsurancePhone] = useState('');
   const [insuranceNotes, setInsuranceNotes] = useState('');
+
+  // Attachment states
+  const [passportAttachments, setPassportAttachments] = useState<Attachment[]>([]);
+  const [insuranceAttachments, setInsuranceAttachments] = useState<Attachment[]>([]);
 
   useFocusEffect(
     useCallback(() => {
@@ -104,6 +112,7 @@ export default function ProfileScreen() {
     setPassportNumber('');
     setPassportIssueDate(undefined);
     setPassportExpiryDate(undefined);
+    setPassportAttachments([]);
     setEditingPassport(null);
   };
 
@@ -113,7 +122,125 @@ export default function ProfileScreen() {
     setInsurancePolicyNumber('');
     setInsurancePhone('');
     setInsuranceNotes('');
+    setInsuranceAttachments([]);
     setEditingInsurance(null);
+  };
+
+  // Attachment picker function
+  const pickAttachment = async (type: 'passport' | 'insurance') => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf', 'image/jpeg', 'image/png'],
+        copyToCacheDirectory: true,
+      });
+
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const file = result.assets[0];
+      const fileExtension = file.name.split('.').pop()?.toLowerCase();
+      
+      // Validate file type
+      if (!['pdf', 'jpg', 'jpeg', 'png'].includes(fileExtension || '')) {
+        showToast('Only PDF, JPG, and PNG files are allowed', 'error');
+        return;
+      }
+
+      // Read file as base64 for storage
+      let uri = file.uri;
+      let base64Data = '';
+      
+      if (Platform.OS !== 'web') {
+        try {
+          base64Data = await FileSystem.readAsStringAsync(file.uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          uri = `data:${file.mimeType};base64,${base64Data}`;
+        } catch (e) {
+          // Fall back to URI if base64 fails
+          uri = file.uri;
+        }
+      }
+
+      const attachment: Attachment = {
+        id: uuidv4(),
+        name: file.name,
+        type: fileExtension === 'pdf' ? 'pdf' : fileExtension === 'png' ? 'png' : 'jpg',
+        mimeType: file.mimeType || 'application/octet-stream',
+        size: file.size || 0,
+        uri: uri,
+        createdAt: new Date().toISOString(),
+      };
+
+      if (type === 'passport') {
+        setPassportAttachments(prev => [...prev, attachment]);
+      } else {
+        setInsuranceAttachments(prev => [...prev, attachment]);
+      }
+      
+      showToast('File attached successfully', 'success');
+    } catch (error) {
+      console.error('Error picking document:', error);
+      showToast('Failed to attach file', 'error');
+    }
+  };
+
+  // Pick image from gallery
+  const pickImageAttachment = async (type: 'passport' | 'insurance') => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.7,
+        base64: true,
+      });
+
+      if (result.canceled || !result.assets[0]) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      const fileExtension = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
+      
+      const attachment: Attachment = {
+        id: uuidv4(),
+        name: `image_${Date.now()}.${fileExtension}`,
+        type: fileExtension === 'png' ? 'png' : 'jpg',
+        mimeType: fileExtension === 'png' ? 'image/png' : 'image/jpeg',
+        size: asset.fileSize || 0,
+        uri: asset.base64 ? `data:image/${fileExtension};base64,${asset.base64}` : asset.uri,
+        createdAt: new Date().toISOString(),
+      };
+
+      if (type === 'passport') {
+        setPassportAttachments(prev => [...prev, attachment]);
+      } else {
+        setInsuranceAttachments(prev => [...prev, attachment]);
+      }
+      
+      showToast('Image attached successfully', 'success');
+    } catch (error) {
+      console.error('Error picking image:', error);
+      showToast('Failed to attach image', 'error');
+    }
+  };
+
+  // Remove attachment
+  const removeAttachment = (type: 'passport' | 'insurance', attachmentId: string) => {
+    if (type === 'passport') {
+      setPassportAttachments(prev => prev.filter(a => a.id !== attachmentId));
+    } else {
+      setInsuranceAttachments(prev => prev.filter(a => a.id !== attachmentId));
+    }
+  };
+
+  // Format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
   };
 
   const openPassportModal = (passport?: Passport) => {
@@ -125,6 +252,7 @@ export default function ProfileScreen() {
       setPassportNumber(passport.passportNumber);
       setPassportIssueDate(new Date(passport.issueDate));
       setPassportExpiryDate(new Date(passport.expiryDate));
+      setPassportAttachments(passport.attachments || []);
     } else {
       resetPassportForm();
     }
@@ -139,6 +267,7 @@ export default function ProfileScreen() {
       setInsurancePolicyNumber(insurance.policyNumber);
       setInsurancePhone(insurance.phone || '');
       setInsuranceNotes(insurance.notes || '');
+      setInsuranceAttachments(insurance.attachments || []);
     } else {
       resetInsuranceForm();
     }
@@ -159,6 +288,7 @@ export default function ProfileScreen() {
       passportNumber,
       issueDate: passportIssueDate.toISOString(),
       expiryDate: passportExpiryDate.toISOString(),
+      attachments: passportAttachments,
     };
 
     let updatedPassports: Passport[];
@@ -195,6 +325,7 @@ export default function ProfileScreen() {
       policyNumber: insurancePolicyNumber,
       phone: insurancePhone || undefined,
       notes: insuranceNotes || undefined,
+      attachments: insuranceAttachments,
     };
 
     let updatedInsurances: Insurance[];
@@ -614,6 +745,62 @@ export default function ProfileScreen() {
                   onChange={setPassportExpiryDate}
                 />
 
+                {/* Attachments Section */}
+                <View style={styles.attachmentSection}>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                    Attachments (PDF, JPG, PNG)
+                  </Text>
+                  
+                  {/* Attachment List */}
+                  {passportAttachments.length > 0 && (
+                    <View style={styles.attachmentList}>
+                      {passportAttachments.map((attachment) => (
+                        <View key={attachment.id} style={[styles.attachmentItem, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                          <View style={[styles.attachmentIcon, { backgroundColor: attachment.type === 'pdf' ? '#FF3B30' : '#007AFF' }]}>
+                            <Ionicons 
+                              name={attachment.type === 'pdf' ? 'document' : 'image'} 
+                              size={18} 
+                              color="#FFFFFF" 
+                            />
+                          </View>
+                          <View style={styles.attachmentInfo}>
+                            <Text style={[styles.attachmentName, { color: colors.text }]} numberOfLines={1}>
+                              {attachment.name}
+                            </Text>
+                            <Text style={[styles.attachmentSize, { color: colors.textSecondary }]}>
+                              {formatFileSize(attachment.size)} • {attachment.type.toUpperCase()}
+                            </Text>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.removeAttachment}
+                            onPress={() => removeAttachment('passport', attachment.id)}
+                          >
+                            <Ionicons name="close-circle" size={22} color={colors.danger} />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Add Attachment Buttons */}
+                  <View style={styles.attachmentButtons}>
+                    <TouchableOpacity
+                      style={[styles.attachButton, { backgroundColor: colors.background, borderColor: colors.border }]}
+                      onPress={() => pickAttachment('passport')}
+                    >
+                      <Ionicons name="document-attach" size={20} color={colors.primary} />
+                      <Text style={[styles.attachButtonText, { color: colors.text }]}>Add File</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.attachButton, { backgroundColor: colors.background, borderColor: colors.border }]}
+                      onPress={() => pickImageAttachment('passport')}
+                    >
+                      <Ionicons name="camera" size={20} color={colors.primary} />
+                      <Text style={[styles.attachButtonText, { color: colors.text }]}>Add Photo</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
                 <TouchableOpacity
                   style={[styles.saveButton, { backgroundColor: colors.primary }]}
                   onPress={savePassport}
@@ -712,6 +899,62 @@ export default function ProfileScreen() {
                     multiline
                     numberOfLines={3}
                   />
+                </View>
+
+                {/* Attachments Section */}
+                <View style={styles.attachmentSection}>
+                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+                    Attachments (PDF, JPG, PNG)
+                  </Text>
+                  
+                  {/* Attachment List */}
+                  {insuranceAttachments.length > 0 && (
+                    <View style={styles.attachmentList}>
+                      {insuranceAttachments.map((attachment) => (
+                        <View key={attachment.id} style={[styles.attachmentItem, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                          <View style={[styles.attachmentIcon, { backgroundColor: attachment.type === 'pdf' ? '#FF3B30' : '#007AFF' }]}>
+                            <Ionicons 
+                              name={attachment.type === 'pdf' ? 'document' : 'image'} 
+                              size={18} 
+                              color="#FFFFFF" 
+                            />
+                          </View>
+                          <View style={styles.attachmentInfo}>
+                            <Text style={[styles.attachmentName, { color: colors.text }]} numberOfLines={1}>
+                              {attachment.name}
+                            </Text>
+                            <Text style={[styles.attachmentSize, { color: colors.textSecondary }]}>
+                              {formatFileSize(attachment.size)} • {attachment.type.toUpperCase()}
+                            </Text>
+                          </View>
+                          <TouchableOpacity
+                            style={styles.removeAttachment}
+                            onPress={() => removeAttachment('insurance', attachment.id)}
+                          >
+                            <Ionicons name="close-circle" size={22} color={colors.danger} />
+                          </TouchableOpacity>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* Add Attachment Buttons */}
+                  <View style={styles.attachmentButtons}>
+                    <TouchableOpacity
+                      style={[styles.attachButton, { backgroundColor: colors.background, borderColor: colors.border }]}
+                      onPress={() => pickAttachment('insurance')}
+                    >
+                      <Ionicons name="document-attach" size={20} color={colors.primary} />
+                      <Text style={[styles.attachButtonText, { color: colors.text }]}>Add File</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.attachButton, { backgroundColor: colors.background, borderColor: colors.border }]}
+                      onPress={() => pickImageAttachment('insurance')}
+                    >
+                      <Ionicons name="camera" size={20} color={colors.primary} />
+                      <Text style={[styles.attachButtonText, { color: colors.text }]}>Add Photo</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 <TouchableOpacity
@@ -1068,5 +1311,61 @@ const styles = StyleSheet.create({
   },
   countryName: {
     fontSize: 16,
+  },
+  attachmentSection: {
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  attachmentList: {
+    marginTop: 10,
+    gap: 8,
+  },
+  attachmentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 12,
+  },
+  attachmentIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  attachmentInfo: {
+    flex: 1,
+  },
+  attachmentName: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  attachmentSize: {
+    fontSize: 12,
+    marginTop: 2,
+  },
+  removeAttachment: {
+    padding: 4,
+  },
+  attachmentButtons: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  attachButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 8,
+  },
+  attachButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
