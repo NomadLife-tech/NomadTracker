@@ -10,14 +10,13 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 // Logo Header Component
 function LogoHeader() {
+  const screenWidth = Dimensions.get('window').width;
   return (
-    <View style={styles.headerContainer}>
-      <Image
-        source={require('../../assets/images/logo-header.png')}
-        style={styles.headerLogo}
-        resizeMode="cover"
-      />
-    </View>
+    <Image
+      source={require('../../assets/images/logo-header.png')}
+      style={{ width: screenWidth - 40, height: 48 }}
+      resizeMode="contain"
+    />
   );
 }
 
@@ -170,12 +169,13 @@ const styles = StyleSheet.create({
     zIndex: 1000,
   },
   headerLogo: {
-    width: SCREEN_WIDTH,
-    height: 56,
+    width: 320,
+    height: 50,
   },
   headerContainer: {
     width: SCREEN_WIDTH,
     height: 56,
-    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
