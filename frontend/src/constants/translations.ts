@@ -175,6 +175,17 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     apply: 'Apply',
     filters: 'Filters',
     advancedFilters: 'Advanced Filters',
+    // Emergency Quick Access
+    emergencyInfo: 'Emergency Info',
+    tapToAddInfo: 'Tap to add insurance & contacts',
+    medicalInsurance: 'Medical',
+    travelInsurance: 'Travel',
+    noInsuranceAdded: 'No insurance policies added yet',
+    noPassportsAdded: 'No passports added yet',
+    expires: 'Expires',
+    emergencyTips: 'Quick Tips',
+    emergencyTip1: '• Keep digital copies of all travel documents',
+    emergencyTip2: '• Save emergency contacts for each country you visit',
   },
   es: {
     dashboard: 'Panel',

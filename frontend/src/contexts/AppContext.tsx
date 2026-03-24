@@ -1,7 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { Platform } from 'react-native';
 import { Visit, UserProfile, AppSettings, SupportedLanguage } from '../types';
 import * as storage from '../services/storage';
 import { getTranslation } from '../constants/translations';
+import { 
+  requestNotificationPermissions, 
+  scheduleVisaNotifications 
+} from '../services/notificationService';
 
 interface AppContextType {
   // Data
@@ -71,6 +76,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setVisits(loadedVisits);
         setProfile(loadedProfile);
         setSettings(loadedSettings);
+        
+        // Initialize notifications on native platforms
+        if (Platform.OS !== 'web') {
+          try {
+            const permissionGranted = await requestNotificationPermissions();
+            if (permissionGranted && loadedSettings.visaAlertsEnabled) {
+              await scheduleVisaNotifications(loadedVisits, loadedSettings);
+              console.log('[Notifications] Visa alerts scheduled on app init');
+            }
+          } catch (notifError) {
+            console.warn('[Notifications] Failed to initialize:', notifError);
+          }
+        }
       } catch (error) {
         console.error('Failed to initialize app data:', error);
       } finally {
@@ -84,17 +102,47 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const addVisit = useCallback(async (visit: Visit) => {
     const updatedVisits = await storage.addVisit(visit);
     setVisits(updatedVisits);
-  }, []);
+    
+    // Reschedule notifications when visits change
+    if (Platform.OS !== 'web' && settings.visaAlertsEnabled) {
+      try {
+        await scheduleVisaNotifications(updatedVisits, settings);
+        console.log('[Notifications] Rescheduled after adding visit');
+      } catch (error) {
+        console.warn('[Notifications] Failed to reschedule:', error);
+      }
+    }
+  }, [settings]);
 
   const updateVisit = useCallback(async (visit: Visit) => {
     const updatedVisits = await storage.updateVisit(visit);
     setVisits(updatedVisits);
-  }, []);
+    
+    // Reschedule notifications when visits change
+    if (Platform.OS !== 'web' && settings.visaAlertsEnabled) {
+      try {
+        await scheduleVisaNotifications(updatedVisits, settings);
+        console.log('[Notifications] Rescheduled after updating visit');
+      } catch (error) {
+        console.warn('[Notifications] Failed to reschedule:', error);
+      }
+    }
+  }, [settings]);
 
   const deleteVisit = useCallback(async (visitId: string) => {
     const updatedVisits = await storage.deleteVisit(visitId);
     setVisits(updatedVisits);
-  }, []);
+    
+    // Reschedule notifications when visits change
+    if (Platform.OS !== 'web' && settings.visaAlertsEnabled) {
+      try {
+        await scheduleVisaNotifications(updatedVisits, settings);
+        console.log('[Notifications] Rescheduled after deleting visit');
+      } catch (error) {
+        console.warn('[Notifications] Failed to reschedule:', error);
+      }
+    }
+  }, [settings]);
 
   const refreshVisits = useCallback(async () => {
     const loadedVisits = await storage.getVisits();
@@ -116,7 +164,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const updateSettings = useCallback(async (newSettings: AppSettings) => {
     await storage.saveSettings(newSettings);
     setSettings(newSettings);
-  }, []);
+    
+    // Reschedule notifications when settings change
+    if (Platform.OS !== 'web') {
+      try {
+        await scheduleVisaNotifications(visits, newSettings);
+        console.log('[Notifications] Rescheduled after settings update');
+      } catch (error) {
+        console.warn('[Notifications] Failed to reschedule:', error);
+      }
+    }
+  }, [visits]);
 
   const setDarkMode = useCallback(async (darkMode: boolean) => {
     setSettings(prevSettings => {
