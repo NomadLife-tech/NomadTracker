@@ -31,6 +31,7 @@ const getDefaultSettings = (): AppSettings => ({
   visaAlertDays: [30, 15, 7],
   customAlertDays: 0,
   alertFrequency: 'daily',
+  cloudSaveEnabled: false,
 });
 
 // Initialize storage

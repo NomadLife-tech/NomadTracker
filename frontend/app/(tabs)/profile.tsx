@@ -59,6 +59,7 @@ export default function ProfileScreen() {
   const [selectedAlertDays, setSelectedAlertDays] = useState<number[]>(settings.visaAlertDays ?? [30, 15, 7]);
   const [customAlertDays, setCustomAlertDays] = useState<string>(settings.customAlertDays?.toString() ?? '0');
   const [alertFrequency, setAlertFrequency] = useState<AppSettings['alertFrequency']>(settings.alertFrequency ?? 'daily');
+  const [cloudSaveEnabled, setCloudSaveEnabled] = useState(settings.cloudSaveEnabled ?? false);
 
   // Sync state with settings when settings change
   useEffect(() => {
@@ -66,6 +67,7 @@ export default function ProfileScreen() {
     setSelectedAlertDays(settings.visaAlertDays ?? [30, 15, 7]);
     setCustomAlertDays(settings.customAlertDays?.toString() ?? '0');
     setAlertFrequency(settings.alertFrequency ?? 'daily');
+    setCloudSaveEnabled(settings.cloudSaveEnabled ?? false);
   }, [settings]);
 
   const [editingPassport, setEditingPassport] = useState<Passport | null>(null);
@@ -114,13 +116,14 @@ export default function ProfileScreen() {
       // Parse custom days if provided
       const customDays = customAlertDays ? parseInt(customAlertDays, 10) : undefined;
       
-      // Save all settings including visa alerts
+      // Save all settings including visa alerts and cloud save
       await updateSettings({
         ...settings,
         visaAlertsEnabled,
         visaAlertDays: selectedAlertDays,
         customAlertDays: customDays && !isNaN(customDays) ? customDays : undefined,
         alertFrequency,
+        cloudSaveEnabled,
       });
       showToast(t('settingsSaved'), 'success');
     } catch (error) {
@@ -650,6 +653,24 @@ export default function ProfileScreen() {
               <Ionicons name="chevron-forward" size={20} color={colors.textSecondary} />
             </View>
           </TouchableOpacity>
+
+          {/* Cloud Save */}
+          <View style={styles.settingRow}>
+            <View style={styles.settingInfo}>
+              <Ionicons name="cloud-upload" size={22} color={colors.text} />
+              <View style={styles.settingLabelContainer}>
+                <Text style={[styles.settingLabel, { color: colors.text }]}>{t('cloudSave')}</Text>
+                <Text style={[styles.settingSubLabel, { color: colors.textSecondary }]}>
+                  {t('cloudSaveDescription')}
+                </Text>
+              </View>
+            </View>
+            <Switch
+              value={cloudSaveEnabled}
+              onValueChange={setCloudSaveEnabled}
+              trackColor={{ false: colors.border, true: colors.primary }}
+            />
+          </View>
 
           {/* Save App Settings Button */}
           <TouchableOpacity
@@ -1540,6 +1561,14 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     fontSize: 16,
+  },
+  settingLabelContainer: {
+    flex: 1,
+  },
+  settingSubLabel: {
+    fontSize: 12,
+    marginTop: 2,
+    lineHeight: 16,
   },
   settingValue: {
     flexDirection: 'row',

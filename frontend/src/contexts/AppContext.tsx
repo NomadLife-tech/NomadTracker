@@ -54,6 +54,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     visaAlertDays: [30, 15, 7],
     customAlertDays: 0,
     alertFrequency: 'daily',
+    cloudSaveEnabled: false,
   });
   const [isLoading, setIsLoading] = useState(true);
 

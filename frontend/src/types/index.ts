@@ -72,6 +72,8 @@ export interface AppSettings {
   visaAlertDays: number[];          // e.g., [90, 60, 30, 15, 10, 7]
   customAlertDays?: number;         // Custom days before expiration
   alertFrequency: 'once' | 'daily' | 'weekly';
+  // Cloud Save
+  cloudSaveEnabled: boolean;
 }
 
 export type SupportedLanguage = 'en' | 'es' | 'fr' | 'de' | 'pt' | 'zh' | 'ja' | 'ko';
