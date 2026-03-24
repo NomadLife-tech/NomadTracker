@@ -37,7 +37,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   FR: {
     emergencyNumbers: { police: '17', ambulance: '15', fire: '18', general: '112' },
     visaResources: [
-      { name: 'France-Visas', url: 'https://france-visas.gouv.fr/en/web/france-visas', type: 'visa' },
+      { name: 'France-Visas', url: 'https://france-visas.gouv.fr/en', type: 'visa' },
       { name: 'Campus France', url: 'https://www.campusfrance.org/en', type: 'visa' },
     ],
     currencyCode: 'EUR',
@@ -47,7 +47,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   ES: {
     emergencyNumbers: { police: '091', ambulance: '112', fire: '080', general: '112', tourist: '902 102 112' },
     visaResources: [
-      { name: 'Spain Visa Portal', url: 'https://www.exteriores.gob.es/en/ServiciosAlCiudadano/Paginas/Visados.aspx', type: 'visa' },
+      { name: 'Spain Visa Portal', url: 'https://www.exteriores.gob.es/en/Paginas/index.aspx', type: 'visa' },
       { name: 'BLS Spain Visa', url: 'https://www.blsspainvisa.com', type: 'visa' },
     ],
     currencyCode: 'EUR',
@@ -57,8 +57,8 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   IT: {
     emergencyNumbers: { police: '113', ambulance: '118', fire: '115', general: '112' },
     visaResources: [
-      { name: 'Italian Ministry of Foreign Affairs', url: 'https://vistoperitalia.esteri.it/home/en', type: 'visa' },
-      { name: 'Italy Visa Information', url: 'https://www.italy-visa.info', type: 'visa' },
+      { name: 'Italian Ministry of Foreign Affairs', url: 'https://vistoperitalia.esteri.it', type: 'visa' },
+      { name: 'Italy Visa Portal', url: 'https://www.esteri.it/en/servizi-consolari-e-visti/', type: 'visa' },
     ],
     currencyCode: 'EUR',
     drivingSide: 'right',
@@ -67,7 +67,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   PT: {
     emergencyNumbers: { police: '112', ambulance: '112', fire: '112', general: '112' },
     visaResources: [
-      { name: 'SEF Portugal', url: 'https://www.sef.pt/en', type: 'immigration' },
+      { name: 'AIMA Portugal', url: 'https://aima.gov.pt/en/', type: 'immigration' },
       { name: 'VFS Global Portugal', url: 'https://www.vfsglobal.com/portugal', type: 'visa' },
     ],
     currencyCode: 'EUR',
@@ -78,7 +78,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
     emergencyNumbers: { police: '112', ambulance: '112', fire: '112', general: '112' },
     visaResources: [
       { name: 'IND Netherlands', url: 'https://ind.nl/en', type: 'immigration' },
-      { name: 'Netherlands Visa', url: 'https://www.netherlandsworldwide.nl/visa', type: 'visa' },
+      { name: 'Netherlands Visa', url: 'https://www.netherlandsandyou.nl/travel-and-residence/visas-for-the-netherlands', type: 'visa' },
     ],
     currencyCode: 'EUR',
     drivingSide: 'right',
@@ -96,7 +96,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   AT: {
     emergencyNumbers: { police: '133', ambulance: '144', fire: '122', general: '112' },
     visaResources: [
-      { name: 'Austrian Embassy', url: 'https://www.bmeia.gv.at/en/travel-stay/entry-and-residence-in-austria/', type: 'visa' },
+      { name: 'Austrian Embassy', url: 'https://www.bmeia.gv.at/en/austrian-embassy-other-country/', type: 'visa' },
     ],
     currencyCode: 'EUR',
     drivingSide: 'right',
@@ -195,8 +195,8 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   JP: {
     emergencyNumbers: { police: '110', ambulance: '119', fire: '119', general: '110' },
     visaResources: [
-      { name: 'Japan Visa Portal', url: 'https://www.mofa.go.jp/j_info/visit/visa/index.html', type: 'visa' },
-      { name: 'Immigration Services Agency', url: 'https://www.isa.go.jp/en/', type: 'immigration' },
+      { name: 'Japan Visa Portal', url: 'https://www.mofa.go.jp/j_info/visit/visa/', type: 'visa' },
+      { name: 'Immigration Services Agency', url: 'https://www.moj.go.jp/isa/index.html', type: 'immigration' },
     ],
     currencyCode: 'JPY',
     drivingSide: 'left',
@@ -233,7 +233,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   HK: {
     emergencyNumbers: { police: '999', ambulance: '999', fire: '999', general: '999' },
     visaResources: [
-      { name: 'HK Immigration', url: 'https://www.immd.gov.hk/eng/services/visas/', type: 'immigration' },
+      { name: 'HK Immigration', url: 'https://www.immd.gov.hk/eng/services/index.html', type: 'immigration' },
     ],
     currencyCode: 'HKD',
     drivingSide: 'left',
@@ -260,7 +260,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   TH: {
     emergencyNumbers: { police: '191', ambulance: '1669', fire: '199', general: '191', tourist: '1155' },
     visaResources: [
-      { name: 'Thai Immigration', url: 'https://www.immigration.go.th', type: 'immigration' },
+      { name: 'Thai Immigration', url: 'https://immigration.go.th', type: 'immigration' },
       { name: 'Thai e-Visa', url: 'https://www.thaievisa.go.th', type: 'visa' },
     ],
     currencyCode: 'THB',
@@ -271,7 +271,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
     emergencyNumbers: { police: '110', ambulance: '118', fire: '113', general: '112' },
     visaResources: [
       { name: 'Indonesia Immigration', url: 'https://www.imigrasi.go.id', type: 'immigration' },
-      { name: 'Visa Online', url: 'https://molina.imigrasi.go.id', type: 'visa' },
+      { name: 'Visa Online', url: 'https://visa-online.imigrasi.go.id', type: 'visa' },
     ],
     currencyCode: 'IDR',
     drivingSide: 'left',
