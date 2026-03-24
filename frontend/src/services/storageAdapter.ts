@@ -70,23 +70,18 @@ const nativeStorage = {
   getItem: async (key: string): Promise<string | null> => {
     try {
       const value = await AsyncStorage.getItem(key);
-      console.log(`[Storage] getItem(${key}):`, value ? `${value.length} chars` : 'null');
       return value;
     } catch (e) {
-      console.error('nativeStorage getItem error:', e);
+      console.error('[Storage] nativeStorage getItem error:', e);
       return null;
     }
   },
   setItem: async (key: string, value: string): Promise<void> => {
     try {
-      console.log(`[Storage] setItem(${key}): ${value.length} chars`);
       await AsyncStorage.setItem(key, value);
-      // Verify the write
-      const verify = await AsyncStorage.getItem(key);
-      console.log(`[Storage] setItem verify(${key}):`, verify ? 'OK' : 'FAILED');
     } catch (e) {
-      console.error('nativeStorage setItem error:', e);
-      throw e; // Re-throw so caller knows it failed
+      console.error('[Storage] nativeStorage setItem error:', e);
+      // Don't throw - allow app to continue with in-memory state
     }
   },
   removeItem: async (key: string): Promise<void> => {

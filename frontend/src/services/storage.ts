@@ -56,17 +56,10 @@ export async function saveVisits(visits: Visit[]): Promise<void> {
 }
 
 export async function addVisit(visit: Visit): Promise<Visit[]> {
-  try {
-    const visits = await getVisits();
-    console.log('Current visits count:', visits.length);
-    visits.push(visit);
-    await saveVisits(visits);
-    console.log('Visits saved, new count:', visits.length);
-    return visits;
-  } catch (error) {
-    console.error('Error in addVisit:', error);
-    throw error;
-  }
+  const visits = await getVisits();
+  visits.push(visit);
+  await saveVisits(visits);
+  return visits;
 }
 
 export async function updateVisit(visit: Visit): Promise<Visit[]> {

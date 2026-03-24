@@ -102,60 +102,70 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Visit operations
   const addVisit = useCallback(async (visit: Visit) => {
-    const updatedVisits = await storage.addVisit(visit);
-    setVisits(updatedVisits);
-    
-    // Enqueue sync operation if cloud sync is enabled
-    if (settings.cloudSaveEnabled) {
-      try {
-        await syncQueue.enqueue({
-          type: 'CREATE',
-          entity: 'visit',
-          data: visit,
-          timestamp: new Date(),
-        });
-      } catch (err) {
-        console.warn('[Sync] Failed to enqueue:', err);
+    try {
+      const updatedVisits = await storage.addVisit(visit);
+      setVisits(updatedVisits);
+      
+      // Enqueue sync operation if cloud sync is enabled
+      if (settings.cloudSaveEnabled) {
+        try {
+          await syncQueue.enqueue({
+            type: 'CREATE',
+            entity: 'visit',
+            data: visit,
+            timestamp: new Date(),
+          });
+        } catch (err) {
+          console.warn('[Sync] Failed to enqueue:', err);
+        }
       }
-    }
-    
-    // Reschedule notifications when visits change
-    if (Platform.OS !== 'web' && settings.visaAlertsEnabled) {
-      try {
-        await scheduleVisaNotifications(updatedVisits, settings);
-        console.log('[Notifications] Rescheduled after adding visit');
-      } catch (error) {
-        console.warn('[Notifications] Failed to reschedule:', error);
+      
+      // Reschedule notifications when visits change
+      if (Platform.OS !== 'web' && settings.visaAlertsEnabled) {
+        try {
+          await scheduleVisaNotifications(updatedVisits, settings);
+          console.log('[Notifications] Rescheduled after adding visit');
+        } catch (error) {
+          console.warn('[Notifications] Failed to reschedule:', error);
+        }
       }
+    } catch (error) {
+      console.error('[AppContext] Failed to add visit:', error);
+      throw error;
     }
   }, [settings]);
 
   const updateVisit = useCallback(async (visit: Visit) => {
-    const updatedVisits = await storage.updateVisit(visit);
-    setVisits(updatedVisits);
-    
-    // Enqueue sync operation if cloud sync is enabled
-    if (settings.cloudSaveEnabled) {
-      try {
-        await syncQueue.enqueue({
-          type: 'UPDATE',
-          entity: 'visit',
-          data: visit,
-          timestamp: new Date(),
-        });
-      } catch (err) {
-        console.warn('[Sync] Failed to enqueue:', err);
+    try {
+      const updatedVisits = await storage.updateVisit(visit);
+      setVisits(updatedVisits);
+      
+      // Enqueue sync operation if cloud sync is enabled
+      if (settings.cloudSaveEnabled) {
+        try {
+          await syncQueue.enqueue({
+            type: 'UPDATE',
+            entity: 'visit',
+            data: visit,
+            timestamp: new Date(),
+          });
+        } catch (err) {
+          console.warn('[Sync] Failed to enqueue:', err);
+        }
       }
-    }
-    
-    // Reschedule notifications when visits change
-    if (Platform.OS !== 'web' && settings.visaAlertsEnabled) {
-      try {
-        await scheduleVisaNotifications(updatedVisits, settings);
-        console.log('[Notifications] Rescheduled after updating visit');
-      } catch (error) {
-        console.warn('[Notifications] Failed to reschedule:', error);
+      
+      // Reschedule notifications when visits change
+      if (Platform.OS !== 'web' && settings.visaAlertsEnabled) {
+        try {
+          await scheduleVisaNotifications(updatedVisits, settings);
+          console.log('[Notifications] Rescheduled after updating visit');
+        } catch (error) {
+          console.warn('[Notifications] Failed to reschedule:', error);
+        }
       }
+    } catch (error) {
+      console.error('[AppContext] Failed to update visit:', error);
+      throw error;
     }
   }, [settings]);
 
@@ -195,8 +205,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Profile operations
   const updateProfile = useCallback(async (newProfile: UserProfile) => {
-    await storage.saveProfile(newProfile);
-    setProfile(newProfile);
+    try {
+      await storage.saveProfile(newProfile);
+      setProfile(newProfile);
+    } catch (error) {
+      console.error('[AppContext] Failed to update profile:', error);
+      throw error;
+    }
   }, []);
 
   const refreshProfile = useCallback(async () => {
