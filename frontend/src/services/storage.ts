@@ -27,6 +27,10 @@ const getDefaultProfile = (): UserProfile => ({
 const getDefaultSettings = (): AppSettings => ({
   darkMode: false,
   language: 'en',
+  visaAlertsEnabled: true,
+  visaAlertDays: [30, 15, 7],
+  customAlertDays: 0,
+  alertFrequency: 'daily',
 });
 
 // Initialize storage
@@ -90,7 +94,12 @@ export async function saveProfile(profile: UserProfile): Promise<void> {
 // Settings
 export async function getSettings(): Promise<AppSettings> {
   const data = await universalStorage.getItem(STORAGE_KEYS.SETTINGS);
-  return data ? JSON.parse(data) : getDefaultSettings();
+  if (data) {
+    const saved = JSON.parse(data);
+    // Merge with defaults to ensure new fields are included
+    return { ...getDefaultSettings(), ...saved };
+  }
+  return getDefaultSettings();
 }
 
 export async function saveSettings(settings: AppSettings): Promise<void> {

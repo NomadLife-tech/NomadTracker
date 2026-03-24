@@ -118,16 +118,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setDarkMode = useCallback(async (darkMode: boolean) => {
-    const newSettings = { ...settings, darkMode };
-    await storage.saveSettings(newSettings);
-    setSettings(newSettings);
-  }, [settings]);
+    setSettings(prevSettings => {
+      const newSettings = { ...prevSettings, darkMode };
+      storage.saveSettings(newSettings);
+      return newSettings;
+    });
+  }, []);
 
   const setLanguage = useCallback(async (language: SupportedLanguage) => {
-    const newSettings = { ...settings, language };
-    await storage.saveSettings(newSettings);
-    setSettings(newSettings);
-  }, [settings]);
+    setSettings(prevSettings => {
+      const newSettings = { ...prevSettings, language };
+      storage.saveSettings(newSettings);
+      return newSettings;
+    });
+  }, []);
 
   // i18n
   const t = useCallback((key: string, params?: Record<string, string>) => {

@@ -19,7 +19,8 @@ import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
 import { useToast } from '../../src/contexts/ToastContext';
 import { Visit } from '../../src/types';
-import { COUNTRIES, getCountryByCode } from '../../src/constants/countries';
+import { COUNTRIES, getCountryByCode, getVisaTypesWithCustom } from '../../src/constants/countries';
+import { getDefaultAllowedDays, isCustomVisaType } from '../../src/constants/visaDefaults';
 import { DatePickerInput } from '../../src/components/common/DatePickerInput';
 import { CountryInfoCard } from '../../src/components/common/CountryInfoCard';
 
@@ -64,7 +65,19 @@ export default function EditVisitScreen() {
   }, [id, visits]);
 
   const selectedCountry = countryCode ? getCountryByCode(countryCode) : null;
-  const visaTypes = selectedCountry?.visaTypes || [];
+  // Get visa types with Custom option added
+  const visaTypes = countryCode ? getVisaTypesWithCustom(countryCode) : [];
+  
+  // Check if allowed days should be editable (only when Custom is selected)
+  const isAllowedDaysEditable = isCustomVisaType(visaType);
+
+  // Auto-populate allowed days when visa type changes (only for non-custom types)
+  useEffect(() => {
+    if (visaType && !isCustomVisaType(visaType) && !loading) {
+      const defaultDays = getDefaultAllowedDays(visaType);
+      setAllowedDays(defaultDays.toString());
+    }
+  }, [visaType, loading]);
 
   const filteredCountries = countrySearch
     ? COUNTRIES.filter(c =>
@@ -226,16 +239,34 @@ export default function EditVisitScreen() {
           {/* Allowed Days */}
           <View style={styles.inputGroup}>
             <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-              {t('allowedDays')} ({t('optional')})
+              {t('allowedDays')} {isAllowedDaysEditable ? '*' : `(${t('optional')})`}
             </Text>
             <TextInput
-              style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: colors.border }]}
+              style={[
+                styles.input, 
+                { 
+                  backgroundColor: isAllowedDaysEditable ? colors.card : colors.border + '30', 
+                  color: colors.text, 
+                  borderColor: colors.border 
+                }
+              ]}
               value={allowedDays}
               onChangeText={setAllowedDays}
-              placeholder="90"
+              placeholder={isAllowedDaysEditable ? t('enterAllowedDays') : '90'}
               placeholderTextColor={colors.textSecondary}
               keyboardType="number-pad"
+              editable={isAllowedDaysEditable}
             />
+            {!isAllowedDaysEditable && allowedDays && (
+              <Text style={[styles.inputHint, { color: colors.textSecondary }]}>
+                {t('autoCalculatedFromVisaType')}
+              </Text>
+            )}
+            {isAllowedDaysEditable && (
+              <Text style={[styles.inputHint, { color: colors.primary }]}>
+                {t('enterCustomAllowedDays')}
+              </Text>
+            )}
           </View>
 
           {/* Visa Number */}
@@ -481,6 +512,11 @@ const styles = StyleSheet.create({
   pickerPlaceholder: {
     flex: 1,
     fontSize: 16,
+  },
+  inputHint: {
+    fontSize: 12,
+    marginTop: 6,
+    fontStyle: 'italic',
   },
   saveButton: {
     flexDirection: 'row',
