@@ -618,7 +618,7 @@ export default function ProfileScreen() {
             style={[styles.saveButton, { backgroundColor: colors.primary }]}
             onPress={handleSaveProfile}
           >
-            <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
+            <Ionicons name="checkmark-circle" size={16} color="#FFFFFF" />
             <Text style={styles.saveButtonText}>{t('saveProfile')}</Text>
           </TouchableOpacity>
         </View>
@@ -677,7 +677,7 @@ export default function ProfileScreen() {
             style={[styles.saveButton, { backgroundColor: colors.success }]}
             onPress={handleSaveSettings}
           >
-            <Ionicons name="settings" size={20} color="#FFFFFF" />
+            <Ionicons name="settings" size={16} color="#FFFFFF" />
             <Text style={styles.saveButtonText}>{t('saveSettings')}</Text>
           </TouchableOpacity>
         </View>
@@ -1646,15 +1646,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 14,
-    borderRadius: 12,
-    marginTop: 16,
-    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginTop: 12,
+    gap: 6,
+    alignSelf: 'flex-start',
   },
   saveButtonText: {
     color: '#FFFFFF',
     fontWeight: '600',
-    fontSize: 16,
+    fontSize: 14,
   },
   modalOverlay: {
     flex: 1,
@@ -1761,18 +1763,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',
-  },
-  saveButton: {
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 20,
-  },
-  saveButtonText: {
-    color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 16,
   },
   searchBar: {
     flexDirection: 'row',
