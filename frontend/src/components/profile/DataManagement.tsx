@@ -14,18 +14,39 @@ export function DataManagement({ onExport, onImport, onClearData, t }: DataManag
   const { colors } = useTheme();
 
   const handleClearData = () => {
+    const title = t('clearAllData') || 'Clear All Data';
+    const message = t('confirmClearData') || 'This will permanently delete all your visits, passports, and insurance data. This action cannot be undone. Are you sure you want to continue?';
+    const cancelText = t('cancel') || 'Cancel';
+    const confirmText = t('clearData') || 'Delete All';
+
     if (Platform.OS === 'web') {
-      if (window.confirm(t('confirmClearData'))) {
+      // Web: Use window.confirm
+      const confirmed = window.confirm(`${title}\n\n${message}`);
+      if (confirmed) {
+        console.log('[DataManagement] User confirmed clear data on web');
         onClearData();
       }
     } else {
+      // Native: Use Alert.alert
       Alert.alert(
-        t('clearAllData'),
-        t('confirmClearData'),
+        title,
+        message,
         [
-          { text: t('cancel'), style: 'cancel' },
-          { text: t('clearData'), style: 'destructive', onPress: onClearData },
-        ]
+          { 
+            text: cancelText, 
+            style: 'cancel',
+            onPress: () => console.log('[DataManagement] User cancelled clear data'),
+          },
+          { 
+            text: confirmText, 
+            style: 'destructive', 
+            onPress: () => {
+              console.log('[DataManagement] User confirmed clear data on native');
+              onClearData();
+            },
+          },
+        ],
+        { cancelable: true }
       );
     }
   };
