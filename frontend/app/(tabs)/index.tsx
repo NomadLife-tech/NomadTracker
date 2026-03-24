@@ -323,7 +323,7 @@ export default function DashboardScreen() {
                     >
                       <View style={[styles.tableCell, styles.tableCountryCell]}>
                         <Text style={styles.tableFlag}>{country?.flag}</Text>
-                        <Text style={[styles.tableCountryName, { color: colors.text }]} numberOfLines={1}>
+                        <Text style={[styles.tableCellText, styles.tableCountryName, { color: colors.text }]} numberOfLines={1}>
                           {country?.name}
                         </Text>
                         {isActive && (
@@ -332,10 +332,10 @@ export default function DashboardScreen() {
                           </View>
                         )}
                       </View>
-                      <Text style={[styles.tableCell, styles.tableVisaCell, { color: colors.text }]} numberOfLines={1}>
+                      <Text style={[styles.tableCell, styles.tableCellText, styles.tableVisaCell, { color: colors.text }]} numberOfLines={1}>
                         {visa.visaType}
                       </Text>
-                      <Text style={[styles.tableCell, styles.tableDateCell, { color: colors.textSecondary }]}>
+                      <Text style={[styles.tableCell, styles.tableCellText, styles.tableDateCell, { color: colors.textSecondary }]}>
                         {visa.exitDate ? formatDate(visa.exitDate, 'MMM d, yyyy') : '—'}
                       </Text>
                     </TouchableOpacity>
@@ -712,6 +712,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
   },
+  progressContainer: {
+    height: 6,
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginVertical: 8,
+  },
+  progressBar: {
+    height: '100%',
+    borderRadius: 3,
+  },
   yearSelector: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -920,6 +930,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   tableCell: {
+    paddingVertical: 2,
+  },
+  tableCellText: {
     fontSize: 14,
   },
   tableCountryCell: {

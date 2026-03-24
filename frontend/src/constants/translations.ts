@@ -143,7 +143,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     visaExpirationAlerts: 'Visa Expiration Alerts',
     enableAlerts: 'Enable Alerts',
     alertDaysBefore: 'Alert Days Before Expiration',
-    customRange: 'Custom Range',
     customDays: 'Custom Days',
     enterDays: 'Enter days',
     daysBefore: 'days before expiration',
@@ -239,7 +238,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     pastVisits: 'Past visits',
     moreVisits: 'more visits',
     addFirstVisitMap: 'Add your first visit to see it on the map',
-    daysPerCountry: 'Days per country',
     travelMap: 'Travel Map',
     miniMap: 'Mini Map',
     // Visit Form
@@ -460,7 +458,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     pastVisits: 'Visitas pasadas',
     moreVisits: 'más visitas',
     addFirstVisitMap: 'Agrega tu primera visita para verla en el mapa',
-    daysPerCountry: 'Días por país',
     travelMap: 'Mapa de viajes',
     miniMap: 'Mini mapa',
     // Visit Form
@@ -689,7 +686,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     pastVisits: 'Visites passées',
     moreVisits: 'visites supplémentaires',
     addFirstVisitMap: 'Ajoutez votre première visite pour la voir sur la carte',
-    daysPerCountry: 'Jours par pays',
     travelMap: 'Carte de voyage',
     miniMap: 'Mini carte',
     // Visit Form
@@ -918,7 +914,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     pastVisits: 'Vergangene Besuche',
     moreVisits: 'weitere Besuche',
     addFirstVisitMap: 'Fügen Sie Ihren ersten Besuch hinzu, um ihn auf der Karte zu sehen',
-    daysPerCountry: 'Tage pro Land',
     travelMap: 'Reisekarte',
     miniMap: 'Minikarte',
     // Visit Form
@@ -1147,7 +1142,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     pastVisits: 'Visitas passadas',
     moreVisits: 'mais visitas',
     addFirstVisitMap: 'Adicione sua primeira visita para vê-la no mapa',
-    daysPerCountry: 'Dias por país',
     travelMap: 'Mapa de viagens',
     miniMap: 'Mini mapa',
     // Visit Form
@@ -1376,7 +1370,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     pastVisits: '过去访问',
     moreVisits: '更多访问',
     addFirstVisitMap: '添加您的第一次访问以在地图上查看',
-    daysPerCountry: '每国天数',
     travelMap: '旅行地图',
     miniMap: '小地图',
     // Visit Form
@@ -1605,7 +1598,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     pastVisits: '過去の訪問',
     moreVisits: '他の訪問',
     addFirstVisitMap: '最初の訪問を追加して地図に表示',
-    daysPerCountry: '国ごとの日数',
     travelMap: '旅行マップ',
     miniMap: 'ミニマップ',
     // Visit Form
@@ -1834,7 +1826,6 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     pastVisits: '지난 방문',
     moreVisits: '추가 방문',
     addFirstVisitMap: '첫 번째 방문을 추가하여 지도에서 확인하세요',
-    daysPerCountry: '국가별 일수',
     travelMap: '여행 지도',
     miniMap: '미니 지도',
     // Visit Form
