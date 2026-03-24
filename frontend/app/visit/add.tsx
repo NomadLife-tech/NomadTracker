@@ -139,6 +139,42 @@ export default function AddVisitScreen() {
           {/* Country Info Card */}
           {countryCode && <CountryInfoCard countryCode={countryCode} />}
 
+          {/* Passport Used on Entry - OPTIONAL */}
+          <View style={styles.inputGroup}>
+            <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
+              {t('passportUsed')} ({t('optional')})
+            </Text>
+            {profile.passports.length > 0 ? (
+              <TouchableOpacity
+                style={[styles.pickerButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+                onPress={() => setShowPassportPicker(true)}
+              >
+                {passportId ? (
+                  <>
+                    <Text style={styles.pickerFlag}>
+                      {getCountryByCode(profile.passports.find(p => p.id === passportId)?.countryCode || '')?.flag}
+                    </Text>
+                    <Text style={[styles.pickerText, { color: colors.text }]}>
+                      {profile.passports.find(p => p.id === passportId)?.countryName} - {profile.passports.find(p => p.id === passportId)?.passportNumber}
+                    </Text>
+                  </>
+                ) : (
+                  <Text style={[styles.pickerPlaceholder, { color: colors.textSecondary }]}>
+                    {t('selectPassport')}
+                  </Text>
+                )}
+                <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            ) : (
+              <View style={[styles.emptyPassportHint, { backgroundColor: colors.border + '30', borderColor: colors.border }]}>
+                <Ionicons name="information-circle-outline" size={18} color={colors.textSecondary} />
+                <Text style={[styles.emptyPassportText, { color: colors.textSecondary }]}>
+                  {t('noPassportsHint')}
+                </Text>
+              </View>
+            )}
+          </View>
+
           {/* Entry Date */}
           <DatePickerInput
             label={`${t('entryDate')} *`}
@@ -212,35 +248,6 @@ export default function AddVisitScreen() {
               </Text>
             )}
           </View>
-
-          {/* Passport */}
-          {profile.passports.length > 0 && (
-            <View style={styles.inputGroup}>
-              <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>
-                {t('passport')} ({t('optional')})
-              </Text>
-              <TouchableOpacity
-                style={[styles.pickerButton, { backgroundColor: colors.card, borderColor: colors.border }]}
-                onPress={() => setShowPassportPicker(true)}
-              >
-                {passportId ? (
-                  <>
-                    <Text style={styles.pickerFlag}>
-                      {getCountryByCode(profile.passports.find(p => p.id === passportId)?.countryCode || '')?.flag}
-                    </Text>
-                    <Text style={[styles.pickerText, { color: colors.text }]}>
-                      {profile.passports.find(p => p.id === passportId)?.countryName}
-                    </Text>
-                  </>
-                ) : (
-                  <Text style={[styles.pickerPlaceholder, { color: colors.textSecondary }]}>
-                    Select passport
-                  </Text>
-                )}
-                <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-          )}
 
           {/* Visa Number */}
           <View style={styles.inputGroup}>
@@ -609,6 +616,18 @@ const styles = StyleSheet.create({
   passportSub: {
     fontSize: 13,
     marginTop: 2,
+  },
+  emptyPassportHint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 10,
+  },
+  emptyPassportText: {
+    flex: 1,
+    fontSize: 14,
   },
   emptyText: {
     textAlign: 'center',
