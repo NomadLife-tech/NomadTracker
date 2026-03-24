@@ -1,14 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform, Modal, ScrollView } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { formatDate } from '../../utils/dateUtils';
 import { Ionicons } from '@expo/vector-icons';
-
-// Use react-native-date-picker for native, which works better with new architecture
-let DatePicker: any = null;
-if (Platform.OS !== 'web') {
-  DatePicker = require('react-native-date-picker').default;
-}
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
 interface DatePickerInputProps {
   label: string;
@@ -33,6 +28,9 @@ export function DatePickerInput({
   const [showPicker, setShowPicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date>(value || new Date());
   
+  // For iOS - show in modal
+  const [showIOSModal, setShowIOSModal] = useState(false);
+  
   // Web-specific state
   const [webYear, setWebYear] = useState(value ? value.getFullYear().toString() : new Date().getFullYear().toString());
   const [webMonth, setWebMonth] = useState(value ? String(value.getMonth() + 1).padStart(2, '0') : String(new Date().getMonth() + 1).padStart(2, '0'));
@@ -43,33 +41,44 @@ export function DatePickerInput({
   };
 
   const openPicker = () => {
-    if (value) {
-      setTempDate(value);
-      setWebYear(value.getFullYear().toString());
-      setWebMonth(String(value.getMonth() + 1).padStart(2, '0'));
-      setWebDay(String(value.getDate()).padStart(2, '0'));
+    const dateToUse = value || new Date();
+    setTempDate(dateToUse);
+    
+    if (Platform.OS === 'web') {
+      setWebYear(dateToUse.getFullYear().toString());
+      setWebMonth(String(dateToUse.getMonth() + 1).padStart(2, '0'));
+      setWebDay(String(dateToUse.getDate()).padStart(2, '0'));
+      setShowPicker(true);
+    } else if (Platform.OS === 'ios') {
+      setShowIOSModal(true);
     } else {
-      const now = new Date();
-      setTempDate(now);
-      setWebYear(now.getFullYear().toString());
-      setWebMonth(String(now.getMonth() + 1).padStart(2, '0'));
-      setWebDay(String(now.getDate()).padStart(2, '0'));
+      // Android - show inline picker
+      setShowPicker(true);
     }
-    setShowPicker(true);
   };
 
-  // Native handler for react-native-date-picker
-  const handleNativeDateChange = (selectedDate: Date) => {
-    setTempDate(selectedDate);
+  // Native handler for @react-native-community/datetimepicker
+  const handleNativeDateChange = (event: DateTimePickerEvent, selectedDate?: Date) => {
+    if (Platform.OS === 'android') {
+      setShowPicker(false);
+      if (event.type === 'set' && selectedDate) {
+        onChange(selectedDate);
+      }
+    } else if (Platform.OS === 'ios') {
+      // iOS - update temp date, don't close yet
+      if (selectedDate) {
+        setTempDate(selectedDate);
+      }
+    }
   };
 
-  const handleNativeConfirm = () => {
+  const handleIOSConfirm = () => {
     onChange(tempDate);
-    setShowPicker(false);
+    setShowIOSModal(false);
   };
 
-  const handleNativeCancel = () => {
-    setShowPicker(false);
+  const handleIOSCancel = () => {
+    setShowIOSModal(false);
   };
 
   // Web handlers
@@ -132,6 +141,7 @@ export function DatePickerInput({
           { backgroundColor: colors.card, borderColor: colors.border },
         ]}
         onPress={openPicker}
+        activeOpacity={0.7}
       >
         <Ionicons name="calendar-outline" size={20} color={colors.textSecondary} />
         <Text
@@ -172,7 +182,7 @@ export function DatePickerInput({
                 {/* Month Selector */}
                 <View style={styles.webPickerColumn}>
                   <Text style={[styles.webPickerLabel, { color: colors.textSecondary }]}>Month</Text>
-                  <View style={[styles.webPickerSelect, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                  <ScrollView style={[styles.webPickerSelect, { backgroundColor: colors.background, borderColor: colors.border }]}>
                     {months.map((month) => (
                       <TouchableOpacity
                         key={month.value}
@@ -190,13 +200,13 @@ export function DatePickerInput({
                         </Text>
                       </TouchableOpacity>
                     ))}
-                  </View>
+                  </ScrollView>
                 </View>
 
                 {/* Day Selector */}
                 <View style={styles.webPickerColumn}>
                   <Text style={[styles.webPickerLabel, { color: colors.textSecondary }]}>Day</Text>
-                  <View style={[styles.webPickerSelect, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                  <ScrollView style={[styles.webPickerSelect, { backgroundColor: colors.background, borderColor: colors.border }]}>
                     {days.map((day) => (
                       <TouchableOpacity
                         key={day.value}
@@ -214,13 +224,13 @@ export function DatePickerInput({
                         </Text>
                       </TouchableOpacity>
                     ))}
-                  </View>
+                  </ScrollView>
                 </View>
 
                 {/* Year Selector */}
                 <View style={styles.webPickerColumn}>
                   <Text style={[styles.webPickerLabel, { color: colors.textSecondary }]}>Year</Text>
-                  <View style={[styles.webPickerSelect, { backgroundColor: colors.background, borderColor: colors.border }]}>
+                  <ScrollView style={[styles.webPickerSelect, { backgroundColor: colors.background, borderColor: colors.border }]}>
                     {years.map((year) => (
                       <TouchableOpacity
                         key={year.value}
@@ -238,7 +248,7 @@ export function DatePickerInput({
                         </Text>
                       </TouchableOpacity>
                     ))}
-                  </View>
+                  </ScrollView>
                 </View>
               </View>
 
@@ -253,26 +263,48 @@ export function DatePickerInput({
         </Modal>
       )}
 
-      {/* Native Date Picker using react-native-date-picker */}
-      {Platform.OS !== 'web' && DatePicker && (
-        <DatePicker
-          modal
-          open={showPicker}
-          date={tempDate}
+      {/* iOS Date Picker Modal */}
+      {Platform.OS === 'ios' && showIOSModal && (
+        <Modal
+          visible={showIOSModal}
+          transparent
+          animationType="slide"
+        >
+          <View style={styles.iosModalOverlay}>
+            <View style={[styles.iosModalContent, { backgroundColor: colors.card }]}>
+              <View style={[styles.iosModalHeader, { borderBottomColor: colors.border }]}>
+                <TouchableOpacity onPress={handleIOSCancel}>
+                  <Text style={[styles.modalButton, { color: colors.textSecondary }]}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>Select Date</Text>
+                <TouchableOpacity onPress={handleIOSConfirm}>
+                  <Text style={[styles.modalButton, { color: colors.primary }]}>Done</Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={tempDate}
+                mode="date"
+                display="spinner"
+                onChange={handleNativeDateChange}
+                minimumDate={minimumDate}
+                maximumDate={maximumDate}
+                style={styles.iosPicker}
+                textColor={colors.text}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Android Date Picker - inline display */}
+      {Platform.OS === 'android' && showPicker && (
+        <DateTimePicker
+          value={tempDate}
           mode="date"
-          theme={isDark ? 'dark' : 'light'}
+          display="default"
+          onChange={handleNativeDateChange}
           minimumDate={minimumDate}
           maximumDate={maximumDate}
-          onConfirm={(date: Date) => {
-            onChange(date);
-            setShowPicker(false);
-          }}
-          onCancel={() => {
-            setShowPicker(false);
-          }}
-          title="Select Date"
-          confirmText="Done"
-          cancelText="Cancel"
         />
       )}
     </View>
@@ -348,7 +380,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     maxHeight: 200,
-    overflow: 'scroll' as any,
   },
   webPickerOption: {
     paddingVertical: 10,
@@ -368,5 +399,26 @@ const styles = StyleSheet.create({
   selectedPreviewText: {
     fontSize: 16,
     fontWeight: '500',
+  },
+  // iOS Modal styles
+  iosModalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  iosModalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 20,
+  },
+  iosModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  iosPicker: {
+    height: 200,
   },
 });
