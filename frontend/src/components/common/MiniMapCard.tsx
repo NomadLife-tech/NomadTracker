@@ -174,22 +174,55 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
             0%, 100% { transform: scale(0.95); opacity: 0.9; }
             50% { transform: scale(1.05); opacity: 1; }
           }
-          .leaflet-control-container { display: none !important; }
+          /* Custom zoom controls styling */
+          .leaflet-control-zoom {
+            border: none !important;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
+            border-radius: 12px !important;
+            overflow: hidden;
+            margin: 10px !important;
+          }
+          .leaflet-control-zoom a {
+            width: 36px !important;
+            height: 36px !important;
+            line-height: 36px !important;
+            font-size: 18px !important;
+            color: #333 !important;
+            background: rgba(255,255,255,0.95) !important;
+            border: none !important;
+          }
+          .leaflet-control-zoom a:hover {
+            background: rgba(255,255,255,1) !important;
+            color: #007AFF !important;
+          }
+          .leaflet-control-zoom-in {
+            border-radius: 12px 12px 0 0 !important;
+            border-bottom: 1px solid rgba(0,0,0,0.1) !important;
+          }
+          .leaflet-control-zoom-out {
+            border-radius: 0 0 12px 12px !important;
+          }
+          .leaflet-control-attribution { display: none !important; }
         </style>
       </head>
       <body>
         <div id="map"></div>
         <script>
           var map = L.map('map', { 
-            zoomControl: false,
+            zoomControl: true,
             attributionControl: false,
-            dragging: false,
-            touchZoom: false,
-            scrollWheelZoom: false,
-            doubleClickZoom: false,
-            boxZoom: false,
-            keyboard: false
+            dragging: true,
+            touchZoom: true,
+            scrollWheelZoom: true,
+            doubleClickZoom: true,
+            boxZoom: true,
+            keyboard: true,
+            minZoom: 2,
+            maxZoom: 18
           }).setView([${lat}, ${lng}], ${zoom});
+          
+          // Position zoom controls
+          map.zoomControl.setPosition('bottomright');
           
           // Base satellite imagery layer
           L.tileLayer('${baseTileUrl}', {
@@ -250,19 +283,13 @@ export function MiniMapCard({ activeVisit, onPress, onAddVisit, t }: MiniMapCard
   if (activeVisit && activeVisitStatus) {
     return (
       <View style={styles.container}>
-        {/* Map Background - Always Light/Satellite Mode - Tappable to navigate */}
-        <TouchableOpacity 
-          style={styles.mapTouchable}
-          onPress={onPress}
-          activeOpacity={0.98}
-        >
-          <View style={styles.mapContainer}>
-            {renderMap()}
-          </View>
-        </TouchableOpacity>
+        {/* Map Background - Interactive (zoom, pan enabled) */}
+        <View style={styles.mapContainer}>
+          {renderMap()}
+        </View>
 
         {/* Top Badges */}
-        <View style={styles.topRow}>
+        <View style={styles.topRow} pointerEvents="box-none">
           <View style={[styles.locationBadge, { backgroundColor: badgeBgColor }]}>
             <View style={styles.locationPulse} />
             <Text style={[styles.locationText, { color: colors.text }]}>{t('currentlyIn')}</Text>
@@ -421,10 +448,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 16,
     position: 'relative',
-  },
-  mapTouchable: {
-    ...StyleSheet.absoluteFillObject,
-    borderRadius: 24,
   },
   mapContainer: {
     ...StyleSheet.absoluteFillObject,
