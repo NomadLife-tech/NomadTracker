@@ -47,7 +47,7 @@ const ALERT_FREQUENCY_OPTIONS: { value: AppSettings['alertFrequency']; label: st
 
 export default function ProfileScreen() {
   const { colors } = useTheme();
-  const { profile, settings, updateProfile, updateSettings, setDarkMode, setLanguage, refreshAll, clearAllData, t } = useApp();
+  const { profile, settings, updateProfile, updateSettings, setDarkMode, setLanguage, refreshAll, t } = useApp();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
 
@@ -543,18 +543,6 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleClearData = async () => {
-    console.log('[Profile] handleClearData called');
-    try {
-      await clearAllData();
-      console.log('[Profile] clearAllData completed successfully');
-      showToast(t('dataClearedSuccess') || 'All data cleared successfully', 'success');
-    } catch (error) {
-      console.error('[Profile] Failed to clear data:', error);
-      showToast(t('dataClearFailed') || 'Failed to clear data', 'error');
-    }
-  };
-
   const filteredCountries = countrySearch
     ? COUNTRIES.filter(c => c.name.toLowerCase().includes(countrySearch.toLowerCase()))
     : COUNTRIES;
@@ -733,7 +721,6 @@ export default function ProfileScreen() {
         <DataManagement
           onExport={handleExport}
           onImport={handleImport}
-          onClearData={handleClearData}
           t={t}
         />
 
