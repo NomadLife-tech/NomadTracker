@@ -10,12 +10,22 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.nomadtracker.app",
+      "buildNumber": "1",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Track your current country for travel logging",
-        "NSPhotoLibraryUsageDescription": "Add a custom profile photo"
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Track your location to automatically log country visits",
+        "NSPhotoLibraryUsageDescription": "Select photos for your profile picture",
+        "NSPhotoLibraryAddUsageDescription": "Save travel photos to your library",
+        "NSCameraUsageDescription": "Take photos for your profile picture",
+        "NSDocumentsFolderUsageDescription": "Attach visa and insurance documents",
+        "UIFileSharingEnabled": true,
+        "LSSupportsOpeningDocumentsInPlace": true
       }
     },
     "android": {
+      "package": "com.nomadtracker.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#007AFF"
@@ -24,7 +34,14 @@
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
-        "READ_EXTERNAL_STORAGE"
+        "ACCESS_BACKGROUND_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_IMAGES",
+        "VIBRATE",
+        "RECEIVE_BOOT_COMPLETED",
+        "SCHEDULE_EXACT_ALARM"
       ]
     },
     "web": {
@@ -46,19 +63,32 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Track your current country for travel logging"
+          "locationAlwaysAndWhenInUsePermission": "Track your location to automatically log country visits",
+          "locationWhenInUsePermission": "Track your current country for travel logging"
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Add a custom profile photo"
+          "photosPermission": "Select photos for your profile picture",
+          "cameraPermission": "Take photos for your profile picture"
+        }
+      ],
+      [
+        "expo-document-picker",
+        {
+          "iCloudContainerEnvironment": "Production"
         }
       ],
       "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "nomad-tracker"
+      }
     }
   }
 }
