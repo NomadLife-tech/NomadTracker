@@ -1,4 +1,5 @@
-import * as FileSystem from 'expo-file-system';
+import * as FileSystemLegacy from 'expo-file-system/legacy';
+import { Paths, File } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 import { Platform } from 'react-native';
@@ -22,14 +23,12 @@ export async function exportData(): Promise<boolean> {
       URL.revokeObjectURL(url);
       return true;
     } else {
-      // Native: Save and share file
-      const fileUri = FileSystem.documentDirectory + filename;
-      await FileSystem.writeAsStringAsync(fileUri, data, {
-        encoding: FileSystem.EncodingType.UTF8,
-      });
+      // Native: Save and share file using new File API
+      const file = new File(Paths.document, filename);
+      await file.write(data);
       
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(fileUri, {
+        await Sharing.shareAsync(file.uri, {
           mimeType: 'application/json',
           dialogTitle: 'Export Nomad Tracker Data',
         });
@@ -62,10 +61,9 @@ export async function importData(): Promise<boolean> {
       const response = await fetch(fileUri);
       content = await response.text();
     } else {
-      // Native: Read file
-      content = await FileSystem.readAsStringAsync(fileUri, {
-        encoding: FileSystem.EncodingType.UTF8,
-      });
+      // Native: Read file using new File API
+      const file = new File(fileUri);
+      content = await file.text();
     }
     
     return await importAllData(content);

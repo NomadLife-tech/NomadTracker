@@ -166,73 +166,7 @@ export default function CalendarScreen() {
           textDayHeaderFontWeight: '600',
           textMonthFontSize: 18,
           textDayHeaderFontSize: 13,
-          contentStyle: {
-            backgroundColor: colors.card,
-          },
-          'stylesheet.calendar.main': {
-            container: {
-              backgroundColor: colors.card,
-              paddingLeft: 0,
-              paddingRight: 0,
-            },
-            monthView: {
-              backgroundColor: colors.card,
-            },
-            week: {
-              marginTop: 2,
-              marginBottom: 2,
-              flexDirection: 'row',
-              justifyContent: 'space-around',
-              backgroundColor: colors.card,
-            },
-            dayContainer: {
-              flex: 1,
-              alignItems: 'center',
-              backgroundColor: colors.card,
-            },
-          },
-          'stylesheet.calendar.header': {
-            header: {
-              backgroundColor: colors.card,
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              paddingLeft: 10,
-              paddingRight: 10,
-              alignItems: 'center',
-            },
-            week: {
-              marginTop: 7,
-              flexDirection: 'row',
-              justifyContent: 'space-around',
-              backgroundColor: colors.card,
-            },
-            dayHeader: {
-              marginTop: 2,
-              marginBottom: 7,
-              width: 32,
-              textAlign: 'center',
-              fontSize: 13,
-              fontWeight: '600',
-              color: colors.textSecondary,
-            },
-          },
-          'stylesheet.day.basic': {
-            base: {
-              width: 44,
-              height: 44,
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: colors.card,
-            },
-            text: {
-              marginTop: 4,
-              fontSize: 16,
-              fontWeight: '500',
-              color: colors.text,
-              backgroundColor: 'transparent',
-            },
-          },
-        }}
+        } as any}
         dayComponent={({ date, state }) => renderDay(date, state)}
         onDayPress={handleDayPress}
         enableSwipeMonths
