@@ -63,21 +63,7 @@ export default function DashboardScreen() {
 
   // Get active visit
   const activeVisit = useMemo(() => {
-    console.log('=== Active Visit Debug ===');
-    console.log('Total visits:', visits.length);
-    visits.forEach((v, i) => {
-      console.log(`Visit ${i}:`, {
-        id: v.id,
-        country: v.countryCode,
-        entryDate: v.entryDate,
-        exitDate: v.exitDate,
-        visaType: v.visaType,
-        isActive: isCurrentVisit(v)
-      });
-    });
-    const active = visits.find(v => isCurrentVisit(v));
-    console.log('Active visit found:', active ? active.id : 'none');
-    return active;
+    return visits.find(v => isCurrentVisit(v));
   }, [visits]);
 
   // Statistics
@@ -101,51 +87,14 @@ export default function DashboardScreen() {
     return calculateCountryHeatmap(visits);
   }, [visits]);
 
-  // Active visas (visits with exit date in the future or no exit date)
+  // Active visas (visits with entry date in past/today AND (no exit date OR exit date in future))
   const activeVisas = useMemo(() => {
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    
-    console.log('=== Active Visas Debug ===');
-    
     return visits
       .filter(v => {
         // Has visa type
-        if (!v.visaType) {
-          console.log(`Visit ${v.countryCode}: no visaType`);
-          return false;
-        }
-        
-        // Parse entry date - extract just the date part to avoid timezone issues
-        const entryParts = v.entryDate.split('T')[0].split('-');
-        const entryDate = new Date(
-          parseInt(entryParts[0]), 
-          parseInt(entryParts[1]) - 1, 
-          parseInt(entryParts[2])
-        );
-        
-        // Entry must be today or in the past
-        if (entryDate > today) {
-          console.log(`Visit ${v.countryCode}: entry date ${entryDate.toDateString()} is in future`);
-          return false;
-        }
-        
-        // Either no exit date (still active) or exit date in future
-        if (!v.exitDate) {
-          console.log(`Visit ${v.countryCode}: no exit date, active`);
-          return true;
-        }
-        
-        const exitParts = v.exitDate.split('T')[0].split('-');
-        const exitDate = new Date(
-          parseInt(exitParts[0]), 
-          parseInt(exitParts[1]) - 1, 
-          parseInt(exitParts[2])
-        );
-        
-        const isActive = exitDate >= today;
-        console.log(`Visit ${v.countryCode}: exit ${exitDate.toDateString()} >= today ${today.toDateString()} = ${isActive}`);
-        return isActive;
+        if (!v.visaType) return false;
+        // Check if visit is currently active
+        return isCurrentVisit(v);
       })
       .sort((a, b) => {
         // Sort by entry date descending (most recent first)

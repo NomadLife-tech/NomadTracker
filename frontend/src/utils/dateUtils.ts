@@ -121,22 +121,13 @@ export function isCurrentVisit(visit: Visit): boolean {
     parseInt(entryParts[2])
   );
   
-  console.log(`isCurrentVisit check for ${visit.countryCode}:`, {
-    today: today.toDateString(),
-    entryDate: entryDate.toDateString(),
-    exitDate: visit.exitDate,
-    entryDateRaw: visit.entryDate,
-  });
-  
   // Entry date must be today or in the past
   if (entryDate > today) {
-    console.log('  -> FALSE: entry date is in future');
     return false;
   }
   
   // If no exit date, the visit is ongoing
   if (!visit.exitDate) {
-    console.log('  -> TRUE: no exit date, ongoing');
     return true;
   }
   
@@ -148,9 +139,8 @@ export function isCurrentVisit(visit: Visit): boolean {
     parseInt(exitParts[2])
   );
   
-  const isActive = exitDate >= today;
-  console.log(`  -> ${isActive}: exitDate ${exitDate.toDateString()} >= today ${today.toDateString()}`);
-  return isActive;
+  // If exit date is today or in the future, still active
+  return exitDate >= today;
 }
 
 // Get visa status with all calculated fields
