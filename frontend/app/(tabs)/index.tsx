@@ -21,7 +21,6 @@ import {
   TravelStreaksCard,
   CountryHeatmap,
   GoalTrackerCard,
-  YearComparisonCard,
 } from '../../src/components/statistics';
 import { 
   isCurrentVisit, 
@@ -36,9 +35,7 @@ import {
 import {
   calculateTravelStreaks,
   calculateCountryHeatmap,
-  calculateYearComparisons,
   calculateGoalProgress,
-  getYearsWithVisits,
 } from '../../src/utils/statisticsUtils';
 import { getCountryByCode } from '../../src/constants/countries';
 
@@ -103,11 +100,6 @@ export default function DashboardScreen() {
   const goalProgress = useMemo(() => {
     return calculateGoalProgress(visits, countryGoalTarget);
   }, [visits, countryGoalTarget]);
-
-  const yearComparisons = useMemo(() => {
-    const years = getYearsWithVisits(visits);
-    return calculateYearComparisons(visits, years.slice(0, 5));
-  }, [visits]);
 
   // Active visas (visits with exit date in the future or no exit date)
   const activeVisas = useMemo(() => {
@@ -394,9 +386,6 @@ export default function DashboardScreen() {
 
         {/* Country Heatmap */}
         <CountryHeatmap data={countryHeatmapData} t={t} />
-
-        {/* Year Over Year Comparison */}
-        <YearComparisonCard comparisons={yearComparisons} t={t} />
 
         {/* Days per Country Pie Chart */}
         <View style={[styles.card, { backgroundColor: colors.card }]}>
