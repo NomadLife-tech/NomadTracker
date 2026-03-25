@@ -404,22 +404,41 @@ export default function ProfileScreen() {
   };
 
   const pickAttachment = async (type: 'passport' | 'insurance') => {
+    // Step 1: Show that the function was called
+    console.log('[Attachment] pickAttachment called for:', type);
+    
     try {
-      // On native, temporarily close the modal to allow file picker to work
-      if (Platform.OS !== 'web') {
+      // Step 2: Check platform
+      const isNative = Platform.OS !== 'web';
+      console.log('[Attachment] Platform:', Platform.OS, 'isNative:', isNative);
+      
+      // Step 3: Close modal on native (required for picker to work)
+      if (isNative) {
+        console.log('[Attachment] Closing modal for native picker...');
         if (type === 'passport') setShowPassportModal(false);
         else setShowInsuranceModal(false);
+        // Give time for modal to close
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
 
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['application/pdf', 'image/jpeg', 'image/png'],
-        copyToCacheDirectory: true,
-      });
-
-      // Check if user cancelled
-      if (result.canceled || !result.assets || result.assets.length === 0) {
-        // Reopen modal after user cancels
-        if (Platform.OS !== 'web') {
+      // Step 4: Launch document picker
+      console.log('[Attachment] Launching DocumentPicker...');
+      let result;
+      try {
+        result = await DocumentPicker.getDocumentAsync({
+          type: ['application/pdf', 'image/jpeg', 'image/png'],
+          copyToCacheDirectory: true,
+        });
+        console.log('[Attachment] DocumentPicker result:', JSON.stringify(result));
+      } catch (pickerError: any) {
+        console.error('[Attachment] DocumentPicker threw error:', pickerError);
+        Alert.alert(
+          'Document Picker Error',
+          `The document picker failed to open.\n\nError: ${pickerError?.message || String(pickerError)}`,
+          [{ text: 'OK' }]
+        );
+        // Reopen modal
+        if (isNative) {
           setTimeout(() => {
             if (type === 'passport') setShowPassportModal(true);
             else setShowInsuranceModal(true);
@@ -428,13 +447,27 @@ export default function ProfileScreen() {
         return;
       }
 
+      // Step 5: Check if user cancelled
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        console.log('[Attachment] User cancelled or no assets selected');
+        // Reopen modal after user cancels
+        if (isNative) {
+          setTimeout(() => {
+            if (type === 'passport') setShowPassportModal(true);
+            else setShowInsuranceModal(true);
+          }, 100);
+        }
+        return;
+      }
+
+      // Step 6: Process the selected file
       const file = result.assets[0];
+      console.log('[Attachment] File selected:', file.name, 'size:', file.size);
       const fileExtension = file.name.split('.').pop()?.toLowerCase();
 
       if (!['pdf', 'jpg', 'jpeg', 'png'].includes(fileExtension || '')) {
-        showToast('Only PDF, JPG, and PNG files are allowed', 'error');
-        // Reopen modal
-        if (Platform.OS !== 'web') {
+        Alert.alert('Invalid File Type', 'Only PDF, JPG, and PNG files are allowed');
+        if (isNative) {
           setTimeout(() => {
             if (type === 'passport') setShowPassportModal(true);
             else setShowInsuranceModal(true);
@@ -443,20 +476,27 @@ export default function ProfileScreen() {
         return;
       }
 
+      // Step 7: Convert to base64 on native
       let uri = file.uri;
-      if (Platform.OS !== 'web') {
+      if (isNative) {
         try {
+          console.log('[Attachment] Reading file as base64...');
           const base64Data = await FileSystem.readAsStringAsync(file.uri, {
             encoding: 'base64',
           });
           uri = `data:${file.mimeType};base64,${base64Data}`;
-        } catch (e) {
-          console.log('Error reading file as base64:', e);
-          uri = file.uri;
+          console.log('[Attachment] Base64 conversion successful, length:', base64Data.length);
+        } catch (e: any) {
+          console.log('[Attachment] Base64 conversion failed, using original URI:', e);
+          // Continue with original URI
         }
       }
 
+      // Step 8: Generate UUID and create attachment
+      console.log('[Attachment] Generating UUID...');
       const attachmentId = await generateUUID();
+      console.log('[Attachment] UUID generated:', attachmentId);
+      
       const attachment: Attachment = {
         id: attachmentId,
         name: file.name,
@@ -467,24 +507,31 @@ export default function ProfileScreen() {
         createdAt: new Date().toISOString(),
       };
 
+      // Step 9: Add attachment to state
+      console.log('[Attachment] Adding attachment to state...');
       if (type === 'passport') {
         setPassportAttachments(prev => [...prev, attachment]);
       } else {
         setInsuranceAttachments(prev => [...prev, attachment]);
       }
-      showToast('File attached successfully', 'success');
       
-      // Reopen modal after successful attachment
-      if (Platform.OS !== 'web') {
+      showToast('File attached successfully', 'success');
+      console.log('[Attachment] Success!');
+      
+      // Step 10: Reopen modal after successful attachment
+      if (isNative) {
         setTimeout(() => {
           if (type === 'passport') setShowPassportModal(true);
           else setShowInsuranceModal(true);
         }, 100);
       }
-    } catch (error) {
-      console.error('Error picking document:', error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      Alert.alert('Attachment Error', `Failed to attach file: ${errorMessage}`);
+    } catch (error: any) {
+      console.error('[Attachment] Unexpected error:', error);
+      Alert.alert(
+        'Attachment Error',
+        `An unexpected error occurred.\n\nError: ${error?.message || String(error)}\n\nStack: ${error?.stack?.substring(0, 200) || 'N/A'}`,
+        [{ text: 'OK' }]
+      );
       // Reopen modal on error
       if (Platform.OS !== 'web') {
         setTimeout(() => {
@@ -496,23 +543,42 @@ export default function ProfileScreen() {
   };
 
   const pickImageAttachment = async (type: 'passport' | 'insurance') => {
+    // Step 1: Show that the function was called
+    console.log('[ImageAttachment] pickImageAttachment called for:', type);
+    
     try {
-      // On native, temporarily close the modal to allow image picker to work
-      if (Platform.OS !== 'web') {
+      // Step 2: Check platform
+      const isNative = Platform.OS !== 'web';
+      console.log('[ImageAttachment] Platform:', Platform.OS, 'isNative:', isNative);
+      
+      // Step 3: Close modal on native (required for picker to work)
+      if (isNative) {
+        console.log('[ImageAttachment] Closing modal for native picker...');
         if (type === 'passport') setShowPassportModal(false);
         else setShowInsuranceModal(false);
+        // Give time for modal to close
+        await new Promise(resolve => setTimeout(resolve, 300));
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 0.7,
-        base64: true,
-      });
-
-      // Check if user cancelled
-      if (result.canceled || !result.assets[0]) {
-        // Reopen modal after user cancels
-        if (Platform.OS !== 'web') {
+      // Step 4: Launch image picker
+      console.log('[ImageAttachment] Launching ImagePicker...');
+      let result;
+      try {
+        result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          quality: 0.7,
+          base64: true,
+        });
+        console.log('[ImageAttachment] ImagePicker result canceled:', result.canceled);
+      } catch (pickerError: any) {
+        console.error('[ImageAttachment] ImagePicker threw error:', pickerError);
+        Alert.alert(
+          'Image Picker Error',
+          `The image picker failed to open.\n\nError: ${pickerError?.message || String(pickerError)}`,
+          [{ text: 'OK' }]
+        );
+        // Reopen modal
+        if (isNative) {
           setTimeout(() => {
             if (type === 'passport') setShowPassportModal(true);
             else setShowInsuranceModal(true);
@@ -521,10 +587,29 @@ export default function ProfileScreen() {
         return;
       }
 
+      // Step 5: Check if user cancelled
+      if (result.canceled || !result.assets[0]) {
+        console.log('[ImageAttachment] User cancelled or no image selected');
+        // Reopen modal after user cancels
+        if (isNative) {
+          setTimeout(() => {
+            if (type === 'passport') setShowPassportModal(true);
+            else setShowInsuranceModal(true);
+          }, 100);
+        }
+        return;
+      }
+
+      // Step 6: Process the selected image
       const asset = result.assets[0];
+      console.log('[ImageAttachment] Image selected, has base64:', !!asset.base64);
       const fileExtension = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
 
+      // Step 7: Generate UUID and create attachment
+      console.log('[ImageAttachment] Generating UUID...');
       const imageAttachmentId = await generateUUID();
+      console.log('[ImageAttachment] UUID generated:', imageAttachmentId);
+      
       const attachment: Attachment = {
         id: imageAttachmentId,
         name: `image_${Date.now()}.${fileExtension}`,
@@ -535,24 +620,31 @@ export default function ProfileScreen() {
         createdAt: new Date().toISOString(),
       };
 
+      // Step 8: Add attachment to state
+      console.log('[ImageAttachment] Adding attachment to state...');
       if (type === 'passport') {
         setPassportAttachments(prev => [...prev, attachment]);
       } else {
         setInsuranceAttachments(prev => [...prev, attachment]);
       }
-      showToast('Image attached successfully', 'success');
       
-      // Reopen modal after successful attachment
-      if (Platform.OS !== 'web') {
+      showToast('Image attached successfully', 'success');
+      console.log('[ImageAttachment] Success!');
+      
+      // Step 9: Reopen modal after successful attachment
+      if (isNative) {
         setTimeout(() => {
           if (type === 'passport') setShowPassportModal(true);
           else setShowInsuranceModal(true);
         }, 100);
       }
-    } catch (error) {
-      console.error('Error picking image:', error);
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      Alert.alert('Image Attachment Error', `Failed to attach image: ${errorMessage}`);
+    } catch (error: any) {
+      console.error('[ImageAttachment] Unexpected error:', error);
+      Alert.alert(
+        'Image Attachment Error',
+        `An unexpected error occurred.\n\nError: ${error?.message || String(error)}\n\nStack: ${error?.stack?.substring(0, 200) || 'N/A'}`,
+        [{ text: 'OK' }]
+      );
       // Reopen modal on error
       if (Platform.OS !== 'web') {
         setTimeout(() => {
