@@ -80,8 +80,9 @@ export default function AddVisitScreen() {
     }
 
     try {
+      const visitId = await generateUUID();
       const visit: Visit = {
-        id: generateUUID(),
+        id: visitId,
         countryCode,
         countryName,
         entryDate: entryDate.toISOString(),

@@ -271,8 +271,9 @@ export default function ProfileScreen() {
 
   const savePassport = async () => {
     try {
+      const passportId = editingPassport?.id || await generateUUID();
       const passportData: Passport = {
-        id: editingPassport?.id || generateUUID(),
+        id: passportId,
         type: passportType,
         countryCode: passportCountry || '',
         countryName: passportCountryName || '',
@@ -346,8 +347,9 @@ export default function ProfileScreen() {
 
   const saveInsurance = async () => {
     try {
+      const insuranceId = editingInsurance?.id || await generateUUID();
       const insuranceData: Insurance = {
-        id: editingInsurance?.id || generateUUID(),
+        id: insuranceId,
         type: insuranceType,
         provider: insuranceProvider || '',
         policyNumber: insurancePolicyNumber || '',
@@ -445,8 +447,9 @@ export default function ProfileScreen() {
         }
       }
 
+      const attachmentId = await generateUUID();
       const attachment: Attachment = {
-        id: generateUUID(),
+        id: attachmentId,
         name: file.name,
         type: fileExtension === 'pdf' ? 'pdf' : fileExtension === 'png' ? 'png' : 'jpg',
         mimeType: file.mimeType || 'application/octet-stream',
@@ -501,8 +504,9 @@ export default function ProfileScreen() {
       const asset = result.assets[0];
       const fileExtension = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
 
+      const imageAttachmentId = await generateUUID();
       const attachment: Attachment = {
-        id: generateUUID(),
+        id: imageAttachmentId,
         name: `image_${Date.now()}.${fileExtension}`,
         type: fileExtension === 'png' ? 'png' : 'jpg',
         mimeType: fileExtension === 'png' ? 'image/png' : 'image/jpeg',
