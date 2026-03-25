@@ -168,9 +168,17 @@ const nativeStorage = {
   
   setItem: async (key: string, value: string): Promise<void> => {
     try {
+      console.log(`[Storage] nativeStorage setItem called - key: ${key}, size: ${value.length} bytes`);
       await AsyncStorage.setItem(key, value);
-    } catch (e) {
-      console.error('[Storage] nativeStorage setItem error:', e);
+      console.log(`[Storage] nativeStorage setItem SUCCESS - key: ${key}`);
+    } catch (e: any) {
+      console.error('[Storage] nativeStorage setItem FAILED:', {
+        key,
+        valueSize: value.length,
+        errorName: e?.name,
+        errorMessage: e?.message,
+        error: e
+      });
       throw e; // Re-throw so caller can handle the error properly
     }
   },

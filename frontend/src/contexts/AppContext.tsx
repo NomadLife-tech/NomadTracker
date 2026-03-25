@@ -102,8 +102,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   // Visit operations
   const addVisit = useCallback(async (visit: Visit) => {
+    console.log('[AppContext] addVisit called with visit:', visit.countryName);
     try {
+      console.log('[AppContext] Calling storage.addVisit...');
       const updatedVisits = await storage.addVisit(visit);
+      console.log('[AppContext] storage.addVisit succeeded, visits count:', updatedVisits.length);
       setVisits(updatedVisits);
       
       // Enqueue sync operation if cloud sync is enabled
@@ -129,6 +132,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           console.warn('[Notifications] Failed to reschedule:', error);
         }
       }
+      console.log('[AppContext] addVisit completed successfully');
     } catch (error) {
       console.error('[AppContext] Failed to add visit:', error);
       throw error;
