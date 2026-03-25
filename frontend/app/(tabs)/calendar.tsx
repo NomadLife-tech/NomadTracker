@@ -23,6 +23,7 @@ export default function CalendarScreen() {
   // AppContext already manages state updates properly
 
   // Generate marked dates with flag info for custom rendering
+  // Supports multiple flags per day for overlapping visits (e.g., travel days)
   const markedDates = useMemo(() => {
     const marks: Record<string, any> = {};
     
@@ -37,15 +38,22 @@ export default function CalendarScreen() {
         const dateStr = format(day, 'yyyy-MM-dd');
         
         if (!marks[dateStr]) {
+          // First visit for this date
           marks[dateStr] = {
             customStyles: {
               container: {},
               text: {},
             },
-            flag: country?.flag || '🏳️',
-            countryCode: visit.countryCode,
+            flags: [{ flag: country?.flag || '🏳️', countryCode: visit.countryCode }],
             hasVisit: true,
           };
+        } else if (marks[dateStr].hasVisit) {
+          // Additional visit on same date - add flag if not already present
+          const existingFlags = marks[dateStr].flags || [];
+          const flagExists = existingFlags.some((f: any) => f.countryCode === visit.countryCode);
+          if (!flagExists) {
+            marks[dateStr].flags = [...existingFlags, { flag: country?.flag || '🏳️', countryCode: visit.countryCode }];
+          }
         }
       });
     });
@@ -82,7 +90,7 @@ export default function CalendarScreen() {
     }
   };
 
-  // Custom day component with flag emoji
+  // Custom day component with flag emoji - supports multiple flags per day
   const renderDay = (date: any, state: any) => {
     if (!date) return <View style={[styles.emptyDay, { backgroundColor: colors.card }]} />;
     
@@ -91,6 +99,7 @@ export default function CalendarScreen() {
     const isSelected = selectedDate === dateStr;
     const isToday = dateStr === format(new Date(), 'yyyy-MM-dd');
     const isDisabled = state === 'disabled';
+    const flags = marking?.flags || [];
     
     return (
       <TouchableOpacity
@@ -103,14 +112,37 @@ export default function CalendarScreen() {
         disabled={isDisabled}
       >
         {marking?.hasVisit ? (
-          // Day with visit - show flag
+          // Day with visit(s) - show flag(s)
           <View style={styles.flagDayContent}>
-            <Text style={[
-              styles.flagEmoji,
-              isSelected && styles.selectedFlagEmoji,
-            ]}>
-              {marking.flag}
-            </Text>
+            {flags.length === 1 ? (
+              // Single flag - show normally
+              <Text style={[
+                styles.flagEmoji,
+                isSelected && styles.selectedFlagEmoji,
+              ]}>
+                {flags[0].flag}
+              </Text>
+            ) : flags.length === 2 ? (
+              // Two flags - show side by side
+              <View style={styles.doubleFlagContainer}>
+                <Text style={[styles.smallFlagEmoji, isSelected && styles.selectedFlagEmoji]}>
+                  {flags[0].flag}
+                </Text>
+                <Text style={[styles.smallFlagEmoji, isSelected && styles.selectedFlagEmoji]}>
+                  {flags[1].flag}
+                </Text>
+              </View>
+            ) : (
+              // More than 2 flags - show first flag with count
+              <View style={styles.multiFlagContainer}>
+                <Text style={[styles.smallFlagEmoji, isSelected && styles.selectedFlagEmoji]}>
+                  {flags[0].flag}
+                </Text>
+                <Text style={[styles.flagCount, { color: isSelected ? '#FFFFFF' : colors.primary }]}>
+                  +{flags.length - 1}
+                </Text>
+              </View>
+            )}
             <Text style={[
               styles.dayNumber,
               { color: isSelected ? '#FFFFFF' : colors.textSecondary },
@@ -316,6 +348,27 @@ const styles = StyleSheet.create({
   },
   selectedFlagEmoji: {
     fontSize: 18,
+  },
+  smallFlagEmoji: {
+    fontSize: 13,
+  },
+  doubleFlagContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 1,
+    marginBottom: -2,
+  },
+  multiFlagContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: -2,
+  },
+  flagCount: {
+    fontSize: 8,
+    fontWeight: '700',
+    marginLeft: 1,
   },
   dayNumber: {
     fontSize: 10,
