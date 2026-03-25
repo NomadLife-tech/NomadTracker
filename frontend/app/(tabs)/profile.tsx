@@ -416,21 +416,30 @@ export default function ProfileScreen() {
         copyToCacheDirectory: true,
       });
 
-      // Reopen modal after picker completes
-      if (Platform.OS !== 'web') {
-        setTimeout(() => {
-          if (type === 'passport') setShowPassportModal(true);
-          else setShowInsuranceModal(true);
-        }, 100);
+      // Check if user cancelled
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        // Reopen modal after user cancels
+        if (Platform.OS !== 'web') {
+          setTimeout(() => {
+            if (type === 'passport') setShowPassportModal(true);
+            else setShowInsuranceModal(true);
+          }, 100);
+        }
+        return;
       }
-
-      if (result.canceled || !result.assets || result.assets.length === 0) return;
 
       const file = result.assets[0];
       const fileExtension = file.name.split('.').pop()?.toLowerCase();
 
       if (!['pdf', 'jpg', 'jpeg', 'png'].includes(fileExtension || '')) {
         showToast('Only PDF, JPG, and PNG files are allowed', 'error');
+        // Reopen modal
+        if (Platform.OS !== 'web') {
+          setTimeout(() => {
+            if (type === 'passport') setShowPassportModal(true);
+            else setShowInsuranceModal(true);
+          }, 100);
+        }
         return;
       }
 
@@ -464,9 +473,18 @@ export default function ProfileScreen() {
         setInsuranceAttachments(prev => [...prev, attachment]);
       }
       showToast('File attached successfully', 'success');
+      
+      // Reopen modal after successful attachment
+      if (Platform.OS !== 'web') {
+        setTimeout(() => {
+          if (type === 'passport') setShowPassportModal(true);
+          else setShowInsuranceModal(true);
+        }, 100);
+      }
     } catch (error) {
       console.error('Error picking document:', error);
-      showToast('Failed to attach file', 'error');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      Alert.alert('Attachment Error', `Failed to attach file: ${errorMessage}`);
       // Reopen modal on error
       if (Platform.OS !== 'web') {
         setTimeout(() => {
@@ -491,15 +509,17 @@ export default function ProfileScreen() {
         base64: true,
       });
 
-      // Reopen modal after picker completes
-      if (Platform.OS !== 'web') {
-        setTimeout(() => {
-          if (type === 'passport') setShowPassportModal(true);
-          else setShowInsuranceModal(true);
-        }, 100);
+      // Check if user cancelled
+      if (result.canceled || !result.assets[0]) {
+        // Reopen modal after user cancels
+        if (Platform.OS !== 'web') {
+          setTimeout(() => {
+            if (type === 'passport') setShowPassportModal(true);
+            else setShowInsuranceModal(true);
+          }, 100);
+        }
+        return;
       }
-
-      if (result.canceled || !result.assets[0]) return;
 
       const asset = result.assets[0];
       const fileExtension = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
@@ -521,9 +541,18 @@ export default function ProfileScreen() {
         setInsuranceAttachments(prev => [...prev, attachment]);
       }
       showToast('Image attached successfully', 'success');
+      
+      // Reopen modal after successful attachment
+      if (Platform.OS !== 'web') {
+        setTimeout(() => {
+          if (type === 'passport') setShowPassportModal(true);
+          else setShowInsuranceModal(true);
+        }, 100);
+      }
     } catch (error) {
       console.error('Error picking image:', error);
-      showToast('Failed to attach image', 'error');
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      Alert.alert('Image Attachment Error', `Failed to attach image: ${errorMessage}`);
       // Reopen modal on error
       if (Platform.OS !== 'web') {
         setTimeout(() => {
