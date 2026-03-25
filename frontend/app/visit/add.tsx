@@ -23,7 +23,7 @@ import { COUNTRIES, getCountryByCode, getVisaTypesWithCustom } from '../../src/c
 import { getDefaultAllowedDays, isCustomVisaType } from '../../src/constants/visaDefaults';
 import { DatePickerInput } from '../../src/components/common/DatePickerInput';
 import { CountryInfoCard } from '../../src/components/common/CountryInfoCard';
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '../../src/utils/uuid';
 
 export default function AddVisitScreen() {
   const { colors } = useTheme();
@@ -81,7 +81,7 @@ export default function AddVisitScreen() {
 
     try {
       const visit: Visit = {
-        id: uuidv4(),
+        id: generateUUID(),
         countryCode,
         countryName,
         entryDate: entryDate.toISOString(),

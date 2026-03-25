@@ -27,7 +27,7 @@ import { COUNTRIES, getCountryByCode } from '../../src/constants/countries';
 import { LANGUAGE_NAMES } from '../../src/constants/translations';
 import { DatePickerInput } from '../../src/components/common/DatePickerInput';
 import { exportData, importData } from '../../src/services/dataExport';
-import { v4 as uuidv4 } from 'uuid';
+import { generateUUID } from '../../src/utils/uuid';
 
 // Import refactored components
 import {
@@ -272,7 +272,7 @@ export default function ProfileScreen() {
   const savePassport = async () => {
     try {
       const passportData: Passport = {
-        id: editingPassport?.id || uuidv4(),
+        id: editingPassport?.id || generateUUID(),
         type: passportType,
         countryCode: passportCountry || '',
         countryName: passportCountryName || '',
@@ -347,7 +347,7 @@ export default function ProfileScreen() {
   const saveInsurance = async () => {
     try {
       const insuranceData: Insurance = {
-        id: editingInsurance?.id || uuidv4(),
+        id: editingInsurance?.id || generateUUID(),
         type: insuranceType,
         provider: insuranceProvider || '',
         policyNumber: insurancePolicyNumber || '',
@@ -446,7 +446,7 @@ export default function ProfileScreen() {
       }
 
       const attachment: Attachment = {
-        id: uuidv4(),
+        id: generateUUID(),
         name: file.name,
         type: fileExtension === 'pdf' ? 'pdf' : fileExtension === 'png' ? 'png' : 'jpg',
         mimeType: file.mimeType || 'application/octet-stream',
@@ -502,7 +502,7 @@ export default function ProfileScreen() {
       const fileExtension = asset.uri.split('.').pop()?.toLowerCase() || 'jpg';
 
       const attachment: Attachment = {
-        id: uuidv4(),
+        id: generateUUID(),
         name: `image_${Date.now()}.${fileExtension}`,
         type: fileExtension === 'png' ? 'png' : 'jpg',
         mimeType: fileExtension === 'png' ? 'image/png' : 'image/jpeg',
