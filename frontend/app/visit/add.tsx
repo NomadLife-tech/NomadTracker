@@ -10,6 +10,7 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -101,6 +102,13 @@ export default function AddVisitScreen() {
       router.back();
     } catch (error) {
       console.error('Error saving visit:', error);
+      // Show Alert with actual error message for debugging in Expo Go
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      Alert.alert(
+        'Save Failed',
+        `Could not save visit. Error: ${errorMessage}`,
+        [{ text: 'OK' }]
+      );
       showToast(t('errorSavingData'), 'error');
     }
   };
