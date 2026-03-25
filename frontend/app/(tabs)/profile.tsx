@@ -1110,47 +1110,6 @@ export default function ProfileScreen() {
                 <DatePickerInput label={t('issueDate')} value={passportIssueDate} onChange={setPassportIssueDate} />
                 <DatePickerInput label={t('expiryDate')} value={passportExpiryDate} onChange={setPassportExpiryDate} />
 
-                {/* Attachments */}
-                <View style={styles.attachmentSection}>
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Attachments (PDF, JPG, PNG)</Text>
-                  {passportAttachments.length > 0 && (
-                    <View style={styles.attachmentList}>
-                      {passportAttachments.map((attachment) => (
-                        <View key={attachment.id} style={[styles.attachmentItem, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                          <View style={[styles.attachmentIcon, { backgroundColor: attachment.type === 'pdf' ? '#FF3B30' : '#007AFF' }]}>
-                            <Ionicons name={attachment.type === 'pdf' ? 'document' : 'image'} size={18} color="#FFFFFF" />
-                          </View>
-                          <View style={styles.attachmentInfo}>
-                            <Text style={[styles.attachmentName, { color: colors.text }]} numberOfLines={1}>{attachment.name}</Text>
-                            <Text style={[styles.attachmentSize, { color: colors.textSecondary }]}>
-                              {formatFileSize(attachment.size)} • {attachment.type.toUpperCase()}
-                            </Text>
-                          </View>
-                          <TouchableOpacity style={styles.removeAttachment} onPress={() => removeAttachment('passport', attachment.id)}>
-                            <Ionicons name="close-circle" size={22} color={colors.danger} />
-                          </TouchableOpacity>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                  <View style={styles.attachmentButtons}>
-                    <TouchableOpacity
-                      style={[styles.attachButton, { backgroundColor: colors.background, borderColor: colors.border }]}
-                      onPress={() => pickAttachment('passport')}
-                    >
-                      <Ionicons name="document-attach" size={20} color={colors.primary} />
-                      <Text style={[styles.attachButtonText, { color: colors.text }]}>Add File</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.attachButton, { backgroundColor: colors.background, borderColor: colors.border }]}
-                      onPress={() => pickImageAttachment('passport')}
-                    >
-                      <Ionicons name="camera" size={20} color={colors.primary} />
-                      <Text style={[styles.attachButtonText, { color: colors.text }]}>Add Photo</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
                 <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.primary }]} onPress={savePassport}>
                   <Text style={styles.saveButtonText}>{t('save')}</Text>
                 </TouchableOpacity>
@@ -1237,47 +1196,6 @@ export default function ProfileScreen() {
                     multiline
                     numberOfLines={3}
                   />
-                </View>
-
-                {/* Attachments */}
-                <View style={styles.attachmentSection}>
-                  <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>Attachments (PDF, JPG, PNG)</Text>
-                  {insuranceAttachments.length > 0 && (
-                    <View style={styles.attachmentList}>
-                      {insuranceAttachments.map((attachment) => (
-                        <View key={attachment.id} style={[styles.attachmentItem, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                          <View style={[styles.attachmentIcon, { backgroundColor: attachment.type === 'pdf' ? '#FF3B30' : '#007AFF' }]}>
-                            <Ionicons name={attachment.type === 'pdf' ? 'document' : 'image'} size={18} color="#FFFFFF" />
-                          </View>
-                          <View style={styles.attachmentInfo}>
-                            <Text style={[styles.attachmentName, { color: colors.text }]} numberOfLines={1}>{attachment.name}</Text>
-                            <Text style={[styles.attachmentSize, { color: colors.textSecondary }]}>
-                              {formatFileSize(attachment.size)} • {attachment.type.toUpperCase()}
-                            </Text>
-                          </View>
-                          <TouchableOpacity style={styles.removeAttachment} onPress={() => removeAttachment('insurance', attachment.id)}>
-                            <Ionicons name="close-circle" size={22} color={colors.danger} />
-                          </TouchableOpacity>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                  <View style={styles.attachmentButtons}>
-                    <TouchableOpacity
-                      style={[styles.attachButton, { backgroundColor: colors.background, borderColor: colors.border }]}
-                      onPress={() => pickAttachment('insurance')}
-                    >
-                      <Ionicons name="document-attach" size={20} color={colors.primary} />
-                      <Text style={[styles.attachButtonText, { color: colors.text }]}>Add File</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.attachButton, { backgroundColor: colors.background, borderColor: colors.border }]}
-                      onPress={() => pickImageAttachment('insurance')}
-                    >
-                      <Ionicons name="camera" size={20} color={colors.primary} />
-                      <Text style={[styles.attachButtonText, { color: colors.text }]}>Add Photo</Text>
-                    </TouchableOpacity>
-                  </View>
                 </View>
 
                 <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.primary }]} onPress={saveInsurance}>
