@@ -4,11 +4,12 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { Visit } from '../../types';
 import { getCountryByCode, COUNTRIES } from '../../constants/countries';
-import { getVisaStatus } from '../../utils/dateUtils';
+import { getVisaStatus, isSchengenCountry, countsAgainstSchengen, calculateSchengenDays } from '../../utils/dateUtils';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface MiniMapCardProps {
   activeVisit: Visit | null;
+  allVisits?: Visit[]; // All visits for Schengen calculation
   onPress: () => void;
   onAddVisit: () => void;
   onLocationDetected?: (countryCode: string, countryName: string) => void;
@@ -58,17 +59,42 @@ const COUNTRY_COORDS: { [key: string]: [number, number] } = {
   LY: [32.8872, 13.1913], TN: [36.8065, 10.1815], DZ: [36.7538, 3.0588],
 };
 
-export function MiniMapCard({ activeVisit, onPress, onAddVisit, onLocationDetected, t }: MiniMapCardProps) {
+export function MiniMapCard({ activeVisit, allVisits = [], onPress, onAddVisit, onLocationDetected, t }: MiniMapCardProps) {
   const { colors, isDark } = useTheme();
   const [isOverlayVisible, setIsOverlayVisible] = useState(true);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [detectedCountry, setDetectedCountry] = useState<{ code: string; name: string; flag: string } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   
+  // Check if this is a Schengen country with a counting visa type
+  const isSchengenCounting = useMemo(() => {
+    if (!activeVisit) return false;
+    return isSchengenCountry(activeVisit.countryCode) && countsAgainstSchengen(activeVisit.visaType);
+  }, [activeVisit]);
+  
+  // Calculate Schengen status if applicable
+  const schengenStatus = useMemo(() => {
+    if (!isSchengenCounting || allVisits.length === 0) return null;
+    return calculateSchengenDays(allVisits);
+  }, [isSchengenCounting, allVisits]);
+  
   const activeVisitStatus = useMemo(() => {
     if (!activeVisit) return null;
-    return getVisaStatus(activeVisit);
-  }, [activeVisit]);
+    const baseStatus = getVisaStatus(activeVisit);
+    
+    // For Schengen countries with counting visas, override with Schengen cumulative days
+    if (isSchengenCounting && schengenStatus) {
+      return {
+        ...baseStatus,
+        daysUsed: schengenStatus.daysUsedInPeriod,
+        daysRemaining: schengenStatus.daysRemainingInPeriod,
+        percentageUsed: (schengenStatus.daysUsedInPeriod / 90) * 100,
+        isOverstay: schengenStatus.daysUsedInPeriod > 90,
+      };
+    }
+    
+    return baseStatus;
+  }, [activeVisit, isSchengenCounting, schengenStatus]);
 
   const country = activeVisit ? getCountryByCode(activeVisit.countryCode) : null;
   const coords = activeVisit ? COUNTRY_COORDS[activeVisit.countryCode] || [20, 0] : 

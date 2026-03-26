@@ -175,6 +175,7 @@ export default function DashboardScreen() {
         {/* Current Visit Mini Map Card - Always Light Mode */}
         <MiniMapCard
           activeVisit={activeVisit || null}
+          allVisits={visits}
           onPress={() => activeVisit && router.push(`/visit/${activeVisit.id}`)}
           onAddVisit={() => router.push('/visit/add')}
           t={t}
