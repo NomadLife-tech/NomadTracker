@@ -108,7 +108,7 @@ export default function TaxScreen() {
                     <View>
                       <Text style={[styles.countryName, { color: colors.text }]}>{item.countryName}</Text>
                       <Text style={[styles.countryDays, { color: colors.textSecondary }]}>
-                        {item.days} {t('days')} ({item.percentOfYear.toFixed(1)}% of year)
+                        {item.days} {t('days')} ({item.percentOfYear.toFixed(1)}% of YTD)
                       </Text>
                     </View>
                   </View>
