@@ -65,62 +65,37 @@ export function VisitFilterModal({
           </View>
 
           <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
-            {/* Year Filter */}
-            <View style={styles.section}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('filterByYear')}</Text>
-              <TouchableOpacity
-                style={[styles.dropdown, { backgroundColor: colors.background, borderColor: colors.border }]}
-                onPress={onYearPickerOpen}
-              >
-                <Ionicons name="calendar" size={18} color={colors.primary} />
-                <Text style={[styles.dropdownText, { color: selectedYear ? colors.text : colors.textSecondary }]}>
-                  {selectedYear || t('allYears')}
-                </Text>
-                <Ionicons name="chevron-down" size={18} color={colors.textSecondary} />
-              </TouchableOpacity>
-            </View>
-
-            {/* Month Filter (only if year is selected) */}
-            {selectedYear && (
-              <View style={styles.section}>
-                <Text style={[styles.label, { color: colors.textSecondary }]}>{t('filterByMonth')}</Text>
-                <TouchableOpacity
-                  style={[styles.dropdown, { backgroundColor: colors.background, borderColor: colors.border }]}
-                  onPress={onMonthPickerOpen}
-                >
-                  <Ionicons name="calendar-outline" size={18} color={colors.primary} />
-                  <Text style={[styles.dropdownText, { color: selectedMonth !== null ? colors.text : colors.textSecondary }]}>
-                    {selectedMonth !== null ? monthNames[selectedMonth] : t('allMonths')}
-                  </Text>
-                  <Ionicons name="chevron-down" size={18} color={colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
-            )}
-
             {/* Group By */}
             <View style={styles.section}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groupBy')}</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>GROUP BY</Text>
               <View style={styles.options}>
-                {(['none', 'month', 'year'] as const).map((option) => (
-                  <TouchableOpacity
-                    key={option}
-                    style={[
-                      styles.chip,
-                      { borderColor: colors.border },
-                      groupBy === option && { backgroundColor: colors.warning, borderColor: colors.warning },
-                    ]}
-                    onPress={() => onGroupByChange(option)}
-                  >
-                    <Text
+                {(['none', 'month', 'year'] as const).map((option) => {
+                  const labels: Record<string, string> = {
+                    none: 'No Grouping',
+                    month: 'Month',
+                    year: 'Year'
+                  };
+                  return (
+                    <TouchableOpacity
+                      key={option}
                       style={[
-                        styles.chipText,
-                        { color: groupBy === option ? '#FFFFFF' : colors.text },
+                        styles.chip,
+                        { borderColor: colors.border },
+                        groupBy === option && { backgroundColor: colors.warning, borderColor: colors.warning },
                       ]}
+                      onPress={() => onGroupByChange(option)}
                     >
-                      {t(option === 'none' ? 'noGrouping' : option === 'year' ? 'year' : 'month')}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text
+                        style={[
+                          styles.chipText,
+                          { color: groupBy === option ? '#FFFFFF' : colors.text },
+                        ]}
+                      >
+                        {labels[option]}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
 
@@ -153,28 +128,36 @@ export function VisitFilterModal({
 
             {/* Sort By */}
             <View style={styles.section}>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('sortBy')}</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>SORT BY</Text>
               <View style={styles.options}>
-                {(['recent', 'oldest', 'country', 'duration'] as const).map((sort) => (
-                  <TouchableOpacity
-                    key={sort}
-                    style={[
-                      styles.chip,
-                      { borderColor: colors.border },
-                      sortBy === sort && { backgroundColor: colors.primary, borderColor: colors.primary },
-                    ]}
-                    onPress={() => onSortByChange(sort)}
-                  >
-                    <Text
+                {(['recent', 'oldest', 'country', 'duration'] as const).map((sort) => {
+                  const sortLabels: Record<string, string> = {
+                    recent: 'Recent',
+                    oldest: 'Oldest',
+                    country: 'Country',
+                    duration: 'Duration'
+                  };
+                  return (
+                    <TouchableOpacity
+                      key={sort}
                       style={[
-                        styles.chipText,
-                        { color: sortBy === sort ? '#FFFFFF' : colors.text },
+                        styles.chip,
+                        { borderColor: colors.border },
+                        sortBy === sort && { backgroundColor: colors.primary, borderColor: colors.primary },
                       ]}
+                      onPress={() => onSortByChange(sort)}
                     >
-                      {t(sort)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                      <Text
+                        style={[
+                          styles.chipText,
+                          { color: sortBy === sort ? '#FFFFFF' : colors.text },
+                        ]}
+                      >
+                        {sortLabels[sort]}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           </ScrollView>
@@ -185,7 +168,7 @@ export function VisitFilterModal({
               style={[styles.clearButton, { borderColor: colors.border }]}
               onPress={onClearFilters}
             >
-              <Text style={[styles.clearButtonText, { color: colors.text }]}>{t('clearAll')}</Text>
+              <Text style={[styles.clearButtonText, { color: colors.text }]}>Clear All</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.applyButton, { backgroundColor: colors.primary }]}
