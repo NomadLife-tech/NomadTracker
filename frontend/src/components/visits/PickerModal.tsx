@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 interface PickerModalProps<T extends string | number> {
@@ -37,12 +37,11 @@ export function PickerModal<T extends string | number>({
 
   return (
     <Modal visible={visible} animationType="fade" transparent>
-      <TouchableOpacity
+      <Pressable
         style={styles.overlay}
-        activeOpacity={1}
         onPress={onClose}
       >
-        <View style={[styles.content, { backgroundColor: colors.card }]}>
+        <Pressable style={[styles.content, { backgroundColor: colors.card }]}>
           <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
           
           {/* All Items Option */}
@@ -84,8 +83,8 @@ export function PickerModal<T extends string | number>({
               </TouchableOpacity>
             ))}
           </ScrollView>
-        </View>
-      </TouchableOpacity>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }
