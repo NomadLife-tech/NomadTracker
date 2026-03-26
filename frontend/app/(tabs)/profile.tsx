@@ -231,20 +231,49 @@ export default function ProfileScreen() {
   // Passport Handlers
   // ─────────────────────────────────────────────────────────────────────
 
+  // Load passport data for a specific type into the form
+  const loadPassportDataForType = (type: 'primary' | 'secondary' | 'tertiary') => {
+    const existingPassport = profile.passports.find(p => p.type === type);
+    
+    if (existingPassport) {
+      // Load existing passport data
+      setEditingPassport(existingPassport);
+      setPassportCountry(existingPassport.countryCode || '');
+      setPassportCountryName(existingPassport.countryName || '');
+      setPassportNumber(existingPassport.passportNumber || '');
+      
+      // Handle dates
+      if (existingPassport.issueDate && existingPassport.issueDate.length > 0) {
+        const issueDate = new Date(existingPassport.issueDate);
+        setPassportIssueDate(isNaN(issueDate.getTime()) ? undefined : issueDate);
+      } else {
+        setPassportIssueDate(undefined);
+      }
+      if (existingPassport.expiryDate && existingPassport.expiryDate.length > 0) {
+        const expiryDate = new Date(existingPassport.expiryDate);
+        setPassportExpiryDate(isNaN(expiryDate.getTime()) ? undefined : expiryDate);
+      } else {
+        setPassportExpiryDate(undefined);
+      }
+      setPassportAttachments(existingPassport.attachments || []);
+    } else {
+      // Clear form for new passport of this type
+      setEditingPassport(null);
+      setPassportCountry('');
+      setPassportCountryName('');
+      setPassportNumber('');
+      setPassportIssueDate(undefined);
+      setPassportExpiryDate(undefined);
+      setPassportAttachments([]);
+    }
+    
+    setPassportType(type);
+  };
+
   const resetPassportForm = () => {
     setPassportCountry('');
     setPassportCountryName('');
-    // Auto-select the first available passport type
-    const usedTypes = profile.passports.map(p => p.type);
-    if (!usedTypes.includes('primary')) {
-      setPassportType('primary');
-    } else if (!usedTypes.includes('secondary')) {
-      setPassportType('secondary');
-    } else if (!usedTypes.includes('tertiary')) {
-      setPassportType('tertiary');
-    } else {
-      setPassportType('primary'); // Fallback (shouldn't happen as we limit to 3)
-    }
+    setPassportType('primary');
     setPassportNumber('');
     setPassportIssueDate(undefined);
     setPassportExpiryDate(undefined);
@@ -254,51 +283,27 @@ export default function ProfileScreen() {
 
   const openPassportModal = (passport?: Passport) => {
     if (passport) {
-      setEditingPassport(passport);
-      setPassportCountry(passport.countryCode || '');
-      setPassportCountryName(passport.countryName || '');
-      setPassportType(passport.type || 'primary');
-      setPassportNumber(passport.passportNumber || '');
-      // Handle empty or invalid dates
-      if (passport.issueDate && passport.issueDate.length > 0) {
-        const issueDate = new Date(passport.issueDate);
-        setPassportIssueDate(isNaN(issueDate.getTime()) ? undefined : issueDate);
-      } else {
-        setPassportIssueDate(undefined);
-      }
-      if (passport.expiryDate && passport.expiryDate.length > 0) {
-        const expiryDate = new Date(passport.expiryDate);
-        setPassportExpiryDate(isNaN(expiryDate.getTime()) ? undefined : expiryDate);
-      } else {
-        setPassportExpiryDate(undefined);
-      }
-      setPassportAttachments(passport.attachments || []);
+      // Editing existing passport - load its data
+      loadPassportDataForType(passport.type);
     } else {
-      // Adding new passport - reset form and auto-select next available type
-      setPassportCountry('');
-      setPassportCountryName('');
-      // Auto-select the first available passport type
-      const usedTypes = profile.passports.map(p => p.type);
-      if (!usedTypes.includes('primary')) {
-        setPassportType('primary');
-      } else if (!usedTypes.includes('secondary')) {
-        setPassportType('secondary');
-      } else if (!usedTypes.includes('tertiary')) {
-        setPassportType('tertiary');
-      } else {
-        setPassportType('primary');
-      }
-      setPassportNumber('');
-      setPassportIssueDate(undefined);
-      setPassportExpiryDate(undefined);
-      setPassportAttachments([]);
-      setEditingPassport(null);
+      // Adding new passport - start with Primary tab and load its data (if exists)
+      loadPassportDataForType('primary');
     }
     setShowPassportModal(true);
   };
 
   const savePassport = async () => {
     try {
+      // Check if we have at least a country selected
+      if (!passportCountry) {
+        Alert.alert(
+          t('missingCountry') || 'Missing Country',
+          t('pleaseSelectCountry') || 'Please select a country for this passport.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
       const passportId = editingPassport?.id || await generateUUID();
       const passportData: Passport = {
         id: passportId,
@@ -311,17 +316,35 @@ export default function ProfileScreen() {
         attachments: passportAttachments,
       };
 
-      const updatedPassports = editingPassport
-        ? profile.passports.map(p => (p.id === editingPassport.id ? passportData : p))
-        : [...profile.passports, passportData];
+      let updatedPassports: Passport[];
+      
+      if (editingPassport) {
+        // Update existing passport
+        updatedPassports = profile.passports.map(p => 
+          p.id === editingPassport.id ? passportData : p
+        );
+      } else {
+        // Check if a passport of this type already exists (shouldn't happen with new logic)
+        const existingOfType = profile.passports.find(p => p.type === passportType);
+        if (existingOfType) {
+          // Replace the existing passport of this type
+          updatedPassports = profile.passports.map(p => 
+            p.type === passportType ? passportData : p
+          );
+        } else {
+          // Add new passport
+          updatedPassports = [...profile.passports, passportData];
+        }
+      }
 
       await updateProfile({ ...profile, passports: updatedPassports });
-      setShowPassportModal(false);
-      resetPassportForm();
-      showToast(t('success'), 'success');
+      
+      // Update the editing state to reflect the saved passport
+      setEditingPassport(passportData);
+      
+      showToast(t('passportSaved') || 'Passport saved', 'success');
     } catch (error) {
       console.error('Error saving passport:', error);
-      // Show Alert with actual error message for debugging in Expo Go
       const errorMessage = error instanceof Error ? error.message : String(error);
       Alert.alert(
         'Save Failed',
@@ -1108,10 +1131,9 @@ export default function ProfileScreen() {
 
                 <View style={styles.typeSelector}>
                   {(['primary', 'secondary', 'tertiary'] as const).map((type) => {
-                    // Check if a passport of this type already exists
                     const existingPassport = profile.passports.find(p => p.type === type);
                     const isCurrentType = passportType === type;
-                    const hasExisting = !!existingPassport && existingPassport.id !== editingPassport?.id;
+                    const hasData = !!existingPassport;
                     
                     return (
                       <TouchableOpacity
@@ -1120,24 +1142,20 @@ export default function ProfileScreen() {
                           styles.typeChip,
                           { borderColor: colors.border },
                           isCurrentType && { backgroundColor: colors.primary, borderColor: colors.primary },
-                          hasExisting && !isCurrentType && { opacity: 0.5 },
+                          // Show a subtle indicator if this type has saved data
+                          !isCurrentType && hasData && { borderColor: colors.success, borderWidth: 2 },
                         ]}
                         onPress={() => {
-                          // If there's an existing passport of this type (and we're not currently editing it),
-                          // don't allow selecting this type - user should edit that passport directly
-                          if (hasExisting) {
-                            Alert.alert(
-                              t('typeInUse') || 'Type Already Used',
-                              t('typeInUseMessage') || `You already have a ${type} passport. Please edit it from the list or choose a different type.`,
-                              [{ text: 'OK' }]
-                            );
-                            return;
+                          if (type !== passportType) {
+                            // Switch to this passport type and load its data
+                            loadPassportDataForType(type);
                           }
-                          setPassportType(type);
                         }}
                       >
                         <Text style={[styles.typeChipText, { color: isCurrentType ? '#FFFFFF' : colors.text }]}>
                           {t(type)}
+                          {/* Show checkmark if this type has saved data */}
+                          {hasData && !isCurrentType && ' ✓'}
                         </Text>
                       </TouchableOpacity>
                     );
@@ -1158,9 +1176,23 @@ export default function ProfileScreen() {
                 <DatePickerInput label={t('issueDate')} value={passportIssueDate} onChange={setPassportIssueDate} />
                 <DatePickerInput label={t('expiryDate')} value={passportExpiryDate} onChange={setPassportExpiryDate} />
 
-                <TouchableOpacity style={[styles.saveButton, { backgroundColor: colors.primary }]} onPress={savePassport}>
-                  <Text style={styles.saveButtonText}>{t('save')}</Text>
-                </TouchableOpacity>
+                <View style={styles.passportButtonRow}>
+                  <TouchableOpacity 
+                    style={[styles.saveButton, { backgroundColor: colors.primary, flex: 1 }]} 
+                    onPress={savePassport}
+                  >
+                    <Text style={styles.saveButtonText}>{t('save')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.saveButton, { backgroundColor: colors.success, flex: 1 }]} 
+                    onPress={() => {
+                      setShowPassportModal(false);
+                      resetPassportForm();
+                    }}
+                  >
+                    <Text style={styles.saveButtonText}>{t('done') || 'Done'}</Text>
+                  </TouchableOpacity>
+                </View>
               </ScrollView>
             </View>
           </KeyboardAvoidingView>
@@ -1380,6 +1412,7 @@ const styles = StyleSheet.create({
   typeSelector: { flexDirection: 'row', gap: 8, marginBottom: 16 },
   typeChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 20, borderWidth: 1 },
   typeChipText: { fontSize: 14, fontWeight: '600' },
+  passportButtonRow: { flexDirection: 'row', gap: 12, marginTop: 8 },
   // Attachments
   attachmentSection: { marginTop: 8, marginBottom: 16 },
   attachmentList: { marginTop: 10, gap: 8 },
