@@ -234,7 +234,17 @@ export default function ProfileScreen() {
   const resetPassportForm = () => {
     setPassportCountry('');
     setPassportCountryName('');
-    setPassportType('primary');
+    // Auto-select the first available passport type
+    const usedTypes = profile.passports.map(p => p.type);
+    if (!usedTypes.includes('primary')) {
+      setPassportType('primary');
+    } else if (!usedTypes.includes('secondary')) {
+      setPassportType('secondary');
+    } else if (!usedTypes.includes('tertiary')) {
+      setPassportType('tertiary');
+    } else {
+      setPassportType('primary'); // Fallback (shouldn't happen as we limit to 3)
+    }
     setPassportNumber('');
     setPassportIssueDate(undefined);
     setPassportExpiryDate(undefined);
@@ -264,7 +274,25 @@ export default function ProfileScreen() {
       }
       setPassportAttachments(passport.attachments || []);
     } else {
-      resetPassportForm();
+      // Adding new passport - reset form and auto-select next available type
+      setPassportCountry('');
+      setPassportCountryName('');
+      // Auto-select the first available passport type
+      const usedTypes = profile.passports.map(p => p.type);
+      if (!usedTypes.includes('primary')) {
+        setPassportType('primary');
+      } else if (!usedTypes.includes('secondary')) {
+        setPassportType('secondary');
+      } else if (!usedTypes.includes('tertiary')) {
+        setPassportType('tertiary');
+      } else {
+        setPassportType('primary');
+      }
+      setPassportNumber('');
+      setPassportIssueDate(undefined);
+      setPassportExpiryDate(undefined);
+      setPassportAttachments([]);
+      setEditingPassport(null);
     }
     setShowPassportModal(true);
   };
@@ -1079,21 +1107,41 @@ export default function ProfileScreen() {
                 </TouchableOpacity>
 
                 <View style={styles.typeSelector}>
-                  {(['primary', 'secondary', 'tertiary'] as const).map((type) => (
-                    <TouchableOpacity
-                      key={type}
-                      style={[
-                        styles.typeChip,
-                        { borderColor: colors.border },
-                        passportType === type && { backgroundColor: colors.primary, borderColor: colors.primary },
-                      ]}
-                      onPress={() => setPassportType(type)}
-                    >
-                      <Text style={[styles.typeChipText, { color: passportType === type ? '#FFFFFF' : colors.text }]}>
-                        {t(type)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                  {(['primary', 'secondary', 'tertiary'] as const).map((type) => {
+                    // Check if a passport of this type already exists
+                    const existingPassport = profile.passports.find(p => p.type === type);
+                    const isCurrentType = passportType === type;
+                    const hasExisting = !!existingPassport && existingPassport.id !== editingPassport?.id;
+                    
+                    return (
+                      <TouchableOpacity
+                        key={type}
+                        style={[
+                          styles.typeChip,
+                          { borderColor: colors.border },
+                          isCurrentType && { backgroundColor: colors.primary, borderColor: colors.primary },
+                          hasExisting && !isCurrentType && { opacity: 0.5 },
+                        ]}
+                        onPress={() => {
+                          // If there's an existing passport of this type (and we're not currently editing it),
+                          // don't allow selecting this type - user should edit that passport directly
+                          if (hasExisting) {
+                            Alert.alert(
+                              t('typeInUse') || 'Type Already Used',
+                              t('typeInUseMessage') || `You already have a ${type} passport. Please edit it from the list or choose a different type.`,
+                              [{ text: 'OK' }]
+                            );
+                            return;
+                          }
+                          setPassportType(type);
+                        }}
+                      >
+                        <Text style={[styles.typeChipText, { color: isCurrentType ? '#FFFFFF' : colors.text }]}>
+                          {t(type)}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                 </View>
 
                 <View style={styles.inputGroup}>
