@@ -1,5 +1,5 @@
 import { differenceInDays, parseISO, isAfter, isBefore, isWithinInterval, format, subDays, addDays, startOfDay, eachDayOfInterval } from 'date-fns';
-import { Visit, VisaStatus, SchengenStatus } from '../types';
+import { Visit, VisaStatus, SchengenStatus, Passport } from '../types';
 
 // Schengen countries
 export const SCHENGEN_COUNTRIES = [
@@ -7,6 +7,80 @@ export const SCHENGEN_COUNTRIES = [
   'IS', 'IT', 'LV', 'LI', 'LT', 'LU', 'MT', 'NL', 'NO', 'PL',
   'PT', 'SK', 'SI', 'ES', 'SE', 'CH', 'HR', 'BG'
 ];
+
+// Countries whose passport holders have Schengen freedom of movement
+// (EU member states + EEA + Switzerland)
+export const SCHENGEN_FREE_MOVEMENT_COUNTRIES = [
+  // EU Member States (27 countries)
+  'AT', // Austria
+  'BE', // Belgium
+  'BG', // Bulgaria
+  'HR', // Croatia
+  'CY', // Cyprus
+  'CZ', // Czech Republic
+  'DK', // Denmark
+  'EE', // Estonia
+  'FI', // Finland
+  'FR', // France
+  'DE', // Germany
+  'GR', // Greece
+  'HU', // Hungary
+  'IE', // Ireland
+  'IT', // Italy
+  'LV', // Latvia
+  'LT', // Lithuania
+  'LU', // Luxembourg
+  'MT', // Malta
+  'NL', // Netherlands
+  'PL', // Poland
+  'PT', // Portugal
+  'RO', // Romania
+  'SK', // Slovakia
+  'SI', // Slovenia
+  'ES', // Spain
+  'SE', // Sweden
+  // EEA (non-EU)
+  'IS', // Iceland
+  'LI', // Liechtenstein
+  'NO', // Norway
+  // EFTA
+  'CH', // Switzerland
+];
+
+/**
+ * Check if a passport country grants Schengen freedom of movement
+ * (i.e., the passport holder is NOT subject to 90/180 rule)
+ */
+export function hasSchengenFreeMovement(passportCountryCode: string): boolean {
+  return SCHENGEN_FREE_MOVEMENT_COUNTRIES.includes(passportCountryCode);
+}
+
+/**
+ * Check if a visit should count against Schengen 90/180 based on passport used
+ * Returns false (doesn't count) if passport is from EU/EEA/Swiss country
+ */
+export function visitCountsForSchengen(visit: Visit, passports: Passport[]): boolean {
+  // If no passport specified, assume it counts (conservative approach)
+  if (!visit.passportId) {
+    return true;
+  }
+  
+  // Find the passport used for this visit
+  const passportUsed = passports.find(p => p.id === visit.passportId);
+  
+  // If passport not found, assume it counts
+  if (!passportUsed) {
+    return true;
+  }
+  
+  // If passport is from EU/EEA/Swiss country, it does NOT count against Schengen
+  if (hasSchengenFreeMovement(passportUsed.countryCode)) {
+    return false;
+  }
+  
+  // Non-EU passport - it DOES count against Schengen
+  return true;
+}
 
 export function isSchengenCountry(countryCode: string): boolean {
   return SCHENGEN_COUNTRIES.includes(countryCode);
@@ -199,17 +273,21 @@ export function getVisaStatus(visit: Visit): VisaStatus {
 }
 
 // Schengen 90/180 rolling calculator
-// Now based on VISA TYPE, not just country
-export function calculateSchengenDays(visits: Visit[]): SchengenStatus {
+// Now based on VISA TYPE AND PASSPORT USED
+// EU/EEA/Swiss passport holders are exempt from 90/180 rule
+export function calculateSchengenDays(visits: Visit[], passports: Passport[] = []): SchengenStatus {
   const today = startOfDay(new Date());
   const periodEndDate = today;
   const periodStartDate = subDays(today, 179); // 180-day rolling window
   
   // Filter visits that:
   // 1. Are in Schengen countries AND
-  // 2. Have a visa type that counts against Schengen 90/180
+  // 2. Have a visa type that counts against Schengen 90/180 AND
+  // 3. Were entered with a non-EU/EEA/Swiss passport
   const countingVisits = visits.filter(v => 
-    isSchengenCountry(v.countryCode) && countsAgainstSchengen(v.visaType)
+    isSchengenCountry(v.countryCode) && 
+    countsAgainstSchengen(v.visaType) &&
+    visitCountsForSchengen(v, passports)
   );
   
   let totalDays = 0;
@@ -237,14 +315,16 @@ export function calculateSchengenDays(visits: Visit[]): SchengenStatus {
 }
 
 // Get Schengen visits breakdown by country (only counting visits)
-export function getSchengenBreakdown(visits: Visit[]): { countryCode: string; countryName: string; days: number; visits: Visit[]; visaType: string }[] {
+export function getSchengenBreakdown(visits: Visit[], passports: Passport[] = []): { countryCode: string; countryName: string; days: number; visits: Visit[]; visaType: string }[] {
   const today = startOfDay(new Date());
   const periodEndDate = today;
   const periodStartDate = subDays(today, 179);
   
-  // Only include visits that count against Schengen
+  // Only include visits that count against Schengen (including passport check)
   const countingVisits = visits.filter(v => 
-    isSchengenCountry(v.countryCode) && countsAgainstSchengen(v.visaType)
+    isSchengenCountry(v.countryCode) && 
+    countsAgainstSchengen(v.visaType) &&
+    visitCountsForSchengen(v, passports)
   );
   
   const breakdown: { [key: string]: { countryCode: string; countryName: string; days: number; visits: Visit[]; visaType: string } } = {};

@@ -28,6 +28,7 @@ import {
   isSchengenCountry,
   formatDate,
   countsAgainstSchengen,
+  visitCountsForSchengen,
 } from '../../src/utils/dateUtils';
 import {
   calculateCountryHeatmap,
@@ -38,7 +39,7 @@ const screenWidth = Dimensions.get('window').width;
 
 export default function DashboardScreen() {
   const { colors } = useTheme();
-  const { visits, t, refreshAll, isLoading } = useApp();
+  const { visits, profile, t, refreshAll, isLoading } = useApp();
   const router = useRouter();
   
   const [refreshing, setRefreshing] = useState(false);
@@ -68,15 +69,20 @@ export default function DashboardScreen() {
     return codes.size;
   }, [visits]);
 
-  // Schengen status
+  // Schengen status - now considers passport used for entry
+  // EU/EEA/Swiss passport entries don't count against 90/180
   const hasSchengenVisits = useMemo(() => {
-    return visits.some(v => isSchengenCountry(v.countryCode) && countsAgainstSchengen(v.visaType));
-  }, [visits]);
+    return visits.some(v => 
+      isSchengenCountry(v.countryCode) && 
+      countsAgainstSchengen(v.visaType) &&
+      visitCountsForSchengen(v, profile.passports)
+    );
+  }, [visits, profile.passports]);
 
   const schengenStatus = useMemo(() => {
     if (!hasSchengenVisits) return null;
-    return calculateSchengenDays(visits);
-  }, [visits, hasSchengenVisits]);
+    return calculateSchengenDays(visits, profile.passports);
+  }, [visits, hasSchengenVisits, profile.passports]);
 
   const countryHeatmapData = useMemo(() => {
     return calculateCountryHeatmap(visits);
@@ -100,8 +106,8 @@ export default function DashboardScreen() {
 
   const schengenBreakdown = useMemo(() => {
     if (!hasSchengenVisits) return [];
-    return getSchengenBreakdown(visits);
-  }, [visits, hasSchengenVisits]);
+    return getSchengenBreakdown(visits, profile.passports);
+  }, [visits, hasSchengenVisits, profile.passports]);
 
   // Exempt visits (national visas, digital nomad, etc.)
   const schengenExemptVisits = useMemo(() => {
@@ -174,6 +180,7 @@ export default function DashboardScreen() {
         <MiniMapCard
           activeVisit={activeVisit || null}
           allVisits={visits}
+          passports={profile.passports}
           onPress={() => activeVisit && router.push(`/visit/${activeVisit.id}`)}
           onAddVisit={() => router.push('/visit/add')}
           t={t}
