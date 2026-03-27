@@ -10,7 +10,6 @@ import {
   FlatList,
   Dimensions,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { PieChart } from 'react-native-gifted-charts';
@@ -40,7 +39,6 @@ const screenWidth = Dimensions.get('window').width;
 export default function DashboardScreen() {
   const { colors } = useTheme();
   const { visits, t, refreshAll, isLoading } = useApp();
-  const insets = useSafeAreaInsets();
   const router = useRouter();
   
   const [refreshing, setRefreshing] = useState(false);
@@ -166,7 +164,7 @@ export default function DashboardScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 4 }]}
+        contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
