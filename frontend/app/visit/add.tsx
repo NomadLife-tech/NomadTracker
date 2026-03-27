@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
 import { useToast } from '../../src/contexts/ToastContext';
 import { Visit } from '../../src/types';
-import { COUNTRIES, getCountryByCode, getVisaTypesWithCustom } from '../../src/constants/countries';
+import { COUNTRIES, getCountryByCode, getVisaTypesWithCustom, getVisaTypesForPassport, isEUCountry } from '../../src/constants/countries';
 import { getDefaultAllowedDays, isCustomVisaType } from '../../src/constants/visaDefaults';
 import { DatePickerInput } from '../../src/components/common/DatePickerInput';
 import { CountryInfoCard } from '../../src/components/common/CountryInfoCard';
@@ -48,19 +48,45 @@ export default function AddVisitScreen() {
   const [countrySearch, setCountrySearch] = useState('');
 
   const selectedCountry = countryCode ? getCountryByCode(countryCode) : null;
-  // Get visa types with Custom option added
-  const visaTypes = countryCode ? getVisaTypesWithCustom(countryCode) : [];
+  
+  // Get the selected passport's country code
+  const selectedPassportCountry = useMemo(() => {
+    if (!passportId) return null;
+    const passport = profile.passports.find(p => p.id === passportId);
+    return passport?.countryCode || null;
+  }, [passportId, profile.passports]);
+  
+  // Get visa types - includes "EU Citizen" if EU passport + EU destination
+  const visaTypes = useMemo(() => {
+    if (!countryCode) return [];
+    return getVisaTypesForPassport(countryCode, selectedPassportCountry);
+  }, [countryCode, selectedPassportCountry]);
   
   // Check if allowed days should be editable (only when Custom is selected)
+  // EU Citizen should NOT show allowed days field
   const isAllowedDaysEditable = isCustomVisaType(visaType);
+  const isEUCitizen = visaType === 'EU Citizen';
 
   // Auto-populate allowed days when visa type changes
   useEffect(() => {
-    if (visaType && !isCustomVisaType(visaType)) {
+    if (visaType && !isCustomVisaType(visaType) && visaType !== 'EU Citizen') {
       const defaultDays = getDefaultAllowedDays(visaType);
       setAllowedDays(defaultDays.toString());
+    } else if (visaType === 'EU Citizen') {
+      // EU Citizens have unlimited stay
+      setAllowedDays('0');
     }
   }, [visaType]);
+  
+  // Auto-select EU Citizen when EU passport selected for EU destination
+  useEffect(() => {
+    if (selectedPassportCountry && countryCode) {
+      if (isEUCountry(selectedPassportCountry) && isEUCountry(countryCode)) {
+        // Auto-select EU Citizen visa type
+        setVisaType('EU Citizen');
+      }
+    }
+  }, [selectedPassportCountry, countryCode]);
 
   const filteredCountries = countrySearch
     ? COUNTRIES.filter(c =>

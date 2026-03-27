@@ -230,3 +230,33 @@ export function getVisaTypesWithCustom(countryCode: string): string[] {
   return [...country.visaTypes, 'Custom'];
 }
 
+// EU/EEA/Swiss countries (for EU Citizen visa type eligibility)
+export const EU_COUNTRIES = [
+  'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR',
+  'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL',
+  'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE',
+  // EEA
+  'IS', 'LI', 'NO',
+  // EFTA
+  'CH'
+];
+
+// Check if a country is in the EU/EEA/Swiss area
+export function isEUCountry(countryCode: string): boolean {
+  return EU_COUNTRIES.includes(countryCode);
+}
+
+// Get visa types including EU Citizen option when applicable
+export function getVisaTypesForPassport(
+  destinationCountryCode: string, 
+  passportCountryCode: string | null
+): string[] {
+  const baseTypes = getVisaTypesWithCustom(destinationCountryCode);
+  
+  // If user has EU passport and destination is EU country, add EU Citizen option first
+  if (passportCountryCode && isEUCountry(passportCountryCode) && isEUCountry(destinationCountryCode)) {
+    return ['EU Citizen', ...baseTypes];
+  }
+  
+  return baseTypes;
+}

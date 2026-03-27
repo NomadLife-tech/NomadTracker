@@ -81,9 +81,22 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
     return calculateSchengenDays(allVisits, passports);
   }, [isSchengenCounting, allVisits, passports]);
   
+  // Check if this is an EU Citizen visit (no visa limits)
+  const isEUCitizenVisit = activeVisit?.visaType === 'EU Citizen';
+
   const activeVisitStatus = useMemo(() => {
     if (!activeVisit) return null;
     const baseStatus = getVisaStatus(activeVisit);
+    
+    // EU Citizens have unlimited stay - no tracking needed
+    if (isEUCitizenVisit) {
+      return {
+        ...baseStatus,
+        daysRemaining: Infinity,
+        percentageUsed: 0,
+        isOverstay: false,
+      };
+    }
     
     // For Schengen countries with counting visas, override with Schengen cumulative days
     if (isSchengenCounting && schengenStatus) {
@@ -97,7 +110,7 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
     }
     
     return baseStatus;
-  }, [activeVisit, isSchengenCounting, schengenStatus]);
+  }, [activeVisit, isSchengenCounting, schengenStatus, isEUCitizenVisit]);
 
   const country = activeVisit ? getCountryByCode(activeVisit.countryCode) : null;
   const coords = activeVisit ? COUNTRY_COORDS[activeVisit.countryCode] || [20, 0] : 
@@ -420,56 +433,73 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
               </View>
             </View>
 
-            {/* Stats */}
-            <View style={[styles.statsContainer, { borderTopColor: colors.border }]}>
-              <View style={styles.statBox}>
-                <Text style={[styles.statNum, { color: colors.text }]}>
-                  {activeVisitStatus.daysUsed}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                  {t('daysUsed')}
-                </Text>
+            {/* Stats - Simplified for EU Citizens */}
+            {isEUCitizenVisit ? (
+              /* EU Citizen: Only show Days Used */
+              <View style={[styles.statsContainer, { borderTopColor: colors.border }]}>
+                <View style={[styles.statBox, { flex: 1 }]}>
+                  <Text style={[styles.statNum, { color: colors.text, fontSize: 28 }]}>
+                    {activeVisitStatus.daysUsed}
+                  </Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                    {t('daysUsed')}
+                  </Text>
+                </View>
               </View>
-              
-              <View style={[styles.statSeparator, { backgroundColor: colors.border }]} />
-              
-              <View style={styles.statBox}>
-                <Text style={[
-                  styles.statNum, 
-                  styles.highlightStat,
-                  { color: getProgressColor(activeVisitStatus.percentageUsed) }
-                ]}>
-                  {activeVisitStatus.daysRemaining}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                  {t('daysRemaining')}
-                </Text>
+            ) : (
+              /* Non-EU: Show full stats */
+              <View style={[styles.statsContainer, { borderTopColor: colors.border }]}>
+                <View style={styles.statBox}>
+                  <Text style={[styles.statNum, { color: colors.text }]}>
+                    {activeVisitStatus.daysUsed}
+                  </Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                    {t('daysUsed')}
+                  </Text>
+                </View>
+                
+                <View style={[styles.statSeparator, { backgroundColor: colors.border }]} />
+                
+                <View style={styles.statBox}>
+                  <Text style={[
+                    styles.statNum, 
+                    styles.highlightStat,
+                    { color: getProgressColor(activeVisitStatus.percentageUsed) }
+                  ]}>
+                    {activeVisitStatus.daysRemaining}
+                  </Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                    {t('daysRemaining')}
+                  </Text>
+                </View>
+                
+                <View style={[styles.statSeparator, { backgroundColor: colors.border }]} />
+                
+                <View style={styles.statBox}>
+                  <Text style={[styles.statNum, { color: colors.text }]}>
+                    {activeVisit.allowedDays || 90}
+                  </Text>
+                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                    {t('allowedDays')}
+                  </Text>
+                </View>
               </View>
-              
-              <View style={[styles.statSeparator, { backgroundColor: colors.border }]} />
-              
-              <View style={styles.statBox}>
-                <Text style={[styles.statNum, { color: colors.text }]}>
-                  {activeVisit.allowedDays || 90}
-                </Text>
-                <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                  {t('allowedDays')}
-                </Text>
-              </View>
-            </View>
+            )}
 
-            {/* Progress */}
-            <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
-              <View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: `${Math.min(100, activeVisitStatus.percentageUsed)}%`,
-                    backgroundColor: getProgressColor(activeVisitStatus.percentageUsed),
-                  },
-                ]}
-              />
-            </View>
+            {/* Progress - Hide for EU Citizens */}
+            {!isEUCitizenVisit && (
+              <View style={[styles.progressTrack, { backgroundColor: colors.border }]}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: `${Math.min(100, activeVisitStatus.percentageUsed)}%`,
+                      backgroundColor: getProgressColor(activeVisitStatus.percentageUsed),
+                    },
+                  ]}
+                />
+              </View>
+            )}
 
             {activeVisitStatus.isOverstay && (
               <View style={[styles.alertBar, { backgroundColor: colors.danger + '20' }]}>
@@ -493,9 +523,15 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
               <Text style={[styles.miniCountry, { color: colors.text }]} numberOfLines={1}>
                 {activeVisit.countryName}
               </Text>
-              <Text style={[styles.miniDays, { color: getProgressColor(activeVisitStatus.percentageUsed) }]}>
-                {activeVisitStatus.daysRemaining} days left
-              </Text>
+              {isEUCitizenVisit ? (
+                <Text style={[styles.miniDays, { color: colors.success }]}>
+                  {activeVisitStatus.daysUsed} days • EU Citizen
+                </Text>
+              ) : (
+                <Text style={[styles.miniDays, { color: getProgressColor(activeVisitStatus.percentageUsed) }]}>
+                  {activeVisitStatus.daysRemaining} days left
+                </Text>
+              )}
             </View>
             <Ionicons name="chevron-up" size={20} color={colors.textSecondary} />
           </TouchableOpacity>
