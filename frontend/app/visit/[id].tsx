@@ -97,13 +97,19 @@ export default function EditVisitScreen() {
   }, [visaType, loading]);
   
   // Auto-select EU Citizen when EU passport selected for EU destination
+  // This runs whenever passport or country changes
   useEffect(() => {
-    if (selectedPassportCountry && countryCode && !loading) {
-      if (isEUCountry(selectedPassportCountry) && isEUCountry(countryCode)) {
-        // Auto-select EU Citizen visa type if not already set
-        if (visaType !== 'EU Citizen') {
-          setVisaType('EU Citizen');
-        }
+    if (loading) return; // Don't auto-select during initial load
+    
+    // Only auto-select if we have both a passport and country selected
+    if (selectedPassportCountry && countryCode) {
+      const isEUPassport = isEUCountry(selectedPassportCountry);
+      const isEUDestination = isEUCountry(countryCode);
+      
+      if (isEUPassport && isEUDestination) {
+        // Auto-select EU Citizen visa type
+        setVisaType('EU Citizen');
+        setAllowedDays('0');
       }
     }
   }, [selectedPassportCountry, countryCode, loading]);
