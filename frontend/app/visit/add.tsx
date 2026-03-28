@@ -350,53 +350,74 @@ export default function AddVisitScreen() {
           <View style={{ height: 100 }} />
         </ScrollView>
 
-        {/* Country Picker Modal */}
-        <Modal visible={showCountryPicker} animationType="slide" transparent>
-          <View style={styles.modalOverlay}>
-            <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-              <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>{t('selectCountry')}</Text>
-                <TouchableOpacity onPress={() => setShowCountryPicker(false)}>
-                  <Ionicons name="close" size={24} color={colors.text} />
-                </TouchableOpacity>
-              </View>
-              <View style={[styles.searchBar, { backgroundColor: colors.background, borderColor: colors.border }]}>
-                <Ionicons name="search" size={20} color={colors.textSecondary} />
-                <TextInput
-                  style={[styles.searchInput, { color: colors.text }]}
-                  placeholder="Search countries..."
-                  placeholderTextColor={colors.textSecondary}
-                  value={countrySearch}
-                  onChangeText={setCountrySearch}
-                />
-              </View>
-              <FlatList
-                data={filteredCountries}
-                keyExtractor={(item) => item.code}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[styles.listItem, { borderBottomColor: colors.border }]}
-                    onPress={() => {
-                      setCountryCode(item.code);
-                      setCountryName(item.name);
-                      setVisaType('');
-                      setAllowedDays('');
-                      setShowCountryPicker(false);
-                      setCountrySearch('');
-                    }}
-                  >
-                    <Text style={styles.listFlag}>{item.flag}</Text>
-                    <Text style={[styles.listText, { color: colors.text }]}>{item.name}</Text>
-                    {item.isSchengen && (
-                      <View style={[styles.schengenBadge, { backgroundColor: colors.primary + '20' }]}>
-                        <Text style={[styles.schengenText, { color: colors.primary }]}>Schengen</Text>
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                )}
-              />
+        {/* Country Picker Modal - Full Screen with Keyboard Handling */}
+        <Modal visible={showCountryPicker} animationType="slide">
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={[styles.fullScreenModal, { backgroundColor: colors.card }]}
+          >
+            <View style={[styles.fullScreenHeader, { borderBottomColor: colors.border, paddingTop: insets.top }]}>
+              <TouchableOpacity onPress={() => {
+                setShowCountryPicker(false);
+                setCountrySearch('');
+              }}>
+                <Ionicons name="close" size={28} color={colors.text} />
+              </TouchableOpacity>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>{t('selectCountry')}</Text>
+              <View style={{ width: 28 }} />
             </View>
-          </View>
+            <View style={[styles.searchBar, { backgroundColor: colors.background, borderColor: colors.border }]}>
+              <Ionicons name="search" size={20} color={colors.textSecondary} />
+              <TextInput
+                style={[styles.searchInput, { color: colors.text }]}
+                placeholder="Search countries..."
+                placeholderTextColor={colors.textSecondary}
+                value={countrySearch}
+                onChangeText={setCountrySearch}
+                autoFocus={true}
+                returnKeyType="search"
+              />
+              {countrySearch.length > 0 && (
+                <TouchableOpacity onPress={() => setCountrySearch('')}>
+                  <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+                </TouchableOpacity>
+              )}
+            </View>
+            <FlatList
+              data={filteredCountries}
+              keyExtractor={(item) => item.code}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.listItem, { borderBottomColor: colors.border }]}
+                  onPress={() => {
+                    setCountryCode(item.code);
+                    setCountryName(item.name);
+                    setVisaType('');
+                    setAllowedDays('');
+                    setShowCountryPicker(false);
+                    setCountrySearch('');
+                  }}
+                >
+                  <Text style={styles.listFlag}>{item.flag}</Text>
+                  <Text style={[styles.listText, { color: colors.text }]}>{item.name}</Text>
+                  {item.isSchengen && (
+                    <View style={[styles.schengenBadge, { backgroundColor: colors.primary + '20' }]}>
+                      <Text style={[styles.schengenText, { color: colors.primary }]}>Schengen</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={
+                <View style={styles.emptyList}>
+                  <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                    No countries found for "{countrySearch}"
+                  </Text>
+                </View>
+              }
+            />
+          </KeyboardAvoidingView>
         </Modal>
 
         {/* Visa Type Picker Modal */}
@@ -617,6 +638,17 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     maxHeight: '80%',
   },
+  fullScreenModal: {
+    flex: 1,
+  },
+  fullScreenHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+  },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -640,6 +672,14 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
+  },
+  emptyList: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    textAlign: 'center',
   },
   listItem: {
     flexDirection: 'row',
