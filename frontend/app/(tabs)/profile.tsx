@@ -1287,58 +1287,76 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
-      {/* Country Picker Modal */}
-      <Modal visible={showCountryPicker} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.card, maxHeight: '80%' }]}>
-            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>{t('selectCountry')}</Text>
-              <TouchableOpacity onPress={() => {
-                setShowCountryPicker(false);
-                setCountrySearch('');
-                // On native, reopen passport modal when closing country picker
-                if (Platform.OS !== 'web') {
-                  setTimeout(() => setShowPassportModal(true), 100);
-                }
-              }}>
-                <Ionicons name="close" size={24} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-            <View style={[styles.searchBar, { backgroundColor: colors.background, borderColor: colors.border }]}>
-              <Ionicons name="search" size={20} color={colors.textSecondary} />
-              <TextInput
-                style={[styles.searchInput, { color: colors.text }]}
-                placeholder="Search..."
-                placeholderTextColor={colors.textSecondary}
-                value={countrySearch}
-                onChangeText={setCountrySearch}
-              />
-            </View>
-            <FlatList
-              data={filteredCountries}
-              keyExtractor={(item) => item.code}
-              renderItem={({ item }) => (
-                <TouchableOpacity
-                  style={[styles.countryItem, { borderBottomColor: colors.border }]}
-                  onPress={() => {
-                    setPassportCountry(item.code);
-                    setPassportCountryName(item.name);
-                    setShowCountryPicker(false);
-                    setCountrySearch('');
-                    // On native, reopen the passport modal after selecting country
-                    if (Platform.OS !== 'web') {
-                      setTimeout(() => setShowPassportModal(true), 100);
-                    }
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.countryFlag}>{item.flag}</Text>
-                  <Text style={[styles.countryName, { color: colors.text }]}>{item.name}</Text>
-                </TouchableOpacity>
-              )}
-            />
+      {/* Country Picker Modal - Full Screen with Keyboard Handling */}
+      <Modal visible={showCountryPicker} animationType="slide">
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={[styles.fullScreenModal, { backgroundColor: colors.card }]}
+        >
+          <View style={[styles.fullScreenHeader, { borderBottomColor: colors.border, paddingTop: insets.top }]}>
+            <TouchableOpacity onPress={() => {
+              setShowCountryPicker(false);
+              setCountrySearch('');
+              // On native, reopen passport modal when closing country picker
+              if (Platform.OS !== 'web') {
+                setTimeout(() => setShowPassportModal(true), 100);
+              }
+            }}>
+              <Ionicons name="close" size={28} color={colors.text} />
+            </TouchableOpacity>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>{t('selectCountry')}</Text>
+            <View style={{ width: 28 }} />
           </View>
-        </View>
+          <View style={[styles.searchBar, { backgroundColor: colors.background, borderColor: colors.border }]}>
+            <Ionicons name="search" size={20} color={colors.textSecondary} />
+            <TextInput
+              style={[styles.searchInput, { color: colors.text }]}
+              placeholder="Search countries..."
+              placeholderTextColor={colors.textSecondary}
+              value={countrySearch}
+              onChangeText={setCountrySearch}
+              autoFocus={true}
+              returnKeyType="search"
+            />
+            {countrySearch.length > 0 && (
+              <TouchableOpacity onPress={() => setCountrySearch('')}>
+                <Ionicons name="close-circle" size={20} color={colors.textSecondary} />
+              </TouchableOpacity>
+            )}
+          </View>
+          <FlatList
+            data={filteredCountries}
+            keyExtractor={(item) => item.code}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={[styles.countryItem, { borderBottomColor: colors.border }]}
+                onPress={() => {
+                  setPassportCountry(item.code);
+                  setPassportCountryName(item.name);
+                  setShowCountryPicker(false);
+                  setCountrySearch('');
+                  // On native, reopen the passport modal after selecting country
+                  if (Platform.OS !== 'web') {
+                    setTimeout(() => setShowPassportModal(true), 100);
+                  }
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.countryFlag}>{item.flag}</Text>
+                <Text style={[styles.countryName, { color: colors.text }]}>{item.name}</Text>
+              </TouchableOpacity>
+            )}
+            ListEmptyComponent={
+              <View style={styles.emptyList}>
+                <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
+                  No countries found for "{countrySearch}"
+                </Text>
+              </View>
+            }
+          />
+        </KeyboardAvoidingView>
       </Modal>
     </KeyboardAvoidingView>
   );
@@ -1431,4 +1449,9 @@ const styles = StyleSheet.create({
   countryItem: { flexDirection: 'row', alignItems: 'center', padding: 16, borderBottomWidth: 1, gap: 12 },
   countryFlag: { fontSize: 24 },
   countryName: { fontSize: 16 },
+  // Full screen modal
+  fullScreenModal: { flex: 1 },
+  fullScreenHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1 },
+  emptyList: { padding: 40, alignItems: 'center' },
+  emptyText: { fontSize: 16, textAlign: 'center' },
 });
