@@ -57,9 +57,23 @@ export default function DashboardScreen() {
     setRefreshing(false);
   };
 
-  // Get active visit
+  // Get active visit - the most recent visit based on entry date
+  // Among visits that are current (entry date <= today AND no exit or exit >= today),
+  // select the one with the most recent entry date
   const activeVisit = useMemo(() => {
-    return visits.find(v => isCurrentVisit(v));
+    // Filter to only current/active visits
+    const currentVisits = visits.filter(v => isCurrentVisit(v));
+    
+    if (currentVisits.length === 0) return undefined;
+    if (currentVisits.length === 1) return currentVisits[0];
+    
+    // If multiple "active" visits (e.g., user forgot exit date on old trips),
+    // return the one with the most recent entry date
+    return currentVisits.sort((a, b) => {
+      const dateA = new Date(a.entryDate).getTime();
+      const dateB = new Date(b.entryDate).getTime();
+      return dateB - dateA; // Most recent first
+    })[0];
   }, [visits]);
 
   // Statistics
