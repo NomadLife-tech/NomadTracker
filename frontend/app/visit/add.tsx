@@ -24,10 +24,11 @@ import { getDefaultAllowedDays, isCustomVisaType } from '../../src/constants/vis
 import { DatePickerInput } from '../../src/components/common/DatePickerInput';
 import { CountryInfoCard } from '../../src/components/common/CountryInfoCard';
 import { generateUUID } from '../../src/utils/uuid';
+import { isCurrentVisit } from '../../src/utils/dateUtils';
 
 export default function AddVisitScreen() {
   const { colors } = useTheme();
-  const { addVisit, profile, t } = useApp();
+  const { addVisit, visits, profile, t } = useApp();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -46,6 +47,23 @@ export default function AddVisitScreen() {
   const [showVisaPicker, setShowVisaPicker] = useState(false);
   const [showPassportPicker, setShowPassportPicker] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
+
+  // Check for active visits without exit dates and show friendly reminder
+  useEffect(() => {
+    const activeVisitsWithoutExit = visits.filter(v => isCurrentVisit(v) && !v.exitDate);
+    
+    if (activeVisitsWithoutExit.length > 0) {
+      const lastActiveVisit = activeVisitsWithoutExit.sort((a, b) => 
+        new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime()
+      )[0];
+      
+      Alert.alert(
+        '📍 Friendly Reminder',
+        `Don't forget to set an exit date for your visit to ${lastActiveVisit.countryName} (entered ${new Date(lastActiveVisit.entryDate).toLocaleDateString()}).`,
+        [{ text: 'OK', style: 'default' }]
+      );
+    }
+  }, []); // Run once when component mounts
 
   const selectedCountry = countryCode ? getCountryByCode(countryCode) : null;
   
