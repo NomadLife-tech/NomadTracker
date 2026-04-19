@@ -1,6 +1,5 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
@@ -10,7 +9,6 @@ import { getCountryByCode } from '../../src/constants/countries';
 export default function TaxScreen() {
   const { colors } = useTheme();
   const { visits, refreshVisits, t } = useApp();
-  const insets = useSafeAreaInsets();
 
   const [refreshing, setRefreshing] = useState(false);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -46,7 +44,7 @@ export default function TaxScreen() {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 16 }]}
+        contentContainerStyle={styles.content}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
         }
