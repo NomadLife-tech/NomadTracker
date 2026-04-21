@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
@@ -66,6 +66,60 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [detectedCountry, setDetectedCountry] = useState<{ code: string; name: string; flag: string } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  
+  // Fetch user's real GPS location when there's an active visit
+  useEffect(() => {
+    let isMounted = true;
+    
+    const fetchLocation = async () => {
+      if (!activeVisit) {
+        setUserLocation(null);
+        return;
+      }
+      
+      try {
+        setIsLoadingLocation(true);
+        
+        // Request permission
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.log('[MiniMap] Location permission denied, using country center');
+          if (isMounted) setIsLoadingLocation(false);
+          return;
+        }
+        
+        // Get current position with reduced accuracy for privacy
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Low, // ~1km accuracy for privacy
+        });
+        
+        if (isMounted && location) {
+          // Round to 2 decimal places (~1.1km precision) for privacy
+          const roundedLat = Math.round(location.coords.latitude * 100) / 100;
+          const roundedLng = Math.round(location.coords.longitude * 100) / 100;
+          
+          setUserLocation({ lat: roundedLat, lng: roundedLng });
+          console.log(`[MiniMap] User location: ${roundedLat}, ${roundedLng} (rounded for privacy)`);
+        }
+      } catch (error) {
+        console.log('[MiniMap] Error getting location, using country center:', error);
+      } finally {
+        if (isMounted) setIsLoadingLocation(false);
+      }
+    };
+    
+    fetchLocation();
+    
+    // Refresh location every 5 minutes while component is mounted
+    const intervalId = setInterval(fetchLocation, 5 * 60 * 1000);
+    
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [activeVisit?.id]); // Re-fetch when active visit changes
   
   // Check if this is a Schengen country with a counting visa type AND non-EU passport
   const isSchengenCounting = useMemo(() => {
@@ -113,8 +167,22 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
   }, [activeVisit, isSchengenCounting, schengenStatus, isEUCitizenVisit]);
 
   const country = activeVisit ? getCountryByCode(activeVisit.countryCode) : null;
-  const coords = activeVisit ? COUNTRY_COORDS[activeVisit.countryCode] || [20, 0] : 
-                 detectedCountry ? COUNTRY_COORDS[detectedCountry.code] || [20, 0] : [20, 0];
+  
+  // Use real GPS location if available, otherwise fall back to country center
+  const coords = useMemo(() => {
+    if (activeVisit && userLocation) {
+      // Use real GPS location (already privacy-reduced)
+      return [userLocation.lat, userLocation.lng] as [number, number];
+    }
+    if (activeVisit) {
+      // Fall back to country center
+      return COUNTRY_COORDS[activeVisit.countryCode] || [20, 0];
+    }
+    if (detectedCountry) {
+      return COUNTRY_COORDS[detectedCountry.code] || [20, 0];
+    }
+    return [20, 0];
+  }, [activeVisit, userLocation, detectedCountry]);
 
   const getProgressColor = (percentage: number) => {
     if (percentage < 70) return colors.success;

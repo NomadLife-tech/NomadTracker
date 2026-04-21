@@ -13,7 +13,7 @@
       "bundleIdentifier": "com.nomadtracker.app",
       "buildNumber": "1",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Track your current country for travel logging",
+        "NSLocationWhenInUseUsageDescription": "Show your current location on the map while viewing your active visit",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Track your location to automatically log country visits",
         "NSPhotoLibraryUsageDescription": "Select photos for your profile picture",
         "NSPhotoLibraryAddUsageDescription": "Save travel photos to your library",
