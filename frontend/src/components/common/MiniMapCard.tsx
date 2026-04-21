@@ -68,6 +68,7 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
   const [locationError, setLocationError] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [locationStatus, setLocationStatus] = useState<'loading' | 'gps' | 'country' | 'denied'>('loading');
   
   // Fetch user's real GPS location when there's an active visit
   useEffect(() => {
@@ -76,23 +77,39 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
     const fetchLocation = async () => {
       if (!activeVisit) {
         setUserLocation(null);
+        setLocationStatus('country');
         return;
       }
       
       try {
         setIsLoadingLocation(true);
+        setLocationStatus('loading');
         
-        // Request permission
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
+        // Check current permission status first
+        const { status: existingStatus } = await Location.getForegroundPermissionsAsync();
+        
+        let permissionStatus = existingStatus;
+        
+        // If not determined, request permission
+        if (existingStatus !== 'granted') {
+          const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
+          permissionStatus = newStatus;
+        }
+        
+        if (permissionStatus !== 'granted') {
           console.log('[MiniMap] Location permission denied, using country center');
-          if (isMounted) setIsLoadingLocation(false);
+          if (isMounted) {
+            setLocationStatus('denied');
+            setIsLoadingLocation(false);
+          }
           return;
         }
         
         // Get current position with reduced accuracy for privacy
         const location = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Low, // ~1km accuracy for privacy
+          accuracy: Location.Accuracy.Balanced, // Better accuracy but still privacy-conscious
+          timeInterval: 10000,
+          distanceInterval: 100,
         });
         
         if (isMounted && location) {
@@ -101,10 +118,14 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
           const roundedLng = Math.round(location.coords.longitude * 100) / 100;
           
           setUserLocation({ lat: roundedLat, lng: roundedLng });
-          console.log(`[MiniMap] User location: ${roundedLat}, ${roundedLng} (rounded for privacy)`);
+          setLocationStatus('gps');
+          console.log(`[MiniMap] GPS location acquired: ${roundedLat}, ${roundedLng}`);
         }
       } catch (error) {
         console.log('[MiniMap] Error getting location, using country center:', error);
+        if (isMounted) {
+          setLocationStatus('country');
+        }
       } finally {
         if (isMounted) setIsLoadingLocation(false);
       }
@@ -468,9 +489,29 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
             <Text style={[styles.locationText, { color: colors.text }]}>{t('currentlyIn')}</Text>
           </View>
           
+          {/* Location Status Badge */}
           <View style={[styles.liveBadge, { backgroundColor: badgeBgColor }]}>
-            <View style={styles.liveIndicator} />
-            <Text style={styles.liveText}>LIVE</Text>
+            {locationStatus === 'loading' ? (
+              <>
+                <ActivityIndicator size="small" color={colors.primary} style={{ marginRight: 4 }} />
+                <Text style={[styles.liveText, { color: colors.textSecondary }]}>LOCATING...</Text>
+              </>
+            ) : locationStatus === 'gps' ? (
+              <>
+                <View style={[styles.liveIndicator, { backgroundColor: '#34C759' }]} />
+                <Text style={[styles.liveText, { color: '#34C759' }]}>GPS</Text>
+              </>
+            ) : locationStatus === 'denied' ? (
+              <>
+                <Ionicons name="location-outline" size={12} color={colors.warning} style={{ marginRight: 4 }} />
+                <Text style={[styles.liveText, { color: colors.warning }]}>LOCATION OFF</Text>
+              </>
+            ) : (
+              <>
+                <View style={styles.liveIndicator} />
+                <Text style={styles.liveText}>LIVE</Text>
+              </>
+            )}
           </View>
         </View>
 
