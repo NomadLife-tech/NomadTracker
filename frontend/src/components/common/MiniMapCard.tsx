@@ -63,242 +63,210 @@ const COUNTRY_COORDS: { [key: string]: [number, number] } = {
 export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPress, onAddVisit, onLocationDetected, t }: MiniMapCardProps) {
   const { colors, isDark } = useTheme();
   const [isOverlayVisible, setIsOverlayVisible] = useState(true);
-  const [isDetectingLocation, setIsDetectingLocation] = useState(false);
-  const [detectedCountry, setDetectedCountry] = useState<{ code: string; name: string; flag: string } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationStatus, setLocationStatus] = useState<'loading' | 'gps' | 'country' | 'denied'>('loading');
-  const [hasRequestedPermission, setHasRequestedPermission] = useState(false);
+  const [isAddingVisit, setIsAddingVisit] = useState(false);
   
-  // Function to request location permission - can be called manually
-  const requestLocationPermission = async (): Promise<boolean> => {
-    if (Platform.OS === 'web') {
-      console.log('[MiniMap] Web platform - skipping GPS');
-      return false;
-    }
-    
-    try {
-      console.log('[MiniMap] Requesting location permission...');
-      
-      // Check current permission status
-      const { status: existingStatus } = await Location.getForegroundPermissionsAsync();
-      console.log('[MiniMap] Current permission status:', existingStatus);
-      
-      // If already granted, we're good
-      if (existingStatus === 'granted') {
-        return true;
-      }
-      
-      // If denied previously, user needs to go to Settings
-      if (existingStatus === 'denied') {
-        console.log('[MiniMap] Permission previously denied');
-        return false;
-      }
-      
-      // Permission is undetermined - show our pre-prompt first (Apple best practice)
-      const userResponse = await new Promise<'enable' | 'notNow'>((resolve) => {
-        Alert.alert(
-          '📍 Enable Location',
-          'Nomad Tracker would like to show your current location on the map.\n\nYour location is only used while viewing the app and is never stored or shared.',
-          [
-            { 
-              text: 'Not Now', 
-              style: 'cancel',
-              onPress: () => resolve('notNow')
-            },
-            { 
-              text: 'Enable', 
-              onPress: () => resolve('enable')
-            }
-          ]
-        );
-      });
-      
-      if (userResponse === 'notNow') {
-        console.log('[MiniMap] User chose "Not Now"');
-        return false;
-      }
-      
-      // User chose "Enable" - now request the actual iOS permission
-      console.log('[MiniMap] Triggering iOS permission dialog...');
-      const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
-      console.log('[MiniMap] iOS permission result:', newStatus);
-      
-      return newStatus === 'granted';
-    } catch (error) {
-      console.error('[MiniMap] Error requesting permission:', error);
-      return false;
-    }
-  };
-  
-  // Function to fetch current GPS location
-  const fetchGPSLocation = async (): Promise<{ lat: number; lng: number } | null> => {
-    try {
-      console.log('[MiniMap] Fetching GPS location...');
-      
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      
-      if (location) {
-        // Round to 2 decimal places (~1.1km precision) for privacy
-        const roundedLat = Math.round(location.coords.latitude * 100) / 100;
-        const roundedLng = Math.round(location.coords.longitude * 100) / 100;
-        console.log(`[MiniMap] GPS acquired: ${roundedLat}, ${roundedLng}`);
-        return { lat: roundedLat, lng: roundedLng };
-      }
-      return null;
-    } catch (error) {
-      console.error('[MiniMap] GPS fetch error:', error);
-      return null;
-    }
-  };
-  
-  // Manual retry function for when user taps "Enable Location"
-  const handleRetryLocation = async () => {
-    setIsLoadingLocation(true);
-    setLocationStatus('loading');
-    
-    const { status } = await Location.getForegroundPermissionsAsync();
-    
-    if (status === 'denied') {
-      // Permission was denied - need to go to settings
-      Alert.alert(
-        'Location Permission Required',
-        'To show your current location, please enable Location Services for Nomad Tracker in your device Settings.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Open Settings', 
-            onPress: () => {
-              // On iOS, this will open the app settings page
-              if (Platform.OS === 'ios') {
-                // Linking to settings requires expo-linking
-                import('expo-linking').then((Linking) => {
-                  Linking.openSettings();
-                });
-              }
-            }
-          }
-        ]
-      );
-      setLocationStatus('denied');
-      setIsLoadingLocation(false);
-      return;
-    }
-    
-    // Try to request permission again
-    const granted = await requestLocationPermission();
-    
-    if (granted) {
-      const coords = await fetchGPSLocation();
-      if (coords) {
-        setUserLocation(coords);
-        setLocationStatus('gps');
-      } else {
-        setLocationStatus('country');
-      }
-    } else {
-      setLocationStatus('denied');
-    }
-    
-    setIsLoadingLocation(false);
-  };
-  
-  // Fetch user's real GPS location when there's an active visit
+  // Fetch user's GPS location when there's an active visit
   useEffect(() => {
     let isMounted = true;
     
-    const initLocation = async () => {
+    const getLocation = async () => {
+      // No active visit - reset state
       if (!activeVisit) {
         setUserLocation(null);
         setLocationStatus('country');
         return;
       }
       
-      // Skip on web
+      // Skip GPS on web platform
       if (Platform.OS === 'web') {
+        console.log('[MiniMap] Web platform - using country center');
         setLocationStatus('country');
         return;
       }
       
-      setIsLoadingLocation(true);
       setLocationStatus('loading');
       
       try {
-        // First check if we already have permission
-        const { status: existingStatus } = await Location.getForegroundPermissionsAsync();
-        console.log('[MiniMap] Initial permission check:', existingStatus);
+        // Check current permission status
+        const { status } = await Location.getForegroundPermissionsAsync();
+        console.log('[MiniMap] Permission status:', status);
         
-        if (existingStatus === 'granted') {
-          // Already have permission - just get location
-          const coords = await fetchGPSLocation();
-          if (isMounted) {
-            if (coords) {
-              setUserLocation(coords);
-              setLocationStatus('gps');
-            } else {
-              setLocationStatus('country');
-            }
-          }
-        } else if (existingStatus === 'undetermined' && !hasRequestedPermission) {
-          // Never asked before - request permission
-          setHasRequestedPermission(true);
-          const granted = await requestLocationPermission();
+        if (status === 'granted') {
+          // Permission already granted - get GPS location
+          console.log('[MiniMap] Permission granted, fetching GPS...');
+          const location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+          });
           
-          if (isMounted) {
-            if (granted) {
-              const coords = await fetchGPSLocation();
-              if (coords) {
-                setUserLocation(coords);
-                setLocationStatus('gps');
-              } else {
-                setLocationStatus('country');
-              }
-            } else {
-              setLocationStatus('denied');
+          if (isMounted && location) {
+            const lat = Math.round(location.coords.latitude * 100) / 100;
+            const lng = Math.round(location.coords.longitude * 100) / 100;
+            console.log(`[MiniMap] GPS location: ${lat}, ${lng}`);
+            setUserLocation({ lat, lng });
+            setLocationStatus('gps');
+          }
+        } else if (status === 'undetermined') {
+          // First time - show pre-prompt then request permission
+          console.log('[MiniMap] Permission undetermined, showing prompt...');
+          
+          const userWantsLocation = await new Promise<boolean>((resolve) => {
+            Alert.alert(
+              '📍 Enable Location',
+              'Show your current location on the map?\n\nYour location is only used while viewing the app and is never stored or shared.',
+              [
+                { text: 'Not Now', style: 'cancel', onPress: () => resolve(false) },
+                { text: 'Enable', onPress: () => resolve(true) }
+              ]
+            );
+          });
+          
+          if (!userWantsLocation) {
+            console.log('[MiniMap] User declined location');
+            if (isMounted) setLocationStatus('denied');
+            return;
+          }
+          
+          // Request actual permission
+          const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
+          console.log('[MiniMap] Permission result:', newStatus);
+          
+          if (newStatus === 'granted') {
+            const location = await Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.Balanced,
+            });
+            
+            if (isMounted && location) {
+              const lat = Math.round(location.coords.latitude * 100) / 100;
+              const lng = Math.round(location.coords.longitude * 100) / 100;
+              console.log(`[MiniMap] GPS location: ${lat}, ${lng}`);
+              setUserLocation({ lat, lng });
+              setLocationStatus('gps');
             }
+          } else {
+            if (isMounted) setLocationStatus('denied');
           }
         } else {
-          // Permission denied or already asked
-          if (isMounted) {
-            setLocationStatus(existingStatus === 'denied' ? 'denied' : 'country');
-          }
+          // Permission denied
+          console.log('[MiniMap] Permission denied, using country center');
+          if (isMounted) setLocationStatus('denied');
         }
       } catch (error) {
-        console.error('[MiniMap] Location init error:', error);
-        if (isMounted) {
+        console.error('[MiniMap] Location error:', error);
+        if (isMounted) setLocationStatus('country');
+      }
+    };
+    
+    getLocation();
+    
+    return () => { isMounted = false; };
+  }, [activeVisit?.id]); // Only re-run when active visit changes
+  
+  // Handle "Add Visit" with auto-detect location
+  const handleAddVisitWithLocation = async () => {
+    // If on web, just open add visit
+    if (Platform.OS === 'web') {
+      onAddVisit();
+      return;
+    }
+    
+    setIsAddingVisit(true);
+    setLocationError(null);
+    
+    try {
+      // Request permission if needed
+      let { status } = await Location.getForegroundPermissionsAsync();
+      
+      if (status === 'undetermined') {
+        const result = await Location.requestForegroundPermissionsAsync();
+        status = result.status;
+      }
+      
+      if (status === 'granted') {
+        // Get current location
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        
+        // Reverse geocode to get country
+        const [reverseGeocode] = await Location.reverseGeocodeAsync({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+        
+        if (reverseGeocode?.isoCountryCode) {
+          const foundCountry = COUNTRIES.find(
+            c => c.code === reverseGeocode.isoCountryCode
+          );
+          
+          if (foundCountry && onLocationDetected) {
+            console.log('[MiniMap] Detected country:', foundCountry.name);
+            onLocationDetected(foundCountry.code, foundCountry.name);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('[MiniMap] Auto-detect error:', error);
+      // Don't show error - just proceed without pre-fill
+    } finally {
+      setIsAddingVisit(false);
+      onAddVisit();
+    }
+  };
+  
+  // Retry location when user taps "TAP TO ENABLE" badge
+  const handleRetryLocation = async () => {
+    if (Platform.OS === 'web') return;
+    
+    const { status } = await Location.getForegroundPermissionsAsync();
+    
+    if (status === 'denied') {
+      Alert.alert(
+        'Location Permission Required',
+        'Please enable Location Services for Nomad Tracker in Settings.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Open Settings', 
+            onPress: async () => {
+              const Linking = await import('expo-linking');
+              Linking.openSettings();
+            }
+          }
+        ]
+      );
+      return;
+    }
+    
+    // Re-trigger the location fetch
+    setLocationStatus('loading');
+    
+    try {
+      const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
+      
+      if (newStatus === 'granted') {
+        const location = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        });
+        
+        if (location) {
+          const lat = Math.round(location.coords.latitude * 100) / 100;
+          const lng = Math.round(location.coords.longitude * 100) / 100;
+          setUserLocation({ lat, lng });
+          setLocationStatus('gps');
+        } else {
           setLocationStatus('country');
         }
-      } finally {
-        if (isMounted) {
-          setIsLoadingLocation(false);
-        }
+      } else {
+        setLocationStatus('denied');
       }
-    };
-    
-    initLocation();
-    
-    // Refresh location every 5 minutes (only if we have permission)
-    const intervalId = setInterval(async () => {
-      if (!isMounted || !activeVisit) return;
-      
-      const { status } = await Location.getForegroundPermissionsAsync();
-      if (status === 'granted') {
-        const coords = await fetchGPSLocation();
-        if (isMounted && coords) {
-          setUserLocation(coords);
-          setLocationStatus('gps');
-        }
-      }
-    }, 5 * 60 * 1000);
-    
-    return () => {
-      isMounted = false;
-      clearInterval(intervalId);
-    };
-  }, [activeVisit?.id, hasRequestedPermission]); // Re-fetch when active visit changes
+    } catch (error) {
+      console.error('[MiniMap] Retry error:', error);
+      setLocationStatus('country');
+    }
+  };
   
   // Check if this is a Schengen country with a counting visa type AND non-EU passport
   const isSchengenCounting = useMemo(() => {
@@ -357,73 +325,13 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
       // Fall back to country center
       return COUNTRY_COORDS[activeVisit.countryCode] || [20, 0];
     }
-    if (detectedCountry) {
-      return COUNTRY_COORDS[detectedCountry.code] || [20, 0];
-    }
     return [20, 0];
-  }, [activeVisit, userLocation, detectedCountry]);
+  }, [activeVisit, userLocation]);
 
   const getProgressColor = (percentage: number) => {
     if (percentage < 70) return colors.success;
     if (percentage < 90) return colors.warning;
     return colors.danger;
-  };
-
-  // Reverse geocode to find country from coordinates
-  const detectCurrentLocation = async () => {
-    if (Platform.OS === 'web') {
-      setLocationError(t('locationDetectionWebError'));
-      return;
-    }
-    
-    setIsDetectingLocation(true);
-    setLocationError(null);
-    
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      
-      if (status !== 'granted') {
-        setLocationError(t('permissionDenied'));
-        setIsDetectingLocation(false);
-        return;
-      }
-      
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      
-      const [reverseGeocode] = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      });
-      
-      if (reverseGeocode?.isoCountryCode) {
-        const foundCountry = COUNTRIES.find(
-          c => c.code === reverseGeocode.isoCountryCode
-        );
-        
-        if (foundCountry) {
-          setDetectedCountry({
-            code: foundCountry.code,
-            name: foundCountry.name,
-            flag: foundCountry.flag,
-          });
-          
-          if (onLocationDetected) {
-            onLocationDetected(foundCountry.code, foundCountry.name);
-          }
-        } else {
-          setLocationError(t('countryNotFound'));
-        }
-      } else {
-        setLocationError(t('couldNotDetermineCountry'));
-      }
-    } catch (error) {
-      console.error('Location detection error:', error);
-      setLocationError(t('failedToDetectLocation'));
-    } finally {
-      setIsDetectingLocation(false);
-    }
   };
 
   // Generate Leaflet map HTML with 3D-style modern tiles - ALWAYS light mode
@@ -811,98 +719,49 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
     );
   }
 
-  // Empty State
+  // Empty State - Clean and Simple
   return (
     <View style={styles.container}>
       <View style={styles.mapContainer}>
         {renderMap()}
       </View>
 
-      {/* Detected Location Badge */}
-      {detectedCountry && (
-        <View style={styles.topRow} pointerEvents="box-none">
-          <View style={[styles.locationBadge, { backgroundColor: cardBgColor }]}>
-            <Text style={styles.detectedFlag}>{detectedCountry.flag}</Text>
-            <View>
-              <Text style={[styles.detectedLabel, { color: colors.textSecondary }]}>
-                {t('locationDetected')}
-              </Text>
-              <Text style={[styles.detectedCountry, { color: colors.text }]}>
-                {detectedCountry.name}
-              </Text>
-            </View>
-          </View>
-        </View>
-      )}
-
       <View style={[styles.emptyCard, { backgroundColor: cardBgColor }]}>
-        {detectedCountry ? (
-          <>
-            <View style={[styles.emptyIconBg, { backgroundColor: colors.success + '15' }]}>
-              <Text style={styles.detectedFlagLarge}>{detectedCountry.flag}</Text>
-            </View>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              {detectedCountry.name}
-            </Text>
-            <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
-              {t('locationDetected')}
-            </Text>
-            <TouchableOpacity 
-              style={[styles.addBtn, { backgroundColor: colors.primary }]} 
-              onPress={onAddVisit}
-              activeOpacity={0.8}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
+        <View style={[styles.emptyIconBg, { backgroundColor: colors.primary + '15' }]}>
+          <Ionicons name="airplane" size={32} color={colors.primary} />
+        </View>
+        <Text style={[styles.emptyTitle, { color: colors.text }]}>
+          {t('noActiveVisit')}
+        </Text>
+        <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
+          {t('startTrackingTravels')}
+        </Text>
+        
+        {/* Single Add Visit button - auto-detects location */}
+        <TouchableOpacity 
+          style={[styles.addBtn, { backgroundColor: colors.primary }]} 
+          onPress={handleAddVisitWithLocation}
+          activeOpacity={0.8}
+          disabled={isAddingVisit}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          {isAddingVisit ? (
+            <>
+              <ActivityIndicator size="small" color="#FFFFFF" />
+              <Text style={styles.addBtnText}>{t('detectingLocation') || 'Detecting...'}</Text>
+            </>
+          ) : (
+            <>
               <Ionicons name="add" size={20} color="#FFFFFF" />
               <Text style={styles.addBtnText}>{t('addNewVisit')}</Text>
-            </TouchableOpacity>
-          </>
-        ) : (
-          <>
-            <View style={[styles.emptyIconBg, { backgroundColor: colors.primary + '15' }]}>
-              <Ionicons name="airplane" size={32} color={colors.primary} />
-            </View>
-            <Text style={[styles.emptyTitle, { color: colors.text }]}>
-              {t('noActiveVisit')}
-            </Text>
-            <Text style={[styles.emptyDesc, { color: colors.textSecondary }]}>
-              {t('startTrackingTravels')}
-            </Text>
-            
-            {/* GPS Detection Button - Only on native */}
-            {Platform.OS !== 'web' && (
-              <TouchableOpacity 
-                style={[styles.detectBtn, { backgroundColor: colors.success + '15', borderColor: colors.success }]}
-                onPress={detectCurrentLocation}
-                disabled={isDetectingLocation}
-              >
-                {isDetectingLocation ? (
-                  <ActivityIndicator size="small" color={colors.success} />
-                ) : (
-                  <Ionicons name="navigate" size={18} color={colors.success} />
-                )}
-                <Text style={[styles.detectBtnText, { color: colors.success }]}>
-                  {isDetectingLocation ? t('detectingLocation') : t('detectLocation')}
-                </Text>
-              </TouchableOpacity>
-            )}
-            
-            {locationError && (
-              <Text style={[styles.errorText, { color: colors.danger }]}>
-                {locationError}
-              </Text>
-            )}
-            
-            <TouchableOpacity 
-              style={[styles.addBtn, { backgroundColor: colors.primary }]} 
-              onPress={onAddVisit}
-              activeOpacity={0.8}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <Ionicons name="add" size={20} color="#FFFFFF" />
-              <Text style={styles.addBtnText}>{t('addNewVisit')}</Text>
-            </TouchableOpacity>
-          </>
+            </>
+          )}
+        </TouchableOpacity>
+        
+        {locationError && (
+          <Text style={[styles.errorText, { color: colors.danger }]}>
+            {locationError}
+          </Text>
         )}
       </View>
     </View>
@@ -1175,39 +1034,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  detectBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 12,
-    borderWidth: 1,
-    gap: 8,
-    marginBottom: 12,
-  },
-  detectBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
   errorText: {
     fontSize: 12,
     marginBottom: 12,
     textAlign: 'center',
-  },
-  detectedFlag: {
-    fontSize: 24,
-    marginRight: 8,
-  },
-  detectedFlagLarge: {
-    fontSize: 36,
-  },
-  detectedLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    textTransform: 'uppercase',
-  },
-  detectedCountry: {
-    fontSize: 14,
-    fontWeight: '600',
   },
 });

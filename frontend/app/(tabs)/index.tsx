@@ -197,6 +197,13 @@ export default function DashboardScreen() {
           passports={profile.passports}
           onPress={() => activeVisit && router.push(`/visit/${activeVisit.id}`)}
           onAddVisit={() => router.push('/visit/add')}
+          onLocationDetected={(countryCode, countryName) => {
+            // Navigate to add visit with pre-filled country
+            router.push({
+              pathname: '/visit/add',
+              params: { countryCode, countryName }
+            });
+          }}
           t={t}
         />
 
