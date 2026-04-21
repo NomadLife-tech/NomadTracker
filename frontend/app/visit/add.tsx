@@ -13,7 +13,7 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
@@ -32,9 +32,6 @@ export default function AddVisitScreen() {
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  
-  // Get route params for pre-filled country (from GPS detection)
-  const params = useLocalSearchParams<{ countryCode?: string; countryName?: string }>();
 
   const [countryCode, setCountryCode] = useState('');
   const [countryName, setCountryName] = useState('');
@@ -50,15 +47,6 @@ export default function AddVisitScreen() {
   const [showVisaPicker, setShowVisaPicker] = useState(false);
   const [showPassportPicker, setShowPassportPicker] = useState(false);
   const [countrySearch, setCountrySearch] = useState('');
-  
-  // Pre-fill country from GPS detection params
-  useEffect(() => {
-    if (params.countryCode && params.countryName) {
-      console.log('[AddVisit] Pre-filling from GPS:', params.countryCode, params.countryName);
-      setCountryCode(params.countryCode);
-      setCountryName(params.countryName);
-    }
-  }, [params.countryCode, params.countryName]);
 
   // Check for active visits without exit dates and show friendly reminder
   useEffect(() => {
