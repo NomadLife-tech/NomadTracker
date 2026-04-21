@@ -73,6 +73,7 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
   // Fetch user's real GPS location when there's an active visit
   useEffect(() => {
     let isMounted = true;
+    let userChoseNotNow = false;
     
     const fetchLocation = async () => {
       if (!activeVisit) {
@@ -94,7 +95,7 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
         // This is Apple's recommended best practice - explain BEFORE the system dialog
         if (existingStatus === 'undetermined') {
           // Show explanation alert first
-          await new Promise<void>((resolve) => {
+          const userResponse = await new Promise<'enable' | 'notNow'>((resolve) => {
             Alert.alert(
               '📍 Enable Location',
               'Nomad Tracker would like to show your current location on the map.\n\nYour location is only used while viewing the app and is never stored or shared.',
@@ -102,39 +103,31 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
                 { 
                   text: 'Not Now', 
                   style: 'cancel',
-                  onPress: () => {
-                    if (isMounted) {
-                      setLocationStatus('denied');
-                      setIsLoadingLocation(false);
-                    }
-                    resolve();
-                  }
+                  onPress: () => resolve('notNow')
                 },
                 { 
                   text: 'Enable', 
-                  onPress: async () => {
-                    const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
-                    permissionStatus = newStatus;
-                    resolve();
-                  }
+                  onPress: () => resolve('enable')
                 }
               ]
             );
           });
           
-          // If user chose "Not Now", exit early
-          if (permissionStatus === 'undetermined') {
+          if (userResponse === 'notNow') {
+            userChoseNotNow = true;
+            if (isMounted) {
+              setLocationStatus('denied');
+              setIsLoadingLocation(false);
+            }
             return;
           }
-        } else if (existingStatus !== 'granted') {
-          // Permission was previously denied - show how to enable
-          if (isMounted) {
-            setLocationStatus('denied');
-            setIsLoadingLocation(false);
-          }
-          return;
+          
+          // User chose "Enable", now show system dialog
+          const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
+          permissionStatus = newStatus;
         }
         
+        // Check if permission was granted
         if (permissionStatus !== 'granted') {
           console.log('[MiniMap] Location permission denied, using country center');
           if (isMounted) {
@@ -172,8 +165,12 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
     
     fetchLocation();
     
-    // Refresh location every 5 minutes while component is mounted
-    const intervalId = setInterval(fetchLocation, 5 * 60 * 1000);
+    // Refresh location every 5 minutes while component is mounted (only if permission granted)
+    const intervalId = setInterval(() => {
+      if (!userChoseNotNow) {
+        fetchLocation();
+      }
+    }, 5 * 60 * 1000);
     
     return () => {
       isMounted = false;
