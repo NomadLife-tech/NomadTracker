@@ -13,12 +13,10 @@
       "bundleIdentifier": "com.nomadtracker.app",
       "buildNumber": "1",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Show your current location on the map while viewing your active visit",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Track your location to automatically log country visits",
-        "NSPhotoLibraryUsageDescription": "Select photos for your profile picture",
-        "NSPhotoLibraryAddUsageDescription": "Save travel photos to your library",
-        "NSCameraUsageDescription": "Take photos for your profile picture",
-        "NSDocumentsFolderUsageDescription": "Attach visa and insurance documents",
+        "NSLocationWhenInUseUsageDescription": "Nomad Tracker uses your location to show your current position on the map when viewing your active travel visit. Your location is only used while the app is open and is not stored or shared.",
+        "NSPhotoLibraryUsageDescription": "Nomad Tracker needs access to your photos to let you select a profile picture.",
+        "NSPhotoLibraryAddUsageDescription": "Nomad Tracker needs permission to save travel photos to your library.",
+        "NSCameraUsageDescription": "Nomad Tracker needs camera access to take photos for your profile picture.",
         "UIFileSharingEnabled": true,
         "LSSupportsOpeningDocumentsInPlace": true
       }
@@ -63,8 +61,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Track your location to automatically log country visits",
-          "locationWhenInUsePermission": "Track your current country for travel logging"
+          "locationWhenInUsePermission": "Nomad Tracker uses your location to show your current position on the map when viewing your active travel visit. Your location is only used while the app is open and is not stored or shared."
         }
       ],
       [

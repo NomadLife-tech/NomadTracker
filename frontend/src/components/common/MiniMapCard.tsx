@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { Visit, Passport } from '../../types';
@@ -90,10 +90,49 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
         
         let permissionStatus = existingStatus;
         
-        // If not determined, request permission
-        if (existingStatus !== 'granted') {
-          const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
-          permissionStatus = newStatus;
+        // If not yet determined, show a pre-prompt explaining why we need location
+        // This is Apple's recommended best practice - explain BEFORE the system dialog
+        if (existingStatus === 'undetermined') {
+          // Show explanation alert first
+          await new Promise<void>((resolve) => {
+            Alert.alert(
+              '📍 Enable Location',
+              'Nomad Tracker would like to show your current location on the map.\n\nYour location is only used while viewing the app and is never stored or shared.',
+              [
+                { 
+                  text: 'Not Now', 
+                  style: 'cancel',
+                  onPress: () => {
+                    if (isMounted) {
+                      setLocationStatus('denied');
+                      setIsLoadingLocation(false);
+                    }
+                    resolve();
+                  }
+                },
+                { 
+                  text: 'Enable', 
+                  onPress: async () => {
+                    const { status: newStatus } = await Location.requestForegroundPermissionsAsync();
+                    permissionStatus = newStatus;
+                    resolve();
+                  }
+                }
+              ]
+            );
+          });
+          
+          // If user chose "Not Now", exit early
+          if (permissionStatus === 'undetermined') {
+            return;
+          }
+        } else if (existingStatus !== 'granted') {
+          // Permission was previously denied - show how to enable
+          if (isMounted) {
+            setLocationStatus('denied');
+            setIsLoadingLocation(false);
+          }
+          return;
         }
         
         if (permissionStatus !== 'granted') {
@@ -105,9 +144,9 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
           return;
         }
         
-        // Get current position with reduced accuracy for privacy
+        // Get current position with balanced accuracy
         const location = await Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced, // Better accuracy but still privacy-conscious
+          accuracy: Location.Accuracy.Balanced,
           timeInterval: 10000,
           distanceInterval: 100,
         });
