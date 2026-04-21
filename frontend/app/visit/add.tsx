@@ -748,9 +748,4 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
   },
-  emptyText: {
-    textAlign: 'center',
-    padding: 40,
-    fontSize: 14,
-  },
 });
