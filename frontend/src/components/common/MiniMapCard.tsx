@@ -97,16 +97,45 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
         if (status === 'granted') {
           // Permission already granted - get GPS location
           console.log('[MiniMap] Permission granted, fetching GPS...');
-          const location = await Location.getCurrentPositionAsync({
-            accuracy: Location.Accuracy.Balanced,
-          });
           
-          if (isMounted && location) {
-            const lat = Math.round(location.coords.latitude * 100) / 100;
-            const lng = Math.round(location.coords.longitude * 100) / 100;
-            console.log(`[MiniMap] GPS location: ${lat}, ${lng}`);
-            setUserLocation({ lat, lng });
-            setLocationStatus('gps');
+          try {
+            const location = await Location.getCurrentPositionAsync({
+              accuracy: Location.Accuracy.Balanced,
+              timeInterval: 5000,
+              mayShowUserSettingsDialog: true,
+            });
+            
+            if (isMounted && location && location.coords) {
+              const lat = Math.round(location.coords.latitude * 100) / 100;
+              const lng = Math.round(location.coords.longitude * 100) / 100;
+              console.log(`[MiniMap] GPS SUCCESS: ${lat}, ${lng}`);
+              setUserLocation({ lat, lng });
+              setLocationStatus('gps');
+              return; // Important: exit here on success
+            }
+          } catch (gpsError) {
+            console.error('[MiniMap] GPS fetch failed, trying last known:', gpsError);
+            
+            // Try getting last known location as fallback
+            try {
+              const lastKnown = await Location.getLastKnownPositionAsync();
+              if (isMounted && lastKnown && lastKnown.coords) {
+                const lat = Math.round(lastKnown.coords.latitude * 100) / 100;
+                const lng = Math.round(lastKnown.coords.longitude * 100) / 100;
+                console.log(`[MiniMap] Last known location: ${lat}, ${lng}`);
+                setUserLocation({ lat, lng });
+                setLocationStatus('gps');
+                return;
+              }
+            } catch (lastKnownError) {
+              console.error('[MiniMap] Last known also failed:', lastKnownError);
+            }
+          }
+          
+          // If we get here, GPS failed - fall back to country
+          if (isMounted) {
+            console.log('[MiniMap] GPS unavailable, using country center');
+            setLocationStatus('country');
           }
         } else if (status === 'undetermined') {
           // First time - show pre-prompt then request permission
@@ -134,17 +163,23 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
           console.log('[MiniMap] Permission result:', newStatus);
           
           if (newStatus === 'granted') {
-            const location = await Location.getCurrentPositionAsync({
-              accuracy: Location.Accuracy.Balanced,
-            });
-            
-            if (isMounted && location) {
-              const lat = Math.round(location.coords.latitude * 100) / 100;
-              const lng = Math.round(location.coords.longitude * 100) / 100;
-              console.log(`[MiniMap] GPS location: ${lat}, ${lng}`);
-              setUserLocation({ lat, lng });
-              setLocationStatus('gps');
+            try {
+              const location = await Location.getCurrentPositionAsync({
+                accuracy: Location.Accuracy.Balanced,
+              });
+              
+              if (isMounted && location && location.coords) {
+                const lat = Math.round(location.coords.latitude * 100) / 100;
+                const lng = Math.round(location.coords.longitude * 100) / 100;
+                console.log(`[MiniMap] GPS SUCCESS after grant: ${lat}, ${lng}`);
+                setUserLocation({ lat, lng });
+                setLocationStatus('gps');
+                return;
+              }
+            } catch (gpsError) {
+              console.error('[MiniMap] GPS failed after grant:', gpsError);
             }
+            if (isMounted) setLocationStatus('country');
           } else {
             if (isMounted) setLocationStatus('denied');
           }
@@ -577,9 +612,10 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
                 <Text style={[styles.liveText, { color: colors.warning }]}>TAP TO ENABLE</Text>
               </TouchableOpacity>
             ) : (
+              /* 'country' status - GPS failed, showing country center */
               <>
-                <View style={styles.liveIndicator} />
-                <Text style={styles.liveText}>LIVE</Text>
+                <Ionicons name="navigate-outline" size={12} color={colors.textSecondary} style={{ marginRight: 4 }} />
+                <Text style={[styles.liveText, { color: colors.textSecondary }]}>COUNTRY</Text>
               </>
             )}
           </View>
