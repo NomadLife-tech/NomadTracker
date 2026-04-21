@@ -688,6 +688,21 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
                 </Text>
               </View>
             )}
+            
+            {/* Location Enable Banner - shown when permission denied */}
+            {locationStatus === 'denied' && (
+              <TouchableOpacity 
+                style={[styles.locationBanner, { backgroundColor: colors.primary + '15' }]}
+                onPress={handleRetryLocation}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="location" size={18} color={colors.primary} />
+                <Text style={[styles.locationBannerText, { color: colors.primary }]}>
+                  Enable GPS for accurate location
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.primary} />
+              </TouchableOpacity>
+            )}
           </View>
         ) : (
           /* Minimized State - Show button to expand */
@@ -1038,5 +1053,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginBottom: 12,
     textAlign: 'center',
+  },
+  locationBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
+    marginTop: 14,
+    gap: 10,
+  },
+  locationBannerText: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
