@@ -306,7 +306,7 @@ export default function DashboardScreen() {
                 <View style={styles.reEntryHeader}>
                   <Ionicons name="calendar-outline" size={18} color={colors.primary} />
                   <Text style={[styles.reEntryTitle, { color: colors.text }]}>
-                    Fresh 90-Day Allowance
+                    {t('fresh90DayAllowance')}
                   </Text>
                 </View>
                 <Text style={[styles.reEntryDate, { color: colors.primary }]}>
@@ -314,8 +314,8 @@ export default function DashboardScreen() {
                 </Text>
                 <Text style={[styles.reEntrySubtext, { color: colors.textSecondary }]}>
                   {schengenStatus.daysRemaining >= 90 
-                    ? 'Available now - you can stay 90 days' 
-                    : `On this date, you can enter and stay a full 90 days`}
+                    ? t('availableNow90Days')
+                    : t('onThisDateFull90')}
                 </Text>
                 {/* Show days since last Schengen exit instead of misleading reset badge */}
                 {schengenStatus.lastSchengenExit && (
@@ -326,7 +326,7 @@ export default function DashboardScreen() {
                         const daysSinceExit = Math.floor(
                           (new Date().getTime() - schengenStatus.lastSchengenExit!.getTime()) / (1000 * 60 * 60 * 24)
                         );
-                        return `${daysSinceExit} days since last Schengen exit`;
+                        return `${daysSinceExit} ${t('daysSinceExit')}`;
                       })()}
                     </Text>
                   </View>
@@ -503,7 +503,7 @@ export default function DashboardScreen() {
             <View style={styles.emptyChartContainer}>
               <Ionicons name="pie-chart-outline" size={48} color={colors.border} />
               <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                No data for {selectedYear}
+                {t('noDataForYear')} {selectedYear}
               </Text>
             </View>
           )}

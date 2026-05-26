@@ -137,7 +137,7 @@ export default function TaxScreen() {
                   <View style={[styles.warningBanner, { backgroundColor: colors.danger + '15' }]}>
                     <Ionicons name="warning" size={16} color={colors.danger} />
                     <Text style={[styles.warningText, { color: colors.danger }]}>
-                      Tax residency threshold reached
+                      {t('taxResidencyThreshold')}
                     </Text>
                   </View>
                 )}
@@ -148,7 +148,7 @@ export default function TaxScreen() {
           <View style={styles.emptyContainer}>
             <Ionicons name="calculator-outline" size={48} color={colors.textSecondary} />
             <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-              No visits recorded for {selectedYear}
+              {t('noVisitsRecordedFor')} {selectedYear}
             </Text>
           </View>
         )}

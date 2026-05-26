@@ -347,7 +347,7 @@ export default function ProfileScreen() {
       console.error('Error saving passport:', error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       Alert.alert(
-        'Save Failed',
+        t('saveFailed'),
         `Could not save passport. Error: ${errorMessage}`,
         [{ text: 'OK' }]
       );
@@ -422,7 +422,7 @@ export default function ProfileScreen() {
       // Show Alert with actual error message for debugging in Expo Go
       const errorMessage = error instanceof Error ? error.message : String(error);
       Alert.alert(
-        'Save Failed',
+        t('saveFailed'),
         `Could not save insurance. Error: ${errorMessage}`,
         [{ text: 'OK' }]
       );
@@ -484,7 +484,7 @@ export default function ProfileScreen() {
       } catch (pickerError: any) {
         console.error('[Attachment] DocumentPicker threw error:', pickerError);
         Alert.alert(
-          'Document Picker Error',
+          t('documentPickerError'),
           `The document picker failed to open.\n\nError: ${pickerError?.message || String(pickerError)}`,
           [{ text: 'OK' }]
         );
@@ -579,7 +579,7 @@ export default function ProfileScreen() {
     } catch (error: any) {
       console.error('[Attachment] Unexpected error:', error);
       Alert.alert(
-        'Attachment Error',
+        t('attachmentError'),
         `An unexpected error occurred.\n\nError: ${error?.message || String(error)}\n\nStack: ${error?.stack?.substring(0, 200) || 'N/A'}`,
         [{ text: 'OK' }]
       );
@@ -624,7 +624,7 @@ export default function ProfileScreen() {
       } catch (pickerError: any) {
         console.error('[ImageAttachment] ImagePicker threw error:', pickerError);
         Alert.alert(
-          'Image Picker Error',
+          t('imagePickerError'),
           `The image picker failed to open.\n\nError: ${pickerError?.message || String(pickerError)}`,
           [{ text: 'OK' }]
         );
@@ -692,7 +692,7 @@ export default function ProfileScreen() {
     } catch (error: any) {
       console.error('[ImageAttachment] Unexpected error:', error);
       Alert.alert(
-        'Image Attachment Error',
+        t('imageAttachmentError'),
         `An unexpected error occurred.\n\nError: ${error?.message || String(error)}\n\nStack: ${error?.stack?.substring(0, 200) || 'N/A'}`,
         [{ text: 'OK' }]
       );

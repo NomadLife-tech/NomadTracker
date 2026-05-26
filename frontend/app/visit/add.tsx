@@ -162,7 +162,7 @@ export default function AddVisitScreen() {
       // Show Alert with actual error message for debugging in Expo Go
       const errorMessage = error instanceof Error ? error.message : String(error);
       Alert.alert(
-        'Save Failed',
+        t('saveFailed'),
         `Could not save visit. Error: ${errorMessage}`,
         [{ text: 'OK' }]
       );
@@ -280,7 +280,7 @@ export default function AddVisitScreen() {
                 <Text style={[styles.pickerText, { color: colors.text }]}>{visaType}</Text>
               ) : (
                 <Text style={[styles.pickerPlaceholder, { color: colors.textSecondary }]}>
-                  {countryCode ? 'Select visa type' : 'Select country first'}
+                  {countryCode ? t('selectVisaType') : t('selectCountryFirst')}
                 </Text>
               )}
               <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />

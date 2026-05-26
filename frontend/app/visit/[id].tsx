@@ -274,7 +274,7 @@ export default function EditVisitScreen() {
                 <Text style={[styles.pickerText, { color: colors.text }]}>{visaType}</Text>
               ) : (
                 <Text style={[styles.pickerPlaceholder, { color: colors.textSecondary }]}>
-                  {countryCode ? 'Select visa type' : 'Select country first'}
+                  {countryCode ? t('selectVisaType') : t('selectCountryFirst')}
                 </Text>
               )}
               <Ionicons name="chevron-down" size={20} color={colors.textSecondary} />
