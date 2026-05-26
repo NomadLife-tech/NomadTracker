@@ -317,11 +317,17 @@ export default function DashboardScreen() {
                     ? 'Available now - you can stay 90 days' 
                     : `On this date, you can enter and stay a full 90 days`}
                 </Text>
-                {schengenStatus.hasSoftReset && (
-                  <View style={[styles.resetBadge, { backgroundColor: colors.success + '20' }]}>
-                    <Ionicons name="checkmark-circle" size={14} color={colors.success} />
-                    <Text style={[styles.resetBadgeText, { color: colors.success }]}>
-                      {schengenStatus.hasFullReset ? '180-day full reset' : '90-day soft reset'}
+                {/* Show days since last Schengen exit instead of misleading reset badge */}
+                {schengenStatus.lastSchengenExit && (
+                  <View style={[styles.resetBadge, { backgroundColor: colors.textSecondary + '15' }]}>
+                    <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+                    <Text style={[styles.resetBadgeText, { color: colors.textSecondary }]}>
+                      {(() => {
+                        const daysSinceExit = Math.floor(
+                          (new Date().getTime() - schengenStatus.lastSchengenExit!.getTime()) / (1000 * 60 * 60 * 24)
+                        );
+                        return `${daysSinceExit} days since last Schengen exit`;
+                      })()}
                     </Text>
                   </View>
                 )}
