@@ -8,6 +8,7 @@ import {
   TextInput,
   RefreshControl,
   SectionList,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -92,8 +93,21 @@ export default function VisitsListScreen() {
   };
 
   const handleDelete = async (visitId: string) => {
-    await deleteVisit(visitId);
-    showToast(t('success'), 'success');
+    Alert.alert(
+      t('deleteVisit'),
+      t('confirmDelete'),
+      [
+        { text: t('cancel'), style: 'cancel' },
+        {
+          text: t('delete'),
+          style: 'destructive',
+          onPress: async () => {
+            await deleteVisit(visitId);
+            showToast(t('success'), 'success');
+          },
+        },
+      ]
+    );
   };
 
   // Filter and sort visits

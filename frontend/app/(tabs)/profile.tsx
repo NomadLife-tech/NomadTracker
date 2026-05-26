@@ -517,7 +517,7 @@ export default function ProfileScreen() {
       const fileExtension = file.name.split('.').pop()?.toLowerCase();
 
       if (!['pdf', 'jpg', 'jpeg', 'png'].includes(fileExtension || '')) {
-        Alert.alert('Invalid File Type', 'Only PDF, JPG, and PNG files are allowed');
+        Alert.alert(t('invalidFileType'), t('invalidFileTypeDesc'));
         if (isNative) {
           setTimeout(() => {
             if (type === 'passport') setShowPassportModal(true);
@@ -1311,7 +1311,7 @@ export default function ProfileScreen() {
             <Ionicons name="search" size={20} color={colors.textSecondary} />
             <TextInput
               style={[styles.searchInput, { color: colors.text }]}
-              placeholder="Search countries..."
+              placeholder={t('searchCountries')}
               placeholderTextColor={colors.textSecondary}
               value={countrySearch}
               onChangeText={setCountrySearch}

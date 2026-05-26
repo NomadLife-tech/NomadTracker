@@ -379,7 +379,7 @@ export default function EditVisitScreen() {
               <Ionicons name="search" size={20} color={colors.textSecondary} />
               <TextInput
                 style={[styles.searchInput, { color: colors.text }]}
-                placeholder="Search countries..."
+                placeholder={t('searchCountries')}
                 placeholderTextColor={colors.textSecondary}
                 value={countrySearch}
                 onChangeText={setCountrySearch}
