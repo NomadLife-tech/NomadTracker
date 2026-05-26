@@ -126,9 +126,17 @@ export default function AddVisitScreen() {
     console.log('handleSave called');
     console.log('Form state:', { countryCode, entryDate, visaType });
     
-    if (!countryCode || !entryDate || !visaType) {
-      console.log('Validation failed - missing required fields');
-      showToast(t('error'), 'error');
+    // Validate in form order with specific messages
+    if (!countryCode) {
+      showToast('Please select a country', 'warning');
+      return;
+    }
+    if (!entryDate) {
+      showToast('Please set an entry date', 'warning');
+      return;
+    }
+    if (!visaType) {
+      showToast('Please select a visa type', 'warning');
       return;
     }
 
