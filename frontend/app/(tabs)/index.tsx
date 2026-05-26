@@ -238,7 +238,7 @@ export default function DashboardScreen() {
               <View style={[styles.complianceBadge, { backgroundColor: schengenStatus.valid ? colors.success + '20' : colors.danger + '20' }]}>
                 <View style={[styles.complianceDot, { backgroundColor: schengenStatus.valid ? colors.success : colors.danger }]} />
                 <Text style={[styles.complianceText, { color: schengenStatus.valid ? colors.success : colors.danger }]}>
-                  {schengenStatus.valid ? 'Compliant' : 'Overstay'}
+                  {schengenStatus.valid ? t('compliant') : t('overstay')}
                 </Text>
               </View>
             </View>
@@ -280,7 +280,7 @@ export default function DashboardScreen() {
                     {schengenStatus.maxStayFromToday}
                   </Text>
                   <Text style={[styles.schengenLabel, { color: colors.textSecondary }]}>
-                    Max Stay
+                    {t('maxStay')}
                   </Text>
                 </View>
               </View>

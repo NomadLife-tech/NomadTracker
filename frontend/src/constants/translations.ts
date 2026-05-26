@@ -86,6 +86,31 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     noVisitsOnDate: 'No visits on this date',
     // Schengen
     window: 'Window',
+    compliant: 'Compliant',
+    overstay: 'Overstay',
+    maxStay: 'Max Stay',
+    fresh90DayAllowance: 'Fresh 90-Day Allowance',
+    availableNow90Days: 'Available now - you can stay 90 days',
+    onThisDateFull90: 'On this date, you can enter and stay a full 90 days',
+    daysSinceExit: 'days since last Schengen exit',
+    noDataForYear: 'No data for',
+    visit: 'visit',
+    visits: 'visits',
+    // Tax
+    taxResidencyThreshold: 'Tax residency threshold reached',
+    noVisitsRecordedFor: 'No visits recorded for',
+    // Alerts & Errors
+    saveFailed: 'Save Failed',
+    selectVisaType: 'Select visa type',
+    selectCountryFirst: 'Select country first',
+    documentPickerError: 'Document Picker Error',
+    attachmentError: 'Attachment Error',
+    imagePickerError: 'Image Picker Error',
+    imageAttachmentError: 'Image Attachment Error',
+    // Alert Frequencies
+    once: 'Once',
+    daily: 'Daily',
+    weekly: 'Weekly',
     // Map
     visitedCountries: 'Visited Countries',
     tapCountryForDetails: 'Tap a marker for details',
@@ -349,6 +374,32 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     noVisitsOnDate: 'Sin visitas en esta fecha',
     // Schengen
     window: 'Ventana',
+    compliant: 'Conforme',
+    overstay: 'Exceso de estancia',
+    maxStay: 'Estancia máxima',
+    fresh90DayAllowance: 'Nueva asignación de 90 días',
+    availableNow90Days: 'Disponible ahora - puedes quedarte 90 días',
+    onThisDateFull90: 'En esta fecha, puedes entrar y quedarte 90 días completos',
+    daysSinceExit: 'días desde la última salida de Schengen',
+    noDataForYear: 'Sin datos para',
+    visit: 'visita',
+    visits: 'visitas',
+    // Tax
+    taxResidencyThreshold: 'Umbral de residencia fiscal alcanzado',
+    noVisitsRecordedFor: 'Sin visitas registradas para',
+    // Alerts & Errors
+    saveFailed: 'Error al guardar',
+    selectVisaType: 'Seleccionar tipo de visa',
+    selectCountryFirst: 'Seleccionar país primero',
+    documentPickerError: 'Error del selector de documentos',
+    attachmentError: 'Error de adjunto',
+    imagePickerError: 'Error del selector de imágenes',
+    imageAttachmentError: 'Error de adjunto de imagen',
+    // Alert Frequencies
+    once: 'Una vez',
+    daily: 'Diario',
+    weekly: 'Semanal',
+    // Map
     visitedCountries: 'Países visitados',
     tapCountryForDetails: 'Toca un marcador para detalles',
     // Search & Validation
@@ -592,6 +643,32 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     noVisitsOnDate: 'Aucune visite à cette date',
     // Schengen
     window: 'Fenêtre',
+    compliant: 'Conforme',
+    overstay: 'Dépassement de séjour',
+    maxStay: 'Séjour maximum',
+    fresh90DayAllowance: 'Nouvelle allocation de 90 jours',
+    availableNow90Days: 'Disponible maintenant - vous pouvez rester 90 jours',
+    onThisDateFull90: 'À cette date, vous pouvez entrer et rester 90 jours complets',
+    daysSinceExit: 'jours depuis la dernière sortie de Schengen',
+    noDataForYear: 'Pas de données pour',
+    visit: 'visite',
+    visits: 'visites',
+    // Tax
+    taxResidencyThreshold: 'Seuil de résidence fiscale atteint',
+    noVisitsRecordedFor: 'Aucune visite enregistrée pour',
+    // Alerts & Errors
+    saveFailed: 'Échec de la sauvegarde',
+    selectVisaType: 'Sélectionner le type de visa',
+    selectCountryFirst: 'Sélectionner le pays d\'abord',
+    documentPickerError: 'Erreur du sélecteur de documents',
+    attachmentError: 'Erreur de pièce jointe',
+    imagePickerError: 'Erreur du sélecteur d\'images',
+    imageAttachmentError: 'Erreur de pièce jointe image',
+    // Alert Frequencies
+    once: 'Une fois',
+    daily: 'Quotidien',
+    weekly: 'Hebdomadaire',
+    // Map
     visitedCountries: 'Pays visités',
     tapCountryForDetails: 'Appuyez sur un marqueur pour les détails',
     // Search & Validation
@@ -835,6 +912,32 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     noVisitsOnDate: 'Keine Besuche an diesem Datum',
     // Schengen
     window: 'Fenster',
+    compliant: 'Konform',
+    overstay: 'Überziehung',
+    maxStay: 'Maximaler Aufenthalt',
+    fresh90DayAllowance: 'Neue 90-Tage-Zulage',
+    availableNow90Days: 'Jetzt verfügbar - Sie können 90 Tage bleiben',
+    onThisDateFull90: 'An diesem Datum können Sie einreisen und volle 90 Tage bleiben',
+    daysSinceExit: 'Tage seit der letzten Schengen-Ausreise',
+    noDataForYear: 'Keine Daten für',
+    visit: 'Besuch',
+    visits: 'Besuche',
+    // Tax
+    taxResidencyThreshold: 'Steuerlicher Wohnsitz-Schwellenwert erreicht',
+    noVisitsRecordedFor: 'Keine Besuche verzeichnet für',
+    // Alerts & Errors
+    saveFailed: 'Speichern fehlgeschlagen',
+    selectVisaType: 'Visumstyp auswählen',
+    selectCountryFirst: 'Zuerst Land auswählen',
+    documentPickerError: 'Dokumentenauswahl-Fehler',
+    attachmentError: 'Anhang-Fehler',
+    imagePickerError: 'Bildauswahl-Fehler',
+    imageAttachmentError: 'Bildanhang-Fehler',
+    // Alert Frequencies
+    once: 'Einmal',
+    daily: 'Täglich',
+    weekly: 'Wöchentlich',
+    // Map
     visitedCountries: 'Besuchte Länder',
     tapCountryForDetails: 'Markierung antippen für Details',
     // Search & Validation
@@ -1078,6 +1181,32 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     noVisitsOnDate: 'Sem visitas nesta data',
     // Schengen
     window: 'Janela',
+    compliant: 'Conforme',
+    overstay: 'Excesso de permanência',
+    maxStay: 'Permanência máxima',
+    fresh90DayAllowance: 'Nova permissão de 90 dias',
+    availableNow90Days: 'Disponível agora - você pode ficar 90 dias',
+    onThisDateFull90: 'Nesta data, você pode entrar e ficar 90 dias completos',
+    daysSinceExit: 'dias desde a última saída de Schengen',
+    noDataForYear: 'Sem dados para',
+    visit: 'visita',
+    visits: 'visitas',
+    // Tax
+    taxResidencyThreshold: 'Limite de residência fiscal atingido',
+    noVisitsRecordedFor: 'Nenhuma visita registrada para',
+    // Alerts & Errors
+    saveFailed: 'Falha ao salvar',
+    selectVisaType: 'Selecionar tipo de visto',
+    selectCountryFirst: 'Selecionar país primeiro',
+    documentPickerError: 'Erro no seletor de documentos',
+    attachmentError: 'Erro de anexo',
+    imagePickerError: 'Erro no seletor de imagens',
+    imageAttachmentError: 'Erro de anexo de imagem',
+    // Alert Frequencies
+    once: 'Uma vez',
+    daily: 'Diário',
+    weekly: 'Semanal',
+    // Map
     visitedCountries: 'Países visitados',
     tapCountryForDetails: 'Toque em um marcador para detalhes',
     // Search & Validation
@@ -1321,6 +1450,32 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     noVisitsOnDate: '该日期无访问',
     // Schengen
     window: '窗口',
+    compliant: '合规',
+    overstay: '逾期滞留',
+    maxStay: '最长停留',
+    fresh90DayAllowance: '新的90天配额',
+    availableNow90Days: '现在可用 - 您可以停留90天',
+    onThisDateFull90: '在此日期，您可以入境并停留完整的90天',
+    daysSinceExit: '天自上次离开申根区',
+    noDataForYear: '无数据',
+    visit: '次访问',
+    visits: '次访问',
+    // Tax
+    taxResidencyThreshold: '已达到税务居民门槛',
+    noVisitsRecordedFor: '未记录访问',
+    // Alerts & Errors
+    saveFailed: '保存失败',
+    selectVisaType: '选择签证类型',
+    selectCountryFirst: '请先选择国家',
+    documentPickerError: '文档选择器错误',
+    attachmentError: '附件错误',
+    imagePickerError: '图片选择器错误',
+    imageAttachmentError: '图片附件错误',
+    // Alert Frequencies
+    once: '一次',
+    daily: '每天',
+    weekly: '每周',
+    // Map
     visitedCountries: '已访问国家',
     tapCountryForDetails: '点击标记查看详情',
     // Search & Validation
@@ -1564,6 +1719,32 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     noVisitsOnDate: 'この日付の訪問はありません',
     // Schengen
     window: 'ウィンドウ',
+    compliant: '適合',
+    overstay: '滞在超過',
+    maxStay: '最大滞在',
+    fresh90DayAllowance: '新しい90日の許可',
+    availableNow90Days: '今すぐ利用可能 - 90日間滞在できます',
+    onThisDateFull90: 'この日付に入国し、90日間滞在できます',
+    daysSinceExit: '日前にシェンゲンを出国',
+    noDataForYear: 'データがありません',
+    visit: '回の訪問',
+    visits: '回の訪問',
+    // Tax
+    taxResidencyThreshold: '税務上の居住者のしきい値に達しました',
+    noVisitsRecordedFor: '訪問記録がありません',
+    // Alerts & Errors
+    saveFailed: '保存に失敗しました',
+    selectVisaType: 'ビザの種類を選択',
+    selectCountryFirst: '最初に国を選択してください',
+    documentPickerError: 'ドキュメント選択エラー',
+    attachmentError: '添付ファイルエラー',
+    imagePickerError: '画像選択エラー',
+    imageAttachmentError: '画像添付エラー',
+    // Alert Frequencies
+    once: '1回',
+    daily: '毎日',
+    weekly: '毎週',
+    // Map
     visitedCountries: '訪問した国',
     tapCountryForDetails: 'マーカーをタップして詳細を表示',
     // Search & Validation
@@ -1807,6 +1988,32 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     noVisitsOnDate: '이 날짜에 방문 없음',
     // Schengen
     window: '윈도우',
+    compliant: '준수',
+    overstay: '체류 초과',
+    maxStay: '최대 체류',
+    fresh90DayAllowance: '새로운 90일 허용',
+    availableNow90Days: '지금 사용 가능 - 90일 체류 가능',
+    onThisDateFull90: '이 날짜에 입국하여 90일 동안 체류할 수 있습니다',
+    daysSinceExit: '일 전 솅겐 출국',
+    noDataForYear: '데이터 없음',
+    visit: '회 방문',
+    visits: '회 방문',
+    // Tax
+    taxResidencyThreshold: '세금 거주자 기준 도달',
+    noVisitsRecordedFor: '방문 기록 없음',
+    // Alerts & Errors
+    saveFailed: '저장 실패',
+    selectVisaType: '비자 유형 선택',
+    selectCountryFirst: '먼저 국가를 선택하세요',
+    documentPickerError: '문서 선택 오류',
+    attachmentError: '첨부 파일 오류',
+    imagePickerError: '이미지 선택 오류',
+    imageAttachmentError: '이미지 첨부 오류',
+    // Alert Frequencies
+    once: '한 번',
+    daily: '매일',
+    weekly: '매주',
+    // Map
     visitedCountries: '방문한 국가',
     tapCountryForDetails: '마커를 탭하여 상세 정보 보기',
     // Search & Validation
