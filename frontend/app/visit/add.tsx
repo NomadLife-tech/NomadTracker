@@ -123,9 +123,6 @@ export default function AddVisitScreen() {
     : COUNTRIES;
 
   const handleSave = async () => {
-    console.log('handleSave called');
-    console.log('Form state:', { countryCode, entryDate, visaType });
-    
     // Validate in form order with specific messages
     if (!countryCode) {
       showToast('Please select a country', 'warning');
@@ -157,9 +154,7 @@ export default function AddVisitScreen() {
         updatedAt: new Date().toISOString(),
       };
 
-      console.log('Saving visit:', JSON.stringify(visit));
       await addVisit(visit);
-      console.log('Visit saved successfully, navigating back');
       showToast(t('success'), 'success');
       router.back();
     } catch (error) {
@@ -277,10 +272,7 @@ export default function AddVisitScreen() {
             <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('visaType')} *</Text>
             <TouchableOpacity
               style={[styles.pickerButton, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => {
-                console.log('Visa type picker pressed');
-                setShowVisaPicker(true);
-              }}
+              onPress={() => setShowVisaPicker(true)}
               disabled={!countryCode}
               activeOpacity={0.7}
             >
@@ -466,7 +458,6 @@ export default function AddVisitScreen() {
                     <TouchableOpacity
                       style={[styles.listItem, { borderBottomColor: colors.border }]}
                       onPress={() => {
-                        console.log('Selected visa type:', item);
                         setVisaType(item);
                         // Auto-populate allowed days unless Custom
                         if (!isCustom) {

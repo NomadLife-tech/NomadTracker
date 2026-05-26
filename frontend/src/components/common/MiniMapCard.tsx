@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { Visit, Passport } from '../../types';
 import { getCountryByCode, COUNTRIES } from '../../constants/countries';
+import { COUNTRY_COORDS, DEFAULT_COORDS } from '../../constants/countryCoords';
 import { getVisaStatus, isSchengenCountry, countsAgainstSchengen, calculateSchengenDays, visitCountsForSchengen } from '../../utils/dateUtils';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -16,49 +17,6 @@ interface MiniMapCardProps {
   onLocationDetected?: (countryCode: string, countryName: string) => void;
   t: (key: string) => string;
 }
-
-// Country coordinates for map centering
-const COUNTRY_COORDS: { [key: string]: [number, number] } = {
-  US: [37.0902, -95.7129], GB: [51.5074, -0.1278], DE: [52.5200, 13.4050],
-  FR: [48.8566, 2.3522], ES: [40.4168, -3.7038], IT: [41.9028, 12.4964],
-  PT: [38.7223, -9.1393], NL: [52.3676, 4.9041], BE: [50.8503, 4.3517],
-  AT: [48.2082, 16.3738], CH: [46.9480, 7.4474], GR: [37.9838, 23.7275],
-  SE: [59.3293, 18.0686], NO: [59.9139, 10.7522], DK: [55.6761, 12.5683],
-  FI: [60.1699, 24.9384], PL: [52.2297, 21.0122], CZ: [50.0755, 14.4378],
-  HU: [47.4979, 19.0402], IE: [53.3498, -6.2603], JP: [35.6762, 139.6503],
-  KR: [37.5665, 126.9780], CN: [39.9042, 116.4074], TW: [25.0330, 121.5654],
-  SG: [1.3521, 103.8198], MY: [3.1390, 101.6869], TH: [13.7563, 100.5018],
-  ID: [-6.2088, 106.8456], VN: [21.0278, 105.8342], PH: [14.5995, 120.9842],
-  IN: [28.6139, 77.2090], AU: [-33.8688, 151.2093], NZ: [-36.8485, 174.7633],
-  CA: [43.6532, -79.3832], MX: [19.4326, -99.1332], BR: [-23.5505, -46.6333],
-  AR: [-34.6037, -58.3816], CL: [-33.4489, -70.6693], CO: [4.7110, -74.0721],
-  PE: [-12.0464, -77.0428], AE: [25.2048, 55.2708], SA: [24.7136, 46.6753],
-  QA: [25.2854, 51.5310], EG: [30.0444, 31.2357], ZA: [-33.9249, 18.4241],
-  KE: [-1.2921, 36.8219], MA: [33.9716, -6.8498], TR: [41.0082, 28.9784],
-  IL: [32.0853, 34.7818], RU: [55.7558, 37.6173], UA: [50.4501, 30.5234],
-  HR: [45.8150, 15.9819], RO: [44.4268, 26.1025], BG: [42.6977, 23.3219],
-  RS: [44.7866, 20.4489], GE: [41.7151, 44.8271], AM: [40.1792, 44.4991],
-  AZ: [40.4093, 49.8671], KZ: [51.1605, 71.4704], UZ: [41.2995, 69.2401],
-  LK: [6.9271, 79.8612], NP: [27.7172, 85.3240], BD: [23.8103, 90.4125],
-  MM: [16.8661, 96.1951], KH: [11.5564, 104.9282], LA: [17.9757, 102.6331],
-  MV: [4.1755, 73.5093], BT: [27.4728, 89.6390], MN: [47.8864, 106.9057],
-  PA: [8.9824, -79.5199], CR: [9.9281, -84.0907], EC: [-0.1807, -78.4678],
-  UY: [-34.9011, -56.1645], PY: [-25.2637, -57.5759], BO: [-16.4897, -68.1193],
-  IS: [64.1466, -21.9426], LU: [49.6116, 6.1319], MT: [35.8989, 14.5146],
-  CY: [35.1856, 33.3823], EE: [59.4370, 24.7536], LV: [56.9496, 24.1052],
-  LT: [54.6872, 25.2797], SK: [48.1486, 17.1077], SI: [46.0569, 14.5058],
-  ME: [42.4304, 19.2594], AL: [41.3275, 19.8187], MK: [41.9981, 21.4254],
-  BA: [43.8563, 18.4131], MD: [47.0105, 28.8638], BY: [53.9006, 27.5590],
-  AF: [34.5553, 69.2075], PK: [33.6844, 73.0479], NG: [9.0765, 7.3986],
-  GH: [5.6037, -0.1870], ET: [8.9806, 38.7578], TZ: [-6.7924, 39.2083],
-  UG: [0.3476, 32.5825], RW: [-1.9403, 30.0587], MZ: [-25.9692, 32.5732],
-  ZW: [-17.8252, 31.0335], ZM: [-15.3875, 28.3228], NA: [-22.5609, 17.0658],
-  BW: [-24.6282, 25.9231], MW: [-13.9626, 33.7741], AO: [-8.8390, 13.2894],
-  CD: [-4.4419, 15.2663], CG: [-4.2634, 15.2429], CM: [3.8480, 11.5021],
-  CI: [5.3600, -4.0083], SN: [14.7167, -17.4677], ML: [12.6392, -8.0029],
-  NE: [13.5137, 2.1098], TD: [12.1348, 15.0557], SD: [15.5007, 32.5599],
-  LY: [32.8872, 13.1913], TN: [36.8065, 10.1815], DZ: [36.7538, 3.0588],
-};
 
 export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPress, onAddVisit, onLocationDetected, t }: MiniMapCardProps) {
   const { colors, isDark } = useTheme();
@@ -113,8 +71,8 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
   }, [activeVisit, isSchengenCounting, schengenStatus, isEUCitizenVisit]);
 
   const country = activeVisit ? getCountryByCode(activeVisit.countryCode) : null;
-  const coords = activeVisit ? COUNTRY_COORDS[activeVisit.countryCode] || [20, 0] : 
-                 detectedCountry ? COUNTRY_COORDS[detectedCountry.code] || [20, 0] : [20, 0];
+  const coords = activeVisit ? COUNTRY_COORDS[activeVisit.countryCode] || DEFAULT_COORDS : 
+                 detectedCountry ? COUNTRY_COORDS[detectedCountry.code] || DEFAULT_COORDS : DEFAULT_COORDS;
 
   const getProgressColor = (percentage: number) => {
     if (percentage < 70) return colors.success;

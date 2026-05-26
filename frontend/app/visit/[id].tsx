@@ -266,10 +266,7 @@ export default function EditVisitScreen() {
             <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('visaType')} *</Text>
             <TouchableOpacity
               style={[styles.pickerButton, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={() => {
-                console.log('Visa type picker pressed');
-                setShowVisaPicker(true);
-              }}
+              onPress={() => setShowVisaPicker(true)}
               disabled={!countryCode}
               activeOpacity={0.7}
             >
@@ -447,7 +444,6 @@ export default function EditVisitScreen() {
                   <TouchableOpacity
                     style={[styles.listItem, { borderBottomColor: colors.border }]}
                     onPress={() => {
-                      console.log('Selected visa type:', item);
                       setVisaType(item);
                       setShowVisaPicker(false);
                     }}
