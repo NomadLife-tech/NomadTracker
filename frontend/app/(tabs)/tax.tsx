@@ -87,7 +87,7 @@ export default function TaxScreen() {
         <View style={[styles.infoCard, { backgroundColor: colors.primary + '15' }]}>
           <Ionicons name="information-circle" size={20} color={colors.primary} />
           <Text style={[styles.infoText, { color: colors.text }]}>
-            Many countries consider you a tax resident if you spend 183 or more days in a calendar year.
+            {t('taxInfoText')}
           </Text>
         </View>
 

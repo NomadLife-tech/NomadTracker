@@ -415,7 +415,11 @@ export default function DashboardScreen() {
         )}
 
         {/* Country Heatmap */}
-        <CountryHeatmap data={countryHeatmapData} t={t} />
+        <CountryHeatmap 
+          data={countryHeatmapData} 
+          t={t} 
+          onShowAllCountries={() => setShowCountriesModal(true)}
+        />
 
         {/* Days per Country Pie Chart */}
         <View style={[styles.card, { backgroundColor: colors.card }]}>

@@ -16,6 +16,7 @@ export function Toast() {
     switch (type) {
       case 'success': return 'checkmark-circle';
       case 'error': return 'close-circle';
+      case 'warning': return 'alert-circle';
       default: return 'information-circle';
     }
   };
@@ -24,6 +25,7 @@ export function Toast() {
     switch (type) {
       case 'success': return colors.success;
       case 'error': return colors.danger;
+      case 'warning': return colors.warning;
       default: return colors.primary;
     }
   };

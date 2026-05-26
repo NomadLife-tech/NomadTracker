@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -18,6 +18,14 @@ export default function CalendarScreen() {
 
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
+  
+  const todayStr = format(new Date(), 'yyyy-MM-dd');
+  
+  const goToToday = () => {
+    setCurrentMonth(todayStr);
+    setSelectedDate(todayStr);
+  };
 
   // Note: Removed useFocusEffect with refreshVisits() that caused race condition
   // AppContext already manages state updates properly
@@ -175,10 +183,18 @@ export default function CalendarScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={[styles.headerTitle, { color: colors.text }]}>{t('calendar')}</Text>
+        <TouchableOpacity
+          style={[styles.todayButton, { backgroundColor: colors.primary + '20' }]}
+          onPress={goToToday}
+        >
+          <Ionicons name="today-outline" size={16} color={colors.primary} />
+          <Text style={[styles.todayButtonText, { color: colors.primary }]}>{t('today')}</Text>
+        </TouchableOpacity>
       </View>
 
       <Calendar
-        key={isDark ? 'dark' : 'light'}
+        key={`${isDark ? 'dark' : 'light'}-${currentMonth}`}
+        current={currentMonth}
         style={[styles.calendar, { backgroundColor: colors.card }]}
         theme={{
           calendarBackground: colors.card,
@@ -198,6 +214,7 @@ export default function CalendarScreen() {
         } as any}
         dayComponent={({ date, state }) => renderDay(date, state)}
         onDayPress={handleDayPress}
+        onMonthChange={(month: { dateString: string }) => setCurrentMonth(month.dateString)}
         enableSwipeMonths
         hideExtraDays={false}
       />
@@ -303,12 +320,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 12,
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: '800',
+  },
+  todayButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 4,
+  },
+  todayButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   calendar: {
     marginHorizontal: 16,

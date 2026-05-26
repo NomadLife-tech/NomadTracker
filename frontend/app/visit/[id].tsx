@@ -122,8 +122,17 @@ export default function EditVisitScreen() {
     : COUNTRIES;
 
   const handleSave = async () => {
-    if (!countryCode || !entryDate || !visaType) {
-      showToast(t('error'), 'error');
+    // Validate in form order with specific messages (consistent with Add Visit)
+    if (!countryCode) {
+      showToast('Please select a country', 'warning');
+      return;
+    }
+    if (!entryDate) {
+      showToast('Please set an entry date', 'warning');
+      return;
+    }
+    if (!visaType) {
+      showToast('Please select a visa type', 'warning');
       return;
     }
 

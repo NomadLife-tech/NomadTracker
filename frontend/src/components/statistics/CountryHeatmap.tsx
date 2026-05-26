@@ -7,10 +7,11 @@ import { CountryHeatmapData } from '../../utils/statisticsUtils';
 interface CountryHeatmapProps {
   data: CountryHeatmapData[];
   onCountryPress?: (country: CountryHeatmapData) => void;
+  onShowAllCountries?: () => void;
   t: (key: string) => string;
 }
 
-export function CountryHeatmap({ data, onCountryPress, t }: CountryHeatmapProps) {
+export function CountryHeatmap({ data, onCountryPress, onShowAllCountries, t }: CountryHeatmapProps) {
   const { colors } = useTheme();
 
   const getHeatColor = (intensity: number) => {
@@ -89,9 +90,16 @@ export function CountryHeatmap({ data, onCountryPress, t }: CountryHeatmapProps)
       </View>
 
       {data.length > 12 && (
-        <Text style={[styles.moreText, { color: colors.textSecondary }]}>
-          +{data.length - 12} {t('moreCountries')}
-        </Text>
+        <TouchableOpacity 
+          style={styles.moreButton}
+          onPress={onShowAllCountries}
+          activeOpacity={0.7}
+        >
+          <Text style={[styles.moreText, { color: colors.primary }]}>
+            +{data.length - 12} {t('moreCountries')}
+          </Text>
+          <Ionicons name="chevron-forward" size={14} color={colors.primary} />
+        </TouchableOpacity>
       )}
     </View>
   );
@@ -156,10 +164,17 @@ const styles = StyleSheet.create({
   countryDays: {
     fontSize: 9,
   },
-  moreText: {
-    fontSize: 12,
-    textAlign: 'center',
+  moreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 12,
+    paddingVertical: 8,
+    gap: 4,
+  },
+  moreText: {
+    fontSize: 13,
+    fontWeight: '600',
   },
   emptyState: {
     alignItems: 'center',
