@@ -13,23 +13,26 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { PieChart } from 'react-native-gifted-charts';
+import { format } from 'date-fns';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
 import { MiniMapCard } from '../../src/components/common/MiniMapCard';
 import { 
   CountryHeatmap,
 } from '../../src/components/statistics';
+// REFACTORED: Import from new EU-compliant Schengen engine
 import { 
   isCurrentVisit, 
-  calculateSchengenDays,
-  getSchengenBreakdown,
-  getSchengenExemptVisits,
   getDaysByCountryForYear,
-  isSchengenCountry,
   formatDate,
+} from '../../src/utils/dateUtils';
+import {
+  calculateSchengenStatusExtended,
+  isSchengenCountry,
   countsAgainstSchengen,
   visitCountsForSchengen,
-} from '../../src/utils/dateUtils';
+  SchengenStatusExtended,
+} from '../../src/utils/schengenEngine';
 import {
   calculateCountryHeatmap,
 } from '../../src/utils/statisticsUtils';
@@ -83,8 +86,8 @@ export default function DashboardScreen() {
     return codes.size;
   }, [visits]);
 
-  // Schengen status - now considers passport used for entry
-  // EU/EEA/Swiss passport entries don't count against 90/180
+  // REFACTORED: Use new EU-compliant Schengen engine
+  // Calculates extended status with max stay, re-entry dates, etc.
   const hasSchengenVisits = useMemo(() => {
     return visits.some(v => 
       isSchengenCountry(v.countryCode) && 
@@ -93,9 +96,10 @@ export default function DashboardScreen() {
     );
   }, [visits, profile.passports]);
 
-  const schengenStatus = useMemo(() => {
+  // REFACTORED: Use calculateSchengenStatusExtended from new engine
+  const schengenStatus: SchengenStatusExtended | null = useMemo(() => {
     if (!hasSchengenVisits) return null;
-    return calculateSchengenDays(visits, profile.passports);
+    return calculateSchengenStatusExtended(visits, profile.passports);
   }, [visits, hasSchengenVisits, profile.passports]);
 
   const countryHeatmapData = useMemo(() => {
@@ -118,16 +122,11 @@ export default function DashboardScreen() {
       .slice(0, 5); // Limit to 5 most recent
   }, [visits]);
 
+  // REFACTORED: Get breakdown from extended status
   const schengenBreakdown = useMemo(() => {
-    if (!hasSchengenVisits) return [];
-    return getSchengenBreakdown(visits, profile.passports);
-  }, [visits, hasSchengenVisits, profile.passports]);
-
-  // Exempt visits (national visas, digital nomad, etc.)
-  const schengenExemptVisits = useMemo(() => {
-    if (!hasSchengenVisits) return [];
-    return getSchengenExemptVisits(visits);
-  }, [visits, hasSchengenVisits]);
+    if (!schengenStatus) return [];
+    return schengenStatus.countryBreakdown;
+  }, [schengenStatus]);
 
   // Pie chart data - formatted for react-native-chart-kit
   const rawPieData = useMemo(() => {
@@ -228,12 +227,20 @@ export default function DashboardScreen() {
         </View>
 
         {/* Schengen Calculator - Only shown when user has Schengen travel */}
+        {/* REFACTORED: Uses new EU-compliant Schengen engine with extended status */}
         {hasSchengenVisits && schengenStatus && (
           <View style={[styles.card, { backgroundColor: colors.card }]}>
             <View style={styles.cardHeader}>
               <Text style={[styles.cardTitle, { color: colors.textSecondary }]}>
                 {t('schengenCalculator')}
               </Text>
+              {/* Compliance Badge */}
+              <View style={[styles.complianceBadge, { backgroundColor: schengenStatus.valid ? colors.success + '20' : colors.danger + '20' }]}>
+                <View style={[styles.complianceDot, { backgroundColor: schengenStatus.valid ? colors.success : colors.danger }]} />
+                <Text style={[styles.complianceText, { color: schengenStatus.valid ? colors.success : colors.danger }]}>
+                  {schengenStatus.valid ? 'Compliant' : 'Overstay'}
+                </Text>
+              </View>
             </View>
             <View style={styles.schengenContent}>
               {/* Row 1: Days Used */}
@@ -244,7 +251,7 @@ export default function DashboardScreen() {
                 <View style={styles.schengenItemRow}>
                   <View style={styles.schengenItemLeft}>
                     <Text style={[styles.schengenValue, { color: colors.warning }]}>
-                      {schengenStatus.daysUsedInPeriod}
+                      {schengenStatus.daysUsed}
                     </Text>
                     <Text style={[styles.schengenLabel, { color: colors.textSecondary }]}>
                       {t('daysUsed')}
@@ -258,19 +265,22 @@ export default function DashboardScreen() {
                 </View>
               </TouchableOpacity>
 
-              {/* Row 2: Days Remaining */}
-              <View style={[styles.schengenItemFull, { backgroundColor: colors.success + '15' }]}>
-                <View style={styles.schengenItemRow}>
-                  <View style={styles.schengenItemLeft}>
-                    <Text style={[styles.schengenValue, { color: colors.success }]}>
-                      {schengenStatus.daysRemainingInPeriod}
-                    </Text>
-                    <Text style={[styles.schengenLabel, { color: colors.textSecondary }]}>
-                      {t('daysRemaining')}
-                    </Text>
-                  </View>
-                  <Text style={[styles.schengenOutOf, { color: colors.textSecondary }]}>
-                    / 90
+              {/* Row 2: Days Remaining & Max Stay */}
+              <View style={styles.schengenRow}>
+                <View style={[styles.schengenItemHalf, { backgroundColor: colors.success + '15' }]}>
+                  <Text style={[styles.schengenValue, { color: colors.success }]}>
+                    {schengenStatus.daysRemaining}
+                  </Text>
+                  <Text style={[styles.schengenLabel, { color: colors.textSecondary }]}>
+                    {t('daysRemaining')}
+                  </Text>
+                </View>
+                <View style={[styles.schengenItemHalf, { backgroundColor: colors.primary + '15' }]}>
+                  <Text style={[styles.schengenValue, { color: colors.primary }]}>
+                    {schengenStatus.maxStayFromToday}
+                  </Text>
+                  <Text style={[styles.schengenLabel, { color: colors.textSecondary }]}>
+                    Max Stay
                   </Text>
                 </View>
               </View>
@@ -281,8 +291,8 @@ export default function DashboardScreen() {
                   style={[
                     styles.progressBar,
                     {
-                      width: `${Math.min(100, (schengenStatus.daysUsedInPeriod / 90) * 100)}%`,
-                      backgroundColor: getProgressColor((schengenStatus.daysUsedInPeriod / 90) * 100),
+                      width: `${Math.min(100, (schengenStatus.daysUsed / 90) * 100)}%`,
+                      backgroundColor: getProgressColor((schengenStatus.daysUsed / 90) * 100),
                     },
                   ]}
                 />
@@ -290,6 +300,32 @@ export default function DashboardScreen() {
               <Text style={[styles.schengenPeriod, { color: colors.textSecondary }]}>
                 {formatDate(schengenStatus.periodStartDate, 'MMM d')} - {formatDate(schengenStatus.periodEndDate, 'MMM d, yyyy')}
               </Text>
+
+              {/* NEW: Legal Full Re-Entry Date Widget */}
+              <View style={[styles.reEntryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={styles.reEntryHeader}>
+                  <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+                  <Text style={[styles.reEntryTitle, { color: colors.text }]}>
+                    Fresh 90-Day Allowance
+                  </Text>
+                </View>
+                <Text style={[styles.reEntryDate, { color: colors.primary }]}>
+                  {format(schengenStatus.legalFullReEntryDate, 'MMMM d, yyyy')}
+                </Text>
+                <Text style={[styles.reEntrySubtext, { color: colors.textSecondary }]}>
+                  {schengenStatus.daysRemaining >= 90 
+                    ? 'Available now - you can stay 90 days' 
+                    : `On this date, you can enter and stay a full 90 days`}
+                </Text>
+                {schengenStatus.hasSoftReset && (
+                  <View style={[styles.resetBadge, { backgroundColor: colors.success + '20' }]}>
+                    <Ionicons name="checkmark-circle" size={14} color={colors.success} />
+                    <Text style={[styles.resetBadgeText, { color: colors.success }]}>
+                      {schengenStatus.hasFullReset ? '180-day full reset' : '90-day soft reset'}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
           </View>
         )}
@@ -581,37 +617,7 @@ export default function DashboardScreen() {
                 </View>
               )}
 
-              {/* Exempt Visits Section */}
-              {schengenExemptVisits.length > 0 && (
-                <View style={styles.schengenSection}>
-                  <View style={styles.sectionHeader}>
-                    <Ionicons name="checkmark-circle-outline" size={18} color={colors.success} />
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>
-                      Exempt (National/Long-Stay Visa)
-                    </Text>
-                  </View>
-                  {schengenExemptVisits.map((item, index) => (
-                    <View key={`exempt-${index}`} style={[styles.schengenItem, { borderBottomColor: colors.border }]}>
-                      <Text style={styles.modalFlag}>{getCountryByCode(item.countryCode)?.flag}</Text>
-                      <View style={styles.modalItemInfo}>
-                        <Text style={[styles.modalItemTitle, { color: colors.text }]}>{item.countryName}</Text>
-                        <Text style={[styles.visaTypeTag, { backgroundColor: colors.success + '20', color: colors.success }]}>
-                          {item.visaType}
-                        </Text>
-                      </View>
-                      <View style={styles.daysCount}>
-                        <Text style={[styles.daysNumber, { color: colors.success }]}>{item.days}</Text>
-                        <Text style={[styles.daysLabel, { color: colors.textSecondary }]}>days</Text>
-                      </View>
-                    </View>
-                  ))}
-                  <Text style={[styles.exemptNote, { color: colors.textSecondary }]}>
-                    These days do not count against your 90/180 Schengen limit
-                  </Text>
-                </View>
-              )}
-
-              {schengenBreakdown.length === 0 && schengenExemptVisits.length === 0 && (
+              {schengenBreakdown.length === 0 && (
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
                   No Schengen visits
                 </Text>
@@ -1002,5 +1008,67 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 14,
+  },
+  // REFACTORED: New styles for EU-compliant Schengen calculator
+  complianceBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  complianceDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  complianceText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  schengenItemHalf: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  reEntryCard: {
+    marginTop: 16,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  reEntryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  reEntryTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  reEntryDate: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  reEntrySubtext: {
+    fontSize: 12,
+  },
+  resetBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  resetBadgeText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
