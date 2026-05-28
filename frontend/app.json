@@ -85,7 +85,7 @@
     },
     "extra": {
       "eas": {
-        "projectId": "nomad-tracker"
+        "projectId": ""
       }
     }
   }
