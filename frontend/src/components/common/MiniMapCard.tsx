@@ -6,6 +6,7 @@ import { Visit, Passport } from '../../types';
 import { getCountryByCode, COUNTRIES } from '../../constants/countries';
 import { COUNTRY_COORDS, DEFAULT_COORDS } from '../../constants/countryCoords';
 import { getVisaStatus, isSchengenCountry, countsAgainstSchengen, calculateSchengenDays, visitCountsForSchengen } from '../../utils/dateUtils';
+import { getTranslatedCountryName } from '../../utils/countryNames';
 import { useTheme } from '../../contexts/ThemeContext';
 
 interface MiniMapCardProps {
@@ -16,9 +17,10 @@ interface MiniMapCardProps {
   onAddVisit: () => void;
   onLocationDetected?: (countryCode: string, countryName: string) => void;
   t: (key: string) => string;
+  language: string; // Current app language for country name translations
 }
 
-export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPress, onAddVisit, onLocationDetected, t }: MiniMapCardProps) {
+export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPress, onAddVisit, onLocationDetected, t, language }: MiniMapCardProps) {
   const { colors, isDark } = useTheme();
   const [isOverlayVisible, setIsOverlayVisible] = useState(true);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
@@ -383,7 +385,7 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
               </View>
               <View style={styles.countryDetails}>
                 <Text style={[styles.countryName, { color: colors.text }]} numberOfLines={1}>
-                  {activeVisit.countryName}
+                  {getTranslatedCountryName(activeVisit.countryCode, language)}
                 </Text>
                 <Text style={[styles.visaType, { color: colors.textSecondary }]} numberOfLines={1}>
                   {activeVisit.visaType}
@@ -479,7 +481,7 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
             </View>
             <View style={styles.miniInfo}>
               <Text style={[styles.miniCountry, { color: colors.text }]} numberOfLines={1}>
-                {activeVisit.countryName}
+                {getTranslatedCountryName(activeVisit.countryCode, language)}
               </Text>
               {isEUCitizenVisit ? (
                 <Text style={[styles.miniDays, { color: colors.success }]}>

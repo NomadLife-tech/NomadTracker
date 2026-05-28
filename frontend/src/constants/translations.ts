@@ -12,6 +12,7 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Dashboard
     currentlyIn: 'Currently In',
     noActiveVisit: 'No Active Visit',
+    startTrackingTravels: 'Start tracking your travels',
     addNewVisit: 'Add New Visit',
     daysUsed: 'Days Used',
     daysRemaining: 'Days Remaining',

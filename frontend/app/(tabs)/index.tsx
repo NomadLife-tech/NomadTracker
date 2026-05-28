@@ -198,6 +198,7 @@ export default function DashboardScreen() {
           onPress={() => activeVisit && router.push(`/visit/${activeVisit.id}`)}
           onAddVisit={() => router.push('/visit/add')}
           t={t}
+          language={settings.language}
         />
 
         {/* Statistics Card */}
@@ -537,7 +538,7 @@ export default function DashboardScreen() {
                 >
                   <Text style={styles.modalFlag}>{getCountryByCode(item.countryCode)?.flag}</Text>
                   <View style={styles.modalItemInfo}>
-                    <Text style={[styles.modalItemTitle, { color: colors.text }]}>{item.countryName}</Text>
+                    <Text style={[styles.modalItemTitle, { color: colors.text }]}>{getTranslatedCountryName(item.countryCode, settings.language)}</Text>
                     <Text style={[styles.modalItemSub, { color: colors.textSecondary }]}>
                       {formatDate(item.entryDate, 'MMM d, yyyy')}
                       {item.exitDate && ` - ${formatDate(item.exitDate, 'MMM d, yyyy')}`}
@@ -577,7 +578,7 @@ export default function DashboardScreen() {
                 <View style={[styles.modalItem, { borderBottomColor: colors.border }]}>
                   <Text style={styles.modalFlag}>{item.country?.flag}</Text>
                   <View style={styles.modalItemInfo}>
-                    <Text style={[styles.modalItemTitle, { color: colors.text }]}>{item.country?.name}</Text>
+                    <Text style={[styles.modalItemTitle, { color: colors.text }]}>{getTranslatedCountryName(item.code, settings.language)}</Text>
                     <Text style={[styles.modalItemSub, { color: colors.textSecondary }]}>
                       {item.visits} {item.visits === 1 ? 'visit' : 'visits'}
                     </Text>
@@ -614,7 +615,7 @@ export default function DashboardScreen() {
                     <View key={`counting-${index}`} style={[styles.schengenItem, { borderBottomColor: colors.border }]}>
                       <Text style={styles.modalFlag}>{getCountryByCode(item.countryCode)?.flag}</Text>
                       <View style={styles.modalItemInfo}>
-                        <Text style={[styles.modalItemTitle, { color: colors.text }]}>{item.countryName}</Text>
+                        <Text style={[styles.modalItemTitle, { color: colors.text }]}>{getTranslatedCountryName(item.countryCode, settings.language)}</Text>
                         <Text style={[styles.visaTypeTag, { backgroundColor: colors.danger + '20', color: colors.danger }]}>
                           {item.visaType}
                         </Text>

@@ -5,10 +5,11 @@ import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
 import { calculateTaxDays } from '../../src/utils/dateUtils';
 import { getCountryByCode } from '../../src/constants/countries';
+import { getTranslatedCountryName } from '../../src/utils/countryNames';
 
 export default function TaxScreen() {
   const { colors } = useTheme();
-  const { visits, refreshVisits, t } = useApp();
+  const { visits, refreshVisits, t, settings } = useApp();
 
   const [refreshing, setRefreshing] = useState(false);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
@@ -104,7 +105,7 @@ export default function TaxScreen() {
                   <View style={styles.countryInfo}>
                     <Text style={styles.flag}>{country?.flag}</Text>
                     <View>
-                      <Text style={[styles.countryName, { color: colors.text }]}>{item.countryName}</Text>
+                      <Text style={[styles.countryName, { color: colors.text }]}>{getTranslatedCountryName(item.countryCode, settings.language)}</Text>
                       <Text style={[styles.countryDays, { color: colors.textSecondary }]}>
                         {item.days} {t('days')} ({item.percentOfYear.toFixed(1)}% of YTD)
                       </Text>

@@ -8,11 +8,12 @@ import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
 import { getVisitsForDate, formatDate } from '../../src/utils/dateUtils';
 import { getCountryByCode } from '../../src/constants/countries';
+import { getTranslatedCountryName } from '../../src/utils/countryNames';
 import { format, parseISO, eachDayOfInterval } from 'date-fns';
 
 export default function CalendarScreen() {
   const { colors, isDark } = useTheme();
-  const { visits, refreshVisits, t } = useApp();
+  const { visits, refreshVisits, t, settings } = useApp();
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -245,7 +246,7 @@ export default function CalendarScreen() {
               {selectedVisits.map((visit, index) => (
                 <View key={visit.id} style={styles.visitPreviewItem}>
                   <Text style={styles.previewFlag}>{getCountryByCode(visit.countryCode)?.flag}</Text>
-                  <Text style={[styles.previewCountry, { color: colors.text }]}>{visit.countryName}</Text>
+                  <Text style={[styles.previewCountry, { color: colors.text }]}>{getTranslatedCountryName(visit.countryCode, settings.language)}</Text>
                 </View>
               ))}
             </View>
@@ -292,7 +293,7 @@ export default function CalendarScreen() {
                     <Text style={styles.visitFlag}>{getCountryByCode(item.countryCode)?.flag}</Text>
                   </View>
                   <View style={styles.visitInfo}>
-                    <Text style={[styles.visitCountry, { color: colors.text }]}>{item.countryName}</Text>
+                    <Text style={[styles.visitCountry, { color: colors.text }]}>{getTranslatedCountryName(item.countryCode, settings.language)}</Text>
                     <Text style={[styles.visitVisa, { color: colors.textSecondary }]}>{item.visaType}</Text>
                     <Text style={[styles.visitDates, { color: colors.textSecondary }]}>
                       {formatDate(item.entryDate, 'MMM d')}
