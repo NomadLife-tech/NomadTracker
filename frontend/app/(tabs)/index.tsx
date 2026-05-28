@@ -37,12 +37,13 @@ import {
   calculateCountryHeatmap,
 } from '../../src/utils/statisticsUtils';
 import { getCountryByCode } from '../../src/constants/countries';
+import { getTranslatedCountryName } from '../../src/utils/countryNames';
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function DashboardScreen() {
   const { colors } = useTheme();
-  const { visits, profile, t, refreshAll, isLoading } = useApp();
+  const { visits, profile, t, refreshAll, isLoading, settings } = useApp();
   const router = useRouter();
   
   const [refreshing, setRefreshing] = useState(false);

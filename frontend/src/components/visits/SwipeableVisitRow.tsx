@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Visit } from '../../types';
 import { isCurrentVisit, calculateDaysInCountry, formatDate } from '../../utils/dateUtils';
 import { getCountryByCode } from '../../constants/countries';
+import { getTranslatedCountryName } from '../../utils/countryNames';
 
 interface SwipeableVisitRowProps {
   visit: Visit;
@@ -25,9 +26,10 @@ interface SwipeableVisitRowProps {
     danger: string;
   };
   t: (key: string) => string;
+  language?: string;
 }
 
-export function SwipeableVisitRow({ visit, onDelete, onPress, colors, t }: SwipeableVisitRowProps) {
+export function SwipeableVisitRow({ visit, onDelete, onPress, colors, t, language = 'en' }: SwipeableVisitRowProps) {
   const translateX = useRef(new Animated.Value(0)).current;
   const isActive = isCurrentVisit(visit);
   const daysCount = calculateDaysInCountry(visit.entryDate, visit.exitDate);
@@ -89,7 +91,9 @@ export function SwipeableVisitRow({ visit, onDelete, onPress, colors, t }: Swipe
           <Text style={styles.flag}>{country?.flag}</Text>
           <View style={styles.visitInfo}>
             <View style={styles.visitHeader}>
-              <Text style={[styles.visitCountry, { color: colors.text }]}>{visit.countryName}</Text>
+              <Text style={[styles.visitCountry, { color: colors.text }]}>
+                {getTranslatedCountryName(visit.countryCode, language)}
+              </Text>
               {isActive && (
                 <View style={[styles.activeBadge, { backgroundColor: colors.success + '20' }]}>
                   <Text style={[styles.activeBadgeText, { color: colors.success }]}>{t('active')}</Text>

@@ -36,7 +36,7 @@ interface VisitSection {
 
 export default function VisitsListScreen() {
   const { colors } = useTheme();
-  const { visits, deleteVisit, refreshVisits, t } = useApp();
+  const { visits, deleteVisit, refreshVisits, t, settings } = useApp();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -224,8 +224,9 @@ export default function VisitsListScreen() {
       onPress={() => router.push(`/visit/${item.id}`)}
       colors={colors}
       t={t}
+      language={settings.language}
     />
-  ), [colors, t, router, handleDelete]);
+  ), [colors, t, router, handleDelete, settings.language]);
 
   // Render empty state
   const renderEmptyState = useCallback(() => (
