@@ -491,7 +491,7 @@ export default function DashboardScreen() {
                       <View style={[styles.legendColor, { backgroundColor: enhancedColors[index % enhancedColors.length] }]} />
                       <Text style={styles.legendFlag}>{getCountryByCode(item.countryCode)?.flag}</Text>
                       <Text style={[styles.legendCountry, { color: colors.text }]} numberOfLines={1}>
-                        {item.country}
+                        {getTranslatedCountryName(item.countryCode, settings.language)}
                       </Text>
                       <Text style={[styles.legendDays, { color: colors.textSecondary }]}>
                         {item.days}d

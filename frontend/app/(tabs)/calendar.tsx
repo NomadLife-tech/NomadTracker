@@ -1,8 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Calendar } from 'react-native-calendars';
+import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
@@ -10,6 +10,85 @@ import { getVisitsForDate, formatDate } from '../../src/utils/dateUtils';
 import { getCountryByCode } from '../../src/constants/countries';
 import { getTranslatedCountryName } from '../../src/utils/countryNames';
 import { format, parseISO, eachDayOfInterval } from 'date-fns';
+
+// Calendar locale configurations for all supported languages
+const CALENDAR_LOCALES: Record<string, any> = {
+  en: {
+    monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+    monthNamesShort: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+    dayNames: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+    dayNamesShort: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+  },
+  es: {
+    monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+    monthNamesShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+    dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
+    dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+  },
+  fr: {
+    monthNames: ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'],
+    monthNamesShort: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'],
+    dayNames: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
+    dayNamesShort: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
+  },
+  de: {
+    monthNames: ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni', 'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'],
+    monthNamesShort: ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'],
+    dayNames: ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'],
+    dayNamesShort: ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'],
+  },
+  pt: {
+    monthNames: ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'],
+    monthNamesShort: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'],
+    dayNames: ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'],
+    dayNamesShort: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+  },
+  zh: {
+    monthNames: ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'],
+    monthNamesShort: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    dayNames: ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'],
+    dayNamesShort: ['日', '一', '二', '三', '四', '五', '六'],
+  },
+  ja: {
+    monthNames: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    monthNamesShort: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+    dayNames: ['日曜日', '月曜日', '火曜日', '水曜日', '木曜日', '金曜日', '土曜日'],
+    dayNamesShort: ['日', '月', '火', '水', '木', '金', '土'],
+  },
+  ko: {
+    monthNames: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
+    monthNamesShort: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
+    dayNames: ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'],
+    dayNamesShort: ['일', '월', '화', '수', '목', '금', '토'],
+  },
+};
+
+// Register all locales
+Object.keys(CALENDAR_LOCALES).forEach(lang => {
+  LocaleConfig.locales[lang] = CALENDAR_LOCALES[lang];
+});
+
+// Helper function to format date in the current locale
+const formatLocalizedDate = (dateStr: string, lang: string): string => {
+  const date = parseISO(dateStr);
+  const locale = CALENDAR_LOCALES[lang] || CALENDAR_LOCALES.en;
+  const dayName = locale.dayNames[date.getDay()];
+  const monthName = locale.monthNames[date.getMonth()];
+  const day = date.getDate();
+  const year = date.getFullYear();
+  
+  // Different date formats based on language
+  switch (lang) {
+    case 'zh':
+    case 'ja':
+    case 'ko':
+      return `${year}${lang === 'zh' ? '年' : '년'} ${monthName} ${day}${lang === 'zh' ? '日' : '일'} ${dayName}`;
+    case 'de':
+      return `${dayName}, ${day}. ${monthName} ${year}`;
+    default:
+      return `${dayName}, ${monthName} ${day}, ${year}`;
+  }
+};
 
 export default function CalendarScreen() {
   const { colors, isDark } = useTheme();
@@ -22,6 +101,11 @@ export default function CalendarScreen() {
   const [currentMonth, setCurrentMonth] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
   
   const todayStr = format(new Date(), 'yyyy-MM-dd');
+  
+  // Set calendar locale based on app language
+  useEffect(() => {
+    LocaleConfig.defaultLocale = settings.language || 'en';
+  }, [settings.language]);
   
   const goToToday = () => {
     setCurrentMonth(todayStr);
@@ -222,15 +306,15 @@ export default function CalendarScreen() {
 
       {/* Legend */}
       <View style={[styles.legend, { backgroundColor: colors.card }]}>
-        <Text style={[styles.legendTitle, { color: colors.textSecondary }]}>Legend</Text>
+        <Text style={[styles.legendTitle, { color: colors.textSecondary }]}>{t('legend')}</Text>
         <View style={styles.legendItems}>
           <View style={styles.legendItem}>
             <Text style={styles.legendFlag}>🇺🇸</Text>
-            <Text style={[styles.legendText, { color: colors.text }]}>Visit day</Text>
+            <Text style={[styles.legendText, { color: colors.text }]}>{t('visitDay')}</Text>
           </View>
           <View style={styles.legendItem}>
             <View style={[styles.todayDot, { backgroundColor: colors.primary }]} />
-            <Text style={[styles.legendText, { color: colors.text }]}>Today</Text>
+            <Text style={[styles.legendText, { color: colors.text }]}>{t('today')}</Text>
           </View>
         </View>
       </View>
@@ -239,7 +323,7 @@ export default function CalendarScreen() {
       {selectedDate && (
         <View style={[styles.selectedInfo, { backgroundColor: colors.card }]}>
           <Text style={[styles.selectedDate, { color: colors.text }]}>
-            {formatDate(selectedDate, 'EEEE, MMMM d, yyyy')}
+            {formatLocalizedDate(selectedDate, settings.language)}
           </Text>
           {selectedVisits.length > 0 ? (
             <View style={styles.selectedVisitPreview}>
