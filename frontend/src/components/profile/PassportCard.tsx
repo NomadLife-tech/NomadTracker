@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Passport } from '../../types';
 import { getCountryByCode } from '../../constants/countries';
+import { getTranslatedCountryName } from '../../utils/countryNames';
 import { formatDate } from '../../utils/dateUtils';
 import { useTheme } from '../../contexts/ThemeContext';
 import { SwipeableItem } from './SwipeableItem';
@@ -12,9 +13,10 @@ interface PassportCardProps {
   onEdit: () => void;
   onDelete: () => void;
   t: (key: string) => string;
+  language: string;
 }
 
-export function PassportCard({ passport, onEdit, onDelete, t }: PassportCardProps) {
+export function PassportCard({ passport, onEdit, onDelete, t, language }: PassportCardProps) {
   const { colors } = useTheme();
   const country = passport.countryCode ? getCountryByCode(passport.countryCode) : null;
   
@@ -42,7 +44,7 @@ export function PassportCard({ passport, onEdit, onDelete, t }: PassportCardProp
         <View style={styles.info}>
           <View style={styles.header}>
             <Text style={[styles.title, { color: colors.text }]}>
-              {country?.name || passport.countryName || t('noCountry') || 'Passport'}
+              {passport.countryCode ? getTranslatedCountryName(passport.countryCode, language) : (passport.countryName || t('noCountry') || 'Passport')}
             </Text>
             {isExpired && (
               <View style={[styles.badge, { backgroundColor: colors.danger }]}>

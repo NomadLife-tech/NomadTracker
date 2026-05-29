@@ -233,6 +233,9 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     noInsuranceAdded: 'No insurance policies added yet',
     noPassportsAdded: 'No passports added yet',
     expires: 'Expires',
+    // Friendly Reminder Alert
+    friendlyReminder: 'Friendly Reminder',
+    exitDateReminderMessage: "Don't forget to set an exit date for your visit to {country} (entered {date}).",
     emergencyTips: 'Quick Tips',
     emergencyTip1: '• Keep digital copies of all travel documents',
     emergencyTip2: '• Save emergency contacts for each country you visit',
@@ -583,6 +586,9 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Misc
     startTrackingTravels: 'Empieza a registrar tus viajes',
     noDataAvailable: 'Sin datos disponibles',
+    // Friendly Reminder Alert
+    friendlyReminder: 'Recordatorio Amigable',
+    exitDateReminderMessage: 'No olvides establecer una fecha de salida para tu visita a {country} (entrada {date}).',
   },
   fr: {
     dashboard: 'Tableau de bord',
@@ -866,6 +872,9 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Misc
     startTrackingTravels: 'Commencez à suivre vos voyages',
     noDataAvailable: 'Aucune donnée disponible',
+    // Friendly Reminder Alert
+    friendlyReminder: 'Rappel Amical',
+    exitDateReminderMessage: "N'oubliez pas de définir une date de sortie pour votre visite en {country} (entrée le {date}).",
   },
   de: {
     dashboard: 'Dashboard',
@@ -1149,6 +1158,9 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Misc
     startTrackingTravels: 'Beginnen Sie mit der Reiseverfolgung',
     noDataAvailable: 'Keine Daten verfügbar',
+    // Friendly Reminder Alert
+    friendlyReminder: 'Freundliche Erinnerung',
+    exitDateReminderMessage: 'Vergessen Sie nicht, ein Abreisedatum für Ihren Besuch in {country} festzulegen (Einreise {date}).',
   },
   pt: {
     dashboard: 'Painel',
@@ -1432,6 +1444,9 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Misc
     startTrackingTravels: 'Comece a rastrear suas viagens',
     noDataAvailable: 'Sem dados disponíveis',
+    // Friendly Reminder Alert
+    friendlyReminder: 'Lembrete Amigável',
+    exitDateReminderMessage: 'Não se esqueça de definir uma data de saída para sua visita a {country} (entrada em {date}).',
   },
   zh: {
     dashboard: '仪表板',
@@ -1715,6 +1730,9 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Misc
     startTrackingTravels: '开始记录您的旅行',
     noDataAvailable: '暂无数据',
+    // Friendly Reminder Alert
+    friendlyReminder: '温馨提示',
+    exitDateReminderMessage: '请不要忘记为您访问{country}设置离开日期（入境日期：{date}）。',
   },
   ja: {
     dashboard: 'ダッシュボード',
@@ -1998,6 +2016,9 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Misc
     startTrackingTravels: '旅行の記録を開始',
     noDataAvailable: 'データがありません',
+    // Friendly Reminder Alert
+    friendlyReminder: 'リマインダー',
+    exitDateReminderMessage: '{country}への訪問の出国日を設定することをお忘れなく（入国日：{date}）。',
   },
   ko: {
     dashboard: '대시보드',
@@ -2281,6 +2302,9 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
     // Misc
     startTrackingTravels: '여행 기록 시작',
     noDataAvailable: '데이터 없음',
+    // Friendly Reminder Alert
+    friendlyReminder: '알림',
+    exitDateReminderMessage: '{country} 방문의 출국일을 설정하는 것을 잊지 마세요 (입국일: {date}).',
   },
 };
 

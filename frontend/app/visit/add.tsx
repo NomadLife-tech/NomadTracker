@@ -25,10 +25,11 @@ import { DatePickerInput } from '../../src/components/common/DatePickerInput';
 import { CountryInfoCard } from '../../src/components/common/CountryInfoCard';
 import { generateUUID } from '../../src/utils/uuid';
 import { isCurrentVisit } from '../../src/utils/dateUtils';
+import { getTranslatedCountryName } from '../../src/utils/countryNames';
 
 export default function AddVisitScreen() {
   const { colors } = useTheme();
-  const { addVisit, visits, profile, t } = useApp();
+  const { addVisit, visits, profile, t, settings } = useApp();
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -57,9 +58,15 @@ export default function AddVisitScreen() {
         new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime()
       )[0];
       
+      const translatedCountry = getTranslatedCountryName(lastActiveVisit.countryCode, settings.language);
+      const entryDateFormatted = new Date(lastActiveVisit.entryDate).toLocaleDateString();
+      const message = t('exitDateReminderMessage')
+        .replace('{country}', translatedCountry)
+        .replace('{date}', entryDateFormatted);
+      
       Alert.alert(
-        '📍 Friendly Reminder',
-        `Don't forget to set an exit date for your visit to ${lastActiveVisit.countryName} (entered ${new Date(lastActiveVisit.entryDate).toLocaleDateString()}).`,
+        `📍 ${t('friendlyReminder')}`,
+        message,
         [{ text: 'OK', style: 'default' }]
       );
     }

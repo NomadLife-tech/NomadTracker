@@ -881,6 +881,7 @@ export default function ProfileScreen() {
               onEdit={() => openPassportModal(passport)}
               onDelete={() => deletePassport(passport.id)}
               t={t}
+              language={settings.language}
             />
           ))}
         </View>
