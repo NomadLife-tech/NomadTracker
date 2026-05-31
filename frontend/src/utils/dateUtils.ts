@@ -1,6 +1,35 @@
 import { differenceInDays, parseISO, isAfter, isBefore, isWithinInterval, format, subDays, addDays, startOfDay, eachDayOfInterval } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { Visit, VisaStatus, SchengenStatus, Passport } from '../types';
 
+/**
+ * Get the device's configured timezone
+ * Falls back to UTC if timezone cannot be determined
+ */
+export function getDeviceTimezone(): string {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  } catch {
+    return 'UTC';
+  }
+}
+
+/**
+ * Get the current date/time in the device's timezone
+ * This ensures "today" reflects midnight in the user's local timezone
+ */
+export function getNow(): Date {
+  const timezone = getDeviceTimezone();
+  return toZonedTime(new Date(), timezone);
+}
+
+/**
+ * Get the start of today in the device's timezone
+ * This is the primary function for "what day is it for the user"
+ */
+export function getToday(): Date {
+  return startOfDay(getNow());
+}
 // Schengen countries
 export const SCHENGEN_COUNTRIES = [
   'AT', 'BE', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU',
@@ -178,14 +207,13 @@ export function countsAgainstSchengen(visaType: string): boolean {
 // Calculate days spent in country (inclusive of entry day)
 export function calculateDaysInCountry(entryDate: string, exitDate?: string): number {
   const entry = parseISO(entryDate);
-  const exit = exitDate ? parseISO(exitDate) : new Date();
+  const exit = exitDate ? parseISO(exitDate) : getNow();
   return differenceInDays(exit, entry) + 1; // +1 to include entry day
 }
 
 // Check if visit is currently active (user is currently in the country)
 export function isCurrentVisit(visit: Visit): boolean {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const today = getToday();
   
   // Parse entry date - handle both ISO string and date-only formats
   let entryDate: Date;
@@ -276,7 +304,7 @@ export function getVisaStatus(visit: Visit): VisaStatus {
 // Now based on VISA TYPE AND PASSPORT USED
 // EU/EEA/Swiss passport holders are exempt from 90/180 rule
 export function calculateSchengenDays(visits: Visit[], passports: Passport[] = []): SchengenStatus {
-  const today = startOfDay(new Date());
+  const today = getToday();
   const periodEndDate = today;
   const periodStartDate = subDays(today, 179); // 180-day rolling window
   
@@ -316,7 +344,7 @@ export function calculateSchengenDays(visits: Visit[], passports: Passport[] = [
 
 // Get Schengen visits breakdown by country (only counting visits)
 export function getSchengenBreakdown(visits: Visit[], passports: Passport[] = []): { countryCode: string; countryName: string; days: number; visits: Visit[]; visaType: string }[] {
-  const today = startOfDay(new Date());
+  const today = getToday();
   const periodEndDate = today;
   const periodStartDate = subDays(today, 179);
   
@@ -360,7 +388,7 @@ export function getSchengenBreakdown(visits: Visit[], passports: Passport[] = []
 
 // Get exempt visits in Schengen countries (for display purposes)
 export function getSchengenExemptVisits(visits: Visit[]): { countryCode: string; countryName: string; days: number; visaType: string; reason: string }[] {
-  const today = startOfDay(new Date());
+  const today = getToday();
   const periodEndDate = today;
   const periodStartDate = subDays(today, 179);
   
@@ -397,7 +425,7 @@ export function getVisitsForDate(visits: Visit[], date: Date): Visit[] {
   
   return visits.filter(visit => {
     const entryDate = startOfDay(parseISO(visit.entryDate));
-    const exitDate = visit.exitDate ? startOfDay(parseISO(visit.exitDate)) : new Date();
+    const exitDate = visit.exitDate ? startOfDay(parseISO(visit.exitDate)) : getToday();
     
     return isWithinInterval(targetDate, { start: entryDate, end: exitDate }) ||
            targetDate.getTime() === entryDate.getTime() ||
@@ -411,7 +439,7 @@ export function generateCalendarMarks(visits: Visit[]): Record<string, any> {
   
   visits.forEach(visit => {
     const entryDate = parseISO(visit.entryDate);
-    const exitDate = visit.exitDate ? parseISO(visit.exitDate) : new Date();
+    const exitDate = visit.exitDate ? parseISO(visit.exitDate) : getNow();
     
     const days = eachDayOfInterval({ start: entryDate, end: exitDate });
     
@@ -463,7 +491,7 @@ export function formatDate(date: string | Date | undefined | null, formatStr: st
 export function calculateTaxDays(visits: Visit[], year: number): { countryCode: string; countryName: string; days: number; percentOfYear: number }[] {
   const yearStart = new Date(year, 0, 1);
   const yearEnd = new Date(year, 11, 31);
-  const today = new Date();
+  const today = getNow();
   const effectiveEnd = isBefore(yearEnd, today) ? yearEnd : today;
   
   const breakdown: { [key: string]: { countryCode: string; countryName: string; days: number } } = {};

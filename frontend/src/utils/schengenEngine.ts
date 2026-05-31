@@ -27,6 +27,7 @@ import {
   eachDayOfInterval
 } from 'date-fns';
 import { Visit, Passport } from '../types';
+import { getToday, getNow } from './dateUtils';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -267,7 +268,7 @@ export function buildSchengenStateArray(
     const visitEntry = startOfDay(parseISO(visit.entryDate));
     const visitExit = visit.exitDate 
       ? startOfDay(parseISO(visit.exitDate))
-      : startOfDay(new Date()); // If no exit, assume still there
+      : getToday(); // If no exit, assume still there (use device timezone)
     
     // Get all days in this visit
     const visitDays = eachDayOfInterval({ 
@@ -367,7 +368,7 @@ export function validateSchengenCompliance(
   passports: Passport[],
   proposedTrip?: { start: Date; end: Date }
 ): SchengenValidationResult {
-  const today = startOfDay(new Date());
+  const today = getToday();
   
   // Determine the date range to validate
   let validationEndDate: Date;
@@ -540,7 +541,7 @@ export function calculateMaxStay(
 export function calculateLegalFullReEntryDate(
   visits: Visit[],
   passports: Passport[],
-  today: Date = new Date()
+  today: Date = getNow()
 ): Date {
   const todayStart = startOfDay(today);
   
@@ -610,7 +611,7 @@ export function detectSchengenResets(
   visits: Visit[],
   passports: Passport[]
 ): { hasSoftReset: boolean; hasFullReset: boolean; resetDate?: Date; gapLength: number } {
-  const today = startOfDay(new Date());
+  const today = getToday();
   const arrayStartDate = subDays(today, 365);
   
   const stateArray = buildSchengenStateArray(visits, passports, arrayStartDate, today);
@@ -673,7 +674,7 @@ export function calculateSchengenStatusExtended(
   visits: Visit[],
   passports: Passport[]
 ): SchengenStatusExtended {
-  const today = startOfDay(new Date());
+  const today = getToday();
   
   // Get basic validation
   const validation = validateSchengenCompliance(visits, passports);
@@ -719,7 +720,7 @@ export function getSchengenBreakdownByCountry(
   visits: Visit[],
   passports: Passport[]
 ): SchengenCountryBreakdown[] {
-  const today = startOfDay(new Date());
+  const today = getToday();
   const periodStart = subDays(today, 179);
   
   const countingVisits = visits.filter(v => visitCountsForSchengen(v, passports));
