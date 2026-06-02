@@ -27,7 +27,7 @@ import {
   eachDayOfInterval
 } from 'date-fns';
 import { Visit, Passport } from '../types';
-import { getToday, getNow } from './dateUtils';
+import { getToday, getNow, toLocalMidnight } from './dateUtils';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONSTANTS
@@ -265,10 +265,11 @@ export function buildSchengenStateArray(
   
   // Map each counting visit to the state array
   for (const visit of countingVisits) {
-    const visitEntry = startOfDay(parseISO(visit.entryDate));
+    // Use local midnight dates for calendar day comparison
+    const visitEntry = toLocalMidnight(visit.entryDate);
     const visitExit = visit.exitDate 
-      ? startOfDay(parseISO(visit.exitDate))
-      : getToday(); // If no exit, assume still there (use device timezone)
+      ? toLocalMidnight(visit.exitDate)
+      : getToday(); // If no exit, assume still there
     
     // Get all days in this visit
     const visitDays = eachDayOfInterval({ 
@@ -378,7 +379,7 @@ export function validateSchengenCompliance(
     // Find the latest exit date among current/future visits, or today
     const latestDate = visits.reduce((latest, v) => {
       if (v.exitDate) {
-        const exit = startOfDay(parseISO(v.exitDate));
+        const exit = toLocalMidnight(v.exitDate);
         return isAfter(exit, latest) ? exit : latest;
       }
       return latest;
@@ -696,7 +697,7 @@ export function calculateSchengenStatusExtended(
     const sorted = completedVisits.sort((a, b) => 
       new Date(b.exitDate!).getTime() - new Date(a.exitDate!).getTime()
     );
-    lastSchengenExit = parseISO(sorted[0].exitDate!);
+    lastSchengenExit = toLocalMidnight(sorted[0].exitDate!);
   }
   
   // Calculate country breakdown
@@ -728,9 +729,10 @@ export function getSchengenBreakdownByCountry(
   const breakdown: Map<string, SchengenCountryBreakdown> = new Map();
   
   for (const visit of countingVisits) {
-    const entryDate = startOfDay(parseISO(visit.entryDate));
+    // Use local midnight dates for calendar day comparison
+    const entryDate = toLocalMidnight(visit.entryDate);
     const exitDate = visit.exitDate 
-      ? startOfDay(parseISO(visit.exitDate))
+      ? toLocalMidnight(visit.exitDate)
       : today;
     
     // Calculate overlap with the 180-day period

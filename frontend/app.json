@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.nomadlifetech.nomadtracker",
-      "buildNumber": "36",
+      "buildNumber": "37",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Nomad Tracker uses your location to show your current position on the map when viewing your active travel visit. Your location is only used while the app is open and is not stored or shared.",
         "NSPhotoLibraryUsageDescription": "Nomad Tracker needs access to your photos to let you select a profile picture.",

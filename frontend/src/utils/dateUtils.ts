@@ -1,35 +1,46 @@
 import { differenceInDays, parseISO, isAfter, isBefore, isWithinInterval, format, subDays, addDays, startOfDay, eachDayOfInterval } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
 import { Visit, VisaStatus, SchengenStatus, Passport } from '../types';
 
 /**
- * Get the device's configured timezone
- * Falls back to UTC if timezone cannot be determined
- */
-export function getDeviceTimezone(): string {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
-  } catch {
-    return 'UTC';
-  }
-}
-
-/**
- * Get the current date/time in the device's timezone
- * This ensures "today" reflects midnight in the user's local timezone
+ * Get the current date/time using device's local time
+ * Simple and reliable - uses JavaScript's native Date which respects device timezone
  */
 export function getNow(): Date {
-  const timezone = getDeviceTimezone();
-  return toZonedTime(new Date(), timezone);
+  return new Date();
 }
 
 /**
- * Get the start of today in the device's timezone
+ * Get the start of today (midnight) in device's local timezone
  * This is the primary function for "what day is it for the user"
  */
 export function getToday(): Date {
-  return startOfDay(getNow());
+  return startOfDay(new Date());
 }
+
+/**
+ * Extract date-only string (YYYY-MM-DD) from an ISO date string or Date object
+ * This strips the time/timezone component for calendar day comparisons
+ */
+export function toDateOnly(dateInput: string | Date): string {
+  if (typeof dateInput === 'string') {
+    // Handle ISO strings like "2026-05-25T21:00:00.000Z" -> "2026-05-25"
+    return dateInput.split('T')[0];
+  }
+  // Handle Date objects - format to local date
+  return format(dateInput, 'yyyy-MM-dd');
+}
+
+/**
+ * Parse a date string to local midnight Date object
+ * This ensures all date comparisons happen at local midnight
+ */
+export function toLocalMidnight(dateInput: string | Date): Date {
+  const dateOnly = toDateOnly(dateInput);
+  // Parse as local date (not UTC) by using individual components
+  const [year, month, day] = dateOnly.split('-').map(Number);
+  return new Date(year, month - 1, day, 0, 0, 0, 0);
+}
+
 // Schengen countries
 export const SCHENGEN_COUNTRIES = [
   'AT', 'BE', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU',
@@ -205,9 +216,11 @@ export function countsAgainstSchengen(visaType: string): boolean {
 }
 
 // Calculate days spent in country (inclusive of entry day)
+// Uses calendar day comparison - counts days from midnight to midnight
 export function calculateDaysInCountry(entryDate: string, exitDate?: string): number {
-  const entry = parseISO(entryDate);
-  const exit = exitDate ? parseISO(exitDate) : getNow();
+  // Convert to local midnight dates for calendar day comparison
+  const entry = toLocalMidnight(entryDate);
+  const exit = exitDate ? toLocalMidnight(exitDate) : getToday();
   return differenceInDays(exit, entry) + 1; // +1 to include entry day
 }
 
@@ -215,70 +228,24 @@ export function calculateDaysInCountry(entryDate: string, exitDate?: string): nu
 export function isCurrentVisit(visit: Visit): boolean {
   const today = getToday();
   
-  // Parse entry date - handle both ISO string and date-only formats
-  let entryDate: Date;
-  try {
-    // If it's an ISO string like "2025-03-24T00:00:00.000Z"
-    if (visit.entryDate.includes('T')) {
-      const entryParts = visit.entryDate.split('T')[0].split('-');
-      entryDate = new Date(
-        parseInt(entryParts[0]), 
-        parseInt(entryParts[1]) - 1, 
-        parseInt(entryParts[2])
-      );
-    } else {
-      // If it's a date-only string like "2025-03-24"
-      const entryParts = visit.entryDate.split('-');
-      entryDate = new Date(
-        parseInt(entryParts[0]), 
-        parseInt(entryParts[1]) - 1, 
-        parseInt(entryParts[2])
-      );
-    }
-  } catch (e) {
-    console.error('[isCurrentVisit] Error parsing entry date:', visit.entryDate, e);
-    return false;
-  }
+  // Parse entry date to local midnight using our helper
+  const entryDate = toLocalMidnight(visit.entryDate);
   
   // Entry date must be today or in the past
   if (entryDate > today) {
-    console.log(`[isCurrentVisit] ${visit.countryName}: Entry date ${visit.entryDate} is in the future`);
     return false;
   }
   
   // If no exit date, the visit is ongoing
   if (!visit.exitDate) {
-    console.log(`[isCurrentVisit] ${visit.countryName}: No exit date, visit is ACTIVE`);
     return true;
   }
   
-  // Parse exit date - handle both ISO string and date-only formats
-  let exitDate: Date;
-  try {
-    if (visit.exitDate.includes('T')) {
-      const exitParts = visit.exitDate.split('T')[0].split('-');
-      exitDate = new Date(
-        parseInt(exitParts[0]), 
-        parseInt(exitParts[1]) - 1, 
-        parseInt(exitParts[2])
-      );
-    } else {
-      const exitParts = visit.exitDate.split('-');
-      exitDate = new Date(
-        parseInt(exitParts[0]), 
-        parseInt(exitParts[1]) - 1, 
-        parseInt(exitParts[2])
-      );
-    }
-  } catch (e) {
-    console.error('[isCurrentVisit] Error parsing exit date:', visit.exitDate, e);
-    return false;
-  }
+  // Parse exit date to local midnight
+  const exitDate = toLocalMidnight(visit.exitDate);
   
   // If exit date is today or in the future, still active
-  const isActive = exitDate >= today;
-  console.log(`[isCurrentVisit] ${visit.countryName}: Entry=${visit.entryDate}, Exit=${visit.exitDate}, isActive=${isActive}`);
-  return isActive;
+  return exitDate >= today;
 }
 
 // Get visa status with all calculated fields
@@ -321,8 +288,9 @@ export function calculateSchengenDays(visits: Visit[], passports: Passport[] = [
   let totalDays = 0;
   
   countingVisits.forEach(visit => {
-    const entryDate = startOfDay(parseISO(visit.entryDate));
-    const exitDate = visit.exitDate ? startOfDay(parseISO(visit.exitDate)) : today;
+    // Use local midnight dates for calendar day comparison
+    const entryDate = toLocalMidnight(visit.entryDate);
+    const exitDate = visit.exitDate ? toLocalMidnight(visit.exitDate) : today;
     
     // Calculate overlap with the 180-day period
     const overlapStart = isAfter(entryDate, periodStartDate) ? entryDate : periodStartDate;
@@ -358,8 +326,9 @@ export function getSchengenBreakdown(visits: Visit[], passports: Passport[] = []
   const breakdown: { [key: string]: { countryCode: string; countryName: string; days: number; visits: Visit[]; visaType: string } } = {};
   
   countingVisits.forEach(visit => {
-    const entryDate = startOfDay(parseISO(visit.entryDate));
-    const exitDate = visit.exitDate ? startOfDay(parseISO(visit.exitDate)) : today;
+    // Use local midnight dates for calendar day comparison
+    const entryDate = toLocalMidnight(visit.entryDate);
+    const exitDate = visit.exitDate ? toLocalMidnight(visit.exitDate) : today;
     
     const overlapStart = isAfter(entryDate, periodStartDate) ? entryDate : periodStartDate;
     const overlapEnd = isBefore(exitDate, periodEndDate) ? exitDate : periodEndDate;
@@ -398,8 +367,9 @@ export function getSchengenExemptVisits(visits: Visit[]): { countryCode: string;
   );
   
   return exemptVisits.map(visit => {
-    const entryDate = startOfDay(parseISO(visit.entryDate));
-    const exitDate = visit.exitDate ? startOfDay(parseISO(visit.exitDate)) : today;
+    // Use local midnight dates for calendar day comparison
+    const entryDate = toLocalMidnight(visit.entryDate);
+    const exitDate = visit.exitDate ? toLocalMidnight(visit.exitDate) : today;
     
     const overlapStart = isAfter(entryDate, periodStartDate) ? entryDate : periodStartDate;
     const overlapEnd = isBefore(exitDate, periodEndDate) ? exitDate : periodEndDate;
@@ -424,8 +394,9 @@ export function getVisitsForDate(visits: Visit[], date: Date): Visit[] {
   const targetDate = startOfDay(date);
   
   return visits.filter(visit => {
-    const entryDate = startOfDay(parseISO(visit.entryDate));
-    const exitDate = visit.exitDate ? startOfDay(parseISO(visit.exitDate)) : getToday();
+    // Use local midnight dates for calendar day comparison
+    const entryDate = toLocalMidnight(visit.entryDate);
+    const exitDate = visit.exitDate ? toLocalMidnight(visit.exitDate) : getToday();
     
     return isWithinInterval(targetDate, { start: entryDate, end: exitDate }) ||
            targetDate.getTime() === entryDate.getTime() ||
@@ -438,8 +409,9 @@ export function generateCalendarMarks(visits: Visit[]): Record<string, any> {
   const marks: Record<string, any> = {};
   
   visits.forEach(visit => {
-    const entryDate = parseISO(visit.entryDate);
-    const exitDate = visit.exitDate ? parseISO(visit.exitDate) : getNow();
+    // Use local midnight dates for calendar day marking
+    const entryDate = toLocalMidnight(visit.entryDate);
+    const exitDate = visit.exitDate ? toLocalMidnight(visit.exitDate) : getToday();
     
     const days = eachDayOfInterval({ start: entryDate, end: exitDate });
     
@@ -491,14 +463,15 @@ export function formatDate(date: string | Date | undefined | null, formatStr: st
 export function calculateTaxDays(visits: Visit[], year: number): { countryCode: string; countryName: string; days: number; percentOfYear: number }[] {
   const yearStart = new Date(year, 0, 1);
   const yearEnd = new Date(year, 11, 31);
-  const today = getNow();
+  const today = getToday();
   const effectiveEnd = isBefore(yearEnd, today) ? yearEnd : today;
   
   const breakdown: { [key: string]: { countryCode: string; countryName: string; days: number } } = {};
   
   visits.forEach(visit => {
-    const entryDate = parseISO(visit.entryDate);
-    const exitDate = visit.exitDate ? parseISO(visit.exitDate) : today;
+    // Use local midnight dates for calendar day comparison
+    const entryDate = toLocalMidnight(visit.entryDate);
+    const exitDate = visit.exitDate ? toLocalMidnight(visit.exitDate) : today;
     
     // Check if visit overlaps with the year
     if (isAfter(entryDate, yearEnd) || isBefore(exitDate, yearStart)) {
