@@ -2961,16 +2961,16 @@ export const TRANSLATIONS: Record<SupportedLanguage, Record<string, string>> = {
 };
 
 export const LANGUAGE_NAMES: Record<SupportedLanguage, string> = {
+  de: 'Deutsch',
   en: 'English',
   es: 'Español',
   fr: 'Français',
-  de: 'Deutsch',
+  it: 'Italiano',
   pt: 'Português',
+  ru: 'Русский',
   zh: '中文',
   ja: '日本語',
   ko: '한국어',
-  it: 'Italiano',
-  ru: 'Русский',
 };
 
 export function getTranslation(language: SupportedLanguage, key: string): string {
