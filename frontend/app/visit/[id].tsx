@@ -429,7 +429,7 @@ export default function EditVisitScreen() {
               ListEmptyComponent={
                 <View style={styles.emptyList}>
                   <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                    No countries found for "{countrySearch}"
+                    {t('noCountriesFound')} "{countrySearch}"
                   </Text>
                 </View>
               }
@@ -467,7 +467,7 @@ export default function EditVisitScreen() {
                 )}
                 ListEmptyComponent={
                   <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                    No visa types available
+                    {t('noVisaTypesAvailable')}
                   </Text>
                 }
               />

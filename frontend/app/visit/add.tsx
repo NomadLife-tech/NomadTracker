@@ -356,14 +356,14 @@ export default function AddVisitScreen() {
                 <View style={[styles.autoLabel, { backgroundColor: colors.primary + '20' }]}>
                   <Ionicons name="information-circle" size={14} color={colors.primary} />
                   <Text style={[styles.autoLabelText, { color: colors.primary }]}>
-                    Based on visa type
+                    {t('basedOnVisaType')}
                   </Text>
                 </View>
               )}
             </View>
             {!isAllowedDaysEditable && (
               <Text style={[styles.hintText, { color: colors.textSecondary }]}>
-                Select "Custom" visa type to edit manually
+                {t('selectCustomToEdit')}
               </Text>
             )}
           </View>
@@ -472,7 +472,7 @@ export default function AddVisitScreen() {
               ListEmptyComponent={
                 <View style={styles.emptyList}>
                   <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                    No countries found for "{countrySearch}"
+                    {t('noCountriesFound')} "{countrySearch}"
                   </Text>
                 </View>
               }
@@ -518,7 +518,7 @@ export default function AddVisitScreen() {
                         )}
                         {isCustom && (
                           <Text style={[styles.visaDays, { color: colors.primary }]}>
-                            Set your own duration
+                            {t('setYourOwnDuration')}
                           </Text>
                         )}
                       </View>
@@ -530,7 +530,7 @@ export default function AddVisitScreen() {
                 }}
                 ListEmptyComponent={
                   <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                    No visa types available
+                    {t('noVisaTypesAvailable')}
                   </Text>
                 }
               />

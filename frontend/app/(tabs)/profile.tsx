@@ -1352,7 +1352,7 @@ export default function ProfileScreen() {
             ListEmptyComponent={
               <View style={styles.emptyList}>
                 <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                  No countries found for "{countrySearch}"
+                  {t('noCountriesFound')} "{countrySearch}"
                 </Text>
               </View>
             }

@@ -581,7 +581,7 @@ export default function MapScreen() {
               height: '100%',
               border: 'none',
             }}
-            title="Travel Map"
+            title={t('travelMap')}
           />
         </View>
         {/* Legend Overlay */}

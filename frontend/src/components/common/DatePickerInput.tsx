@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Modal, ScrollView } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useApp } from '../../contexts/AppContext';
 import { formatDate } from '../../utils/dateUtils';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
@@ -25,6 +26,7 @@ export function DatePickerInput({
   maximumDate,
 }: DatePickerInputProps) {
   const { colors, isDark } = useTheme();
+  const { t } = useApp();
   const [showPicker, setShowPicker] = useState(false);
   const [tempDate, setTempDate] = useState<Date>(value || new Date());
   
@@ -170,18 +172,18 @@ export function DatePickerInput({
             <View style={[styles.webModalContent, { backgroundColor: colors.card }]}>
               <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={() => setShowPicker(false)}>
-                  <Text style={[styles.modalButton, { color: colors.textSecondary }]}>Cancel</Text>
+                  <Text style={[styles.modalButton, { color: colors.textSecondary }]}>{t('cancel')}</Text>
                 </TouchableOpacity>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>Select Date</Text>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>{t('selectDate')}</Text>
                 <TouchableOpacity onPress={handleWebConfirm}>
-                  <Text style={[styles.modalButton, { color: colors.primary }]}>Done</Text>
+                  <Text style={[styles.modalButton, { color: colors.primary }]}>{t('done')}</Text>
                 </TouchableOpacity>
               </View>
               
               <View style={styles.webPickerContainer}>
                 {/* Month Selector */}
                 <View style={styles.webPickerColumn}>
-                  <Text style={[styles.webPickerLabel, { color: colors.textSecondary }]}>Month</Text>
+                  <Text style={[styles.webPickerLabel, { color: colors.textSecondary }]}>{t('month')}</Text>
                   <ScrollView style={[styles.webPickerSelect, { backgroundColor: colors.background, borderColor: colors.border }]}>
                     {months.map((month) => (
                       <TouchableOpacity
@@ -205,7 +207,7 @@ export function DatePickerInput({
 
                 {/* Day Selector */}
                 <View style={styles.webPickerColumn}>
-                  <Text style={[styles.webPickerLabel, { color: colors.textSecondary }]}>Day</Text>
+                  <Text style={[styles.webPickerLabel, { color: colors.textSecondary }]}>{t('day')}</Text>
                   <ScrollView style={[styles.webPickerSelect, { backgroundColor: colors.background, borderColor: colors.border }]}>
                     {days.map((day) => (
                       <TouchableOpacity
@@ -229,7 +231,7 @@ export function DatePickerInput({
 
                 {/* Year Selector */}
                 <View style={styles.webPickerColumn}>
-                  <Text style={[styles.webPickerLabel, { color: colors.textSecondary }]}>Year</Text>
+                  <Text style={[styles.webPickerLabel, { color: colors.textSecondary }]}>{t('year')}</Text>
                   <ScrollView style={[styles.webPickerSelect, { backgroundColor: colors.background, borderColor: colors.border }]}>
                     {years.map((year) => (
                       <TouchableOpacity
@@ -274,11 +276,11 @@ export function DatePickerInput({
             <View style={[styles.iosModalContent, { backgroundColor: colors.card }]}>
               <View style={[styles.iosModalHeader, { borderBottomColor: colors.border }]}>
                 <TouchableOpacity onPress={handleIOSCancel}>
-                  <Text style={[styles.modalButton, { color: colors.textSecondary }]}>Cancel</Text>
+                  <Text style={[styles.modalButton, { color: colors.textSecondary }]}>{t('cancel')}</Text>
                 </TouchableOpacity>
-                <Text style={[styles.modalTitle, { color: colors.text }]}>Select Date</Text>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>{t('selectDate')}</Text>
                 <TouchableOpacity onPress={handleIOSConfirm}>
-                  <Text style={[styles.modalButton, { color: colors.primary }]}>Done</Text>
+                  <Text style={[styles.modalButton, { color: colors.primary }]}>{t('done')}</Text>
                 </TouchableOpacity>
               </View>
               <DateTimePicker
