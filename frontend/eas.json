@@ -20,10 +20,10 @@
       "env": {
         "EAS_SKIP_AUTO_FINGERPRINT": "1"
       },
-      "node": "20.18.0",
+      "node": "22.12.0",
       "ios": {
         "buildConfiguration": "Release",
-        "image": "macos-ventura-13.6-xcode-15.2"
+        "image": "latest"
       },
       "android": {
         "buildType": "apk"
