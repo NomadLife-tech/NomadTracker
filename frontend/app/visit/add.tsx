@@ -13,7 +13,7 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
@@ -33,10 +33,14 @@ export default function AddVisitScreen() {
   const { showToast } = useToast();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { date: preselectedDate } = useLocalSearchParams<{ date?: string }>();
+
+  // Initialize entry date from query param (from calendar quick-add) or today
+  const initialDate = preselectedDate ? new Date(preselectedDate + 'T12:00:00') : new Date();
 
   const [countryCode, setCountryCode] = useState('');
   const [countryName, setCountryName] = useState('');
-  const [entryDate, setEntryDate] = useState<Date | undefined>(new Date());
+  const [entryDate, setEntryDate] = useState<Date | undefined>(initialDate);
   const [exitDate, setExitDate] = useState<Date | undefined>();
   const [visaType, setVisaType] = useState('');
   const [allowedDays, setAllowedDays] = useState('');
@@ -91,6 +95,14 @@ export default function AddVisitScreen() {
   // EU Citizen should NOT show allowed days field
   const isAllowedDaysEditable = isCustomVisaType(visaType);
   const isEUCitizen = visaType === 'EU Citizen';
+
+  // Calculate visit duration when both dates are selected
+  const visitDuration = useMemo(() => {
+    if (!entryDate || !exitDate) return null;
+    const diffTime = exitDate.getTime() - entryDate.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both entry and exit days
+    return diffDays > 0 ? diffDays : null;
+  }, [entryDate, exitDate]);
 
   // Auto-populate allowed days when visa type changes
   useEffect(() => {
@@ -273,6 +285,19 @@ export default function AddVisitScreen() {
             optional
             minimumDate={entryDate}
           />
+
+          {/* Visit Duration Preview */}
+          {visitDuration && (
+            <View style={[styles.durationPreview, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}>
+              <Ionicons name="time-outline" size={18} color={colors.primary} />
+              <Text style={[styles.durationText, { color: colors.primary }]}>
+                {visitDuration} {visitDuration === 1 ? t('day') : t('days')}
+              </Text>
+              <Text style={[styles.durationLabel, { color: colors.textSecondary }]}>
+                {t('visitDuration')}
+              </Text>
+            </View>
+          )}
 
           {/* Visa Type */}
           <View style={styles.inputGroup}>
@@ -647,6 +672,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 6,
     fontStyle: 'italic',
+  },
+  durationPreview: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: 16,
+    gap: 8,
+  },
+  durationText: {
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  durationLabel: {
+    fontSize: 13,
+    marginLeft: 'auto',
   },
   saveButton: {
     flexDirection: 'row',

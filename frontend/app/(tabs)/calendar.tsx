@@ -335,9 +335,15 @@ export default function CalendarScreen() {
               ))}
             </View>
           ) : (
-            <Text style={[styles.noVisits, { color: colors.textSecondary }]}>
-              {t('noVisitsOnDate')}
-            </Text>
+            <TouchableOpacity
+              style={[styles.quickAddButton, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '40' }]}
+              onPress={() => router.push(`/visit/add?date=${selectedDate}`)}
+            >
+              <Ionicons name="add-circle" size={20} color={colors.primary} />
+              <Text style={[styles.quickAddText, { color: colors.primary }]}>
+                {t('addVisit')}
+              </Text>
+            </TouchableOpacity>
           )}
           {selectedVisits.length > 0 && (
             <TouchableOpacity
@@ -573,6 +579,22 @@ const styles = StyleSheet.create({
   noVisits: {
     fontSize: 14,
     marginTop: 6,
+  },
+  quickAddButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    gap: 8,
+  },
+  quickAddText: {
+    fontSize: 15,
+    fontWeight: '600',
   },
   viewButton: {
     marginTop: 14,
