@@ -428,7 +428,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   ZA: {
     emergencyNumbers: { police: '10111', ambulance: '10177', fire: '10177', general: '112' },
     visaResources: [
-      { name: 'DHA South Africa', url: 'http://www.dha.gov.za', type: 'immigration' },
+      { name: 'DHA South Africa', url: 'https://www.gov.za/services/temporary-residence/visa', type: 'immigration' },
     ],
     currencyCode: 'ZAR',
     drivingSide: 'left',
@@ -734,7 +734,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   CY: {
     emergencyNumbers: { police: '112', ambulance: '112', fire: '112', general: '112' },
     visaResources: [
-      { name: 'Cyprus Civil Registry', url: 'http://www.moi.gov.cy/moi/crmd/crmd.nsf', type: 'immigration' },
+      { name: 'Cyprus Civil Registry', url: 'https://www.mfa.gov.cy/mfa/mfa2016.nsf/mfa90_en/mfa90_en', type: 'immigration' },
     ],
     currencyCode: 'EUR',
     drivingSide: 'left',
@@ -815,7 +815,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   BA: {
     emergencyNumbers: { police: '122', ambulance: '124', fire: '123', general: '112' },
     visaResources: [
-      { name: 'Bosnia MFA', url: 'http://www.mvp.gov.ba/konzularne_informacije/vize/', type: 'visa' },
+      { name: 'Bosnia MFA', url: 'https://mvp.gov.ba/en/vize', type: 'visa' },
     ],
     currencyCode: 'BAM',
     drivingSide: 'right',
