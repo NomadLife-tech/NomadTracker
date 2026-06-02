@@ -95,8 +95,9 @@ export function SwipeableVisitRow({ visit, onDelete, onPress, colors, t, languag
                 {getTranslatedCountryName(visit.countryCode, language)}
               </Text>
               {isActive && (
-                <View style={[styles.activeBadge, { backgroundColor: colors.success + '20' }]}>
-                  <Text style={[styles.activeBadgeText, { color: colors.success }]}>{t('active')}</Text>
+                <View style={[styles.activeBadge, { backgroundColor: colors.success }]}>
+                  <View style={[styles.activeDot, { backgroundColor: '#FFFFFF' }]} />
+                  <Text style={[styles.activeBadgeText, { color: '#FFFFFF' }]}>{t('active')}</Text>
                 </View>
               )}
             </View>
@@ -161,13 +162,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   activeBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 5,
+  },
+  activeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   activeBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
+    fontSize: 12,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   visitVisa: {
     fontSize: 13,

@@ -278,11 +278,21 @@ export default function AddVisitScreen() {
           <View style={styles.inputGroup}>
             <Text style={[styles.inputLabel, { color: colors.textSecondary }]}>{t('visaType')} *</Text>
             <TouchableOpacity
-              style={[styles.pickerButton, { backgroundColor: colors.card, borderColor: colors.border }]}
+              style={[
+                styles.pickerButton, 
+                { 
+                  backgroundColor: colors.card, 
+                  borderColor: colors.border,
+                  opacity: countryCode ? 1 : 0.5,
+                }
+              ]}
               onPress={() => setShowVisaPicker(true)}
               disabled={!countryCode}
               activeOpacity={0.7}
             >
+              {!countryCode && (
+                <Ionicons name="lock-closed" size={16} color={colors.textSecondary} style={{ marginRight: 4 }} />
+              )}
               {visaType ? (
                 <Text style={[styles.pickerText, { color: colors.text }]}>{visaType}</Text>
               ) : (
