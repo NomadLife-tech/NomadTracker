@@ -76,7 +76,7 @@ export interface AppSettings {
   cloudSaveEnabled: boolean;
 }
 
-export type SupportedLanguage = 'en' | 'es' | 'fr' | 'de' | 'pt' | 'zh' | 'ja' | 'ko';
+export type SupportedLanguage = 'en' | 'es' | 'fr' | 'de' | 'pt' | 'zh' | 'ja' | 'ko' | 'it' | 'ru';
 
 // Country definition
 export interface Country {

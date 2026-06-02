@@ -282,6 +282,74 @@ const COUNTRY_NAMES: CountryTranslations = {
     GE: '조지아', AM: '아르메니아', AZ: '아제르바이잔', KZ: '카자흐스탄', UZ: '우즈베키스탄',
     AF: '아프가니스탄',
   },
+  it: {
+    // Schengen Area
+    AT: 'Austria', BE: 'Belgio', HR: 'Croazia', CZ: 'Repubblica Ceca', DK: 'Danimarca',
+    EE: 'Estonia', FI: 'Finlandia', FR: 'Francia', DE: 'Germania', GR: 'Grecia',
+    HU: 'Ungheria', IS: 'Islanda', IT: 'Italia', LV: 'Lettonia', LI: 'Liechtenstein',
+    LT: 'Lituania', LU: 'Lussemburgo', MT: 'Malta', NL: 'Paesi Bassi', NO: 'Norvegia',
+    PL: 'Polonia', PT: 'Portogallo', SK: 'Slovacchia', SI: 'Slovenia', ES: 'Spagna',
+    SE: 'Svezia', CH: 'Svizzera',
+    // Other European
+    AL: 'Albania', AD: 'Andorra', BY: 'Bielorussia', BA: 'Bosnia ed Erzegovina',
+    BG: 'Bulgaria', CY: 'Cipro', GB: 'Regno Unito', IE: 'Irlanda', XK: 'Kosovo',
+    MD: 'Moldavia', MC: 'Monaco', ME: 'Montenegro', MK: 'Macedonia del Nord', RO: 'Romania',
+    RU: 'Russia', SM: 'San Marino', RS: 'Serbia', TR: 'Turchia', UA: 'Ucraina', VA: 'Città del Vaticano',
+    // Americas
+    US: 'Stati Uniti', CA: 'Canada', MX: 'Messico', BR: 'Brasile', AR: 'Argentina',
+    CL: 'Cile', CO: 'Colombia', PE: 'Perù', VE: 'Venezuela', EC: 'Ecuador',
+    BO: 'Bolivia', PY: 'Paraguay', UY: 'Uruguay', PA: 'Panama', CR: 'Costa Rica',
+    CU: 'Cuba', DO: 'Repubblica Dominicana', PR: 'Porto Rico', JM: 'Giamaica', HT: 'Haiti',
+    TT: 'Trinidad e Tobago', BB: 'Barbados', BS: 'Bahamas',
+    // Asia Pacific
+    JP: 'Giappone', KR: 'Corea del Sud', CN: 'Cina', TW: 'Taiwan', HK: 'Hong Kong',
+    SG: 'Singapore', MY: 'Malesia', TH: 'Thailandia', ID: 'Indonesia', VN: 'Vietnam',
+    PH: 'Filippine', IN: 'India', PK: 'Pakistan', BD: 'Bangladesh', LK: 'Sri Lanka',
+    NP: 'Nepal', MM: 'Myanmar', KH: 'Cambogia', LA: 'Laos', BT: 'Bhutan',
+    MV: 'Maldive', MN: 'Mongolia', AU: 'Australia', NZ: 'Nuova Zelanda',
+    // Middle East & Africa
+    AE: 'Emirati Arabi Uniti', SA: 'Arabia Saudita', QA: 'Qatar', KW: 'Kuwait',
+    BH: 'Bahrein', OM: 'Oman', IL: 'Israele', JO: 'Giordania', LB: 'Libano',
+    EG: 'Egitto', MA: 'Marocco', TN: 'Tunisia', DZ: 'Algeria', ZA: 'Sudafrica',
+    KE: 'Kenya', NG: 'Nigeria', GH: 'Ghana', ET: 'Etiopia', TZ: 'Tanzania',
+    // Central Asia & Caucasus
+    GE: 'Georgia', AM: 'Armenia', AZ: 'Azerbaigian', KZ: 'Kazakistan', UZ: 'Uzbekistan',
+    AF: 'Afghanistan',
+  },
+  ru: {
+    // Schengen Area
+    AT: 'Австрия', BE: 'Бельгия', HR: 'Хорватия', CZ: 'Чехия', DK: 'Дания',
+    EE: 'Эстония', FI: 'Финляндия', FR: 'Франция', DE: 'Германия', GR: 'Греция',
+    HU: 'Венгрия', IS: 'Исландия', IT: 'Италия', LV: 'Латвия', LI: 'Лихтенштейн',
+    LT: 'Литва', LU: 'Люксембург', MT: 'Мальта', NL: 'Нидерланды', NO: 'Норвегия',
+    PL: 'Польша', PT: 'Португалия', SK: 'Словакия', SI: 'Словения', ES: 'Испания',
+    SE: 'Швеция', CH: 'Швейцария',
+    // Other European
+    AL: 'Албания', AD: 'Андорра', BY: 'Беларусь', BA: 'Босния и Герцеговина',
+    BG: 'Болгария', CY: 'Кипр', GB: 'Великобритания', IE: 'Ирландия', XK: 'Косово',
+    MD: 'Молдова', MC: 'Монако', ME: 'Черногория', MK: 'Северная Македония', RO: 'Румыния',
+    RU: 'Россия', SM: 'Сан-Марино', RS: 'Сербия', TR: 'Турция', UA: 'Украина', VA: 'Ватикан',
+    // Americas
+    US: 'США', CA: 'Канада', MX: 'Мексика', BR: 'Бразилия', AR: 'Аргентина',
+    CL: 'Чили', CO: 'Колумбия', PE: 'Перу', VE: 'Венесуэла', EC: 'Эквадор',
+    BO: 'Боливия', PY: 'Парагвай', UY: 'Уругвай', PA: 'Панама', CR: 'Коста-Рика',
+    CU: 'Куба', DO: 'Доминиканская Республика', PR: 'Пуэрто-Рико', JM: 'Ямайка', HT: 'Гаити',
+    TT: 'Тринидад и Тобаго', BB: 'Барбадос', BS: 'Багамы',
+    // Asia Pacific
+    JP: 'Япония', KR: 'Южная Корея', CN: 'Китай', TW: 'Тайвань', HK: 'Гонконг',
+    SG: 'Сингапур', MY: 'Малайзия', TH: 'Таиланд', ID: 'Индонезия', VN: 'Вьетнам',
+    PH: 'Филиппины', IN: 'Индия', PK: 'Пакистан', BD: 'Бангладеш', LK: 'Шри-Ланка',
+    NP: 'Непал', MM: 'Мьянма', KH: 'Камбоджа', LA: 'Лаос', BT: 'Бутан',
+    MV: 'Мальдивы', MN: 'Монголия', AU: 'Австралия', NZ: 'Новая Зеландия',
+    // Middle East & Africa
+    AE: 'ОАЭ', SA: 'Саудовская Аравия', QA: 'Катар', KW: 'Кувейт',
+    BH: 'Бахрейн', OM: 'Оман', IL: 'Израиль', JO: 'Иордания', LB: 'Ливан',
+    EG: 'Египет', MA: 'Марокко', TN: 'Тунис', DZ: 'Алжир', ZA: 'ЮАР',
+    KE: 'Кения', NG: 'Нигерия', GH: 'Гана', ET: 'Эфиопия', TZ: 'Танзания',
+    // Central Asia & Caucasus
+    GE: 'Грузия', AM: 'Армения', AZ: 'Азербайджан', KZ: 'Казахстан', UZ: 'Узбекистан',
+    AF: 'Афганистан',
+  },
 };
 
 /**
