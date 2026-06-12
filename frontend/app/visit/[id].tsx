@@ -23,6 +23,7 @@ import { COUNTRIES, getCountryByCode, getVisaTypesForPassport, isEUCountry } fro
 import { getDefaultAllowedDays, isCustomVisaType } from '../../src/constants/visaDefaults';
 import { DatePickerInput } from '../../src/components/common/DatePickerInput';
 import { CountryInfoCard } from '../../src/components/common/CountryInfoCard';
+import { toDateOnly } from '../../src/utils/dateUtils';
 
 export default function EditVisitScreen() {
   const { colors } = useTheme();
@@ -140,8 +141,8 @@ export default function EditVisitScreen() {
       id: id as string,
       countryCode,
       countryName,
-      entryDate: entryDate.toISOString(),
-      exitDate: exitDate?.toISOString(),
+      entryDate: toDateOnly(entryDate),
+      exitDate: exitDate ? toDateOnly(exitDate) : undefined,
       visaType,
       allowedDays: allowedDays ? parseInt(allowedDays) : 90,
       passportId: passportId || undefined,

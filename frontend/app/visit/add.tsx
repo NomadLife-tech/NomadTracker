@@ -24,7 +24,7 @@ import { getDefaultAllowedDays, isCustomVisaType } from '../../src/constants/vis
 import { DatePickerInput } from '../../src/components/common/DatePickerInput';
 import { CountryInfoCard } from '../../src/components/common/CountryInfoCard';
 import { generateUUID } from '../../src/utils/uuid';
-import { isCurrentVisit } from '../../src/utils/dateUtils';
+import { isCurrentVisit, toDateOnly } from '../../src/utils/dateUtils';
 import { getTranslatedCountryName } from '../../src/utils/countryNames';
 
 export default function AddVisitScreen() {
@@ -162,8 +162,8 @@ export default function AddVisitScreen() {
         id: visitId,
         countryCode,
         countryName,
-        entryDate: entryDate.toISOString(),
-        exitDate: exitDate?.toISOString(),
+        entryDate: toDateOnly(entryDate),
+        exitDate: exitDate ? toDateOnly(exitDate) : undefined,
         visaType,
         allowedDays: allowedDays ? parseInt(allowedDays) : 90,
         passportId: passportId || undefined,
