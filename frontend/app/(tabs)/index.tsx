@@ -111,6 +111,16 @@ export default function DashboardScreen() {
   const stayUntilDate = canStayDays > 0 ? addDays(getToday(), canStayDays - 1) : null;
   const showRollOffNote = schengenStatus ? canStayDays > schengenStatus.daysRemaining : false;
 
+  // Whether the user is currently INSIDE Schengen on a counting visit (drives the stay countdown)
+  const isCurrentlyInSchengen = useMemo(() => {
+    return visits.some(v =>
+      isCurrentVisit(v) &&
+      isSchengenCountry(v.countryCode) &&
+      countsAgainstSchengen(v.visaType) &&
+      visitCountsForSchengen(v, profile.passports)
+    );
+  }, [visits, profile.passports]);
+
   const countryHeatmapData = useMemo(() => {
     return calculateCountryHeatmap(visits);
   }, [visits]);
@@ -306,6 +316,20 @@ export default function DashboardScreen() {
                   <Ionicons name="information-circle" size={16} color={colors.primary} />
                   <Text style={[styles.rollOffText, { color: colors.textSecondary }]}>
                     {t('rollOffNote')}
+                  </Text>
+                </View>
+              )}
+
+              {/* Stay countdown - reminder as the departure date approaches (currently in Schengen, ≤30 days left) */}
+              {isCurrentlyInSchengen && canStayDays > 0 && canStayDays <= 30 && (
+                <View style={[styles.countdownRow, { backgroundColor: (canStayDays <= 7 ? colors.danger : colors.warning) + '15' }]}>
+                  <Ionicons
+                    name={canStayDays <= 7 ? 'alert-circle' : 'time-outline'}
+                    size={18}
+                    color={canStayDays <= 7 ? colors.danger : colors.warning}
+                  />
+                  <Text style={[styles.countdownText, { color: canStayDays <= 7 ? colors.danger : colors.warning }]}>
+                    {canStayDays === 1 ? t('lastDayOfStay') : t('daysLeftOfStay', { days: String(canStayDays) })}
                   </Text>
                 </View>
               )}
@@ -760,6 +784,19 @@ const styles = StyleSheet.create({
   },
   rollOffText: {
     fontSize: 12,
+    flex: 1,
+  },
+  countdownRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  countdownText: {
+    fontSize: 14,
+    fontWeight: '700',
     flex: 1,
   },
   schengenOutOf: {
