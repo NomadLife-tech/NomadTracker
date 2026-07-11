@@ -5,7 +5,8 @@ import * as Location from 'expo-location';
 import { Visit, Passport } from '../../types';
 import { getCountryByCode, COUNTRIES } from '../../constants/countries';
 import { COUNTRY_COORDS, DEFAULT_COORDS } from '../../constants/countryCoords';
-import { getVisaStatus, isSchengenCountry, countsAgainstSchengen, calculateSchengenDays, visitCountsForSchengen } from '../../utils/dateUtils';
+import { getVisaStatus, isSchengenCountry, countsAgainstSchengen, visitCountsForSchengen } from '../../utils/dateUtils';
+import { calculateSchengenStatusExtended } from '../../utils/schengenEngine';
 import { getTranslatedCountryName } from '../../utils/countryNames';
 import { useTheme } from '../../contexts/ThemeContext';
 
@@ -38,7 +39,7 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
   // Calculate Schengen status if applicable
   const schengenStatus = useMemo(() => {
     if (!isSchengenCounting || allVisits.length === 0) return null;
-    return calculateSchengenDays(allVisits, passports);
+    return calculateSchengenStatusExtended(allVisits, passports);
   }, [isSchengenCounting, allVisits, passports]);
   
   // Check if this is an EU Citizen visit (no visa limits)
@@ -62,10 +63,10 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
     if (isSchengenCounting && schengenStatus) {
       return {
         ...baseStatus,
-        daysUsed: schengenStatus.daysUsedInPeriod,
-        daysRemaining: schengenStatus.daysRemainingInPeriod,
-        percentageUsed: (schengenStatus.daysUsedInPeriod / 90) * 100,
-        isOverstay: schengenStatus.daysUsedInPeriod > 90,
+        daysUsed: schengenStatus.daysUsed,
+        daysRemaining: schengenStatus.daysRemaining,
+        percentageUsed: (schengenStatus.daysUsed / 90) * 100,
+        isOverstay: schengenStatus.daysUsed > 90,
       };
     }
     
