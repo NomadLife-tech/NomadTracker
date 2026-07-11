@@ -1,0 +1,36 @@
+{
+  "summary": "Frontend-only regression testing of Schengen 'You Can Stay / Until' UI redesign completed on Expo web preview at real system date 2026-07-11 (UTC). Data seeded via localStorage (@nomad_visits, @nomad_profile). All 7 tests requested by the review PASSED. Math checks verified with the actual current date rather than the June-2026 example in the review request. No 'Days Remaining' or 'Max Stay' labels remain on the Schengen card. Roll-off note is displayed when maxStayFromToday > (90 - daysUsed). MiniMapCard expanded overlay shows Days Used | You Can Stay | Until, and its minimized pill correctly reads '<N> days left'. Italian translation keys (Puoi restare / Fino al / rollOff sentence) render correctly with no raw i18n keys leaking. Fresh 90-Day widget shows the availableNow subtext. No React Native red screen. Console shows expected non-fatal deprecation warnings (shadow*, pointerEvents) already present in the codebase. Reference test date: 2026-07-11.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "MiniMapCard (Dashboard, Italian)", "issues": ["Short 'Until' date on MiniMapCard uses format(date,'MMM d') which is locale-independent (English month) even when app language is Italian. Dashboard main Schengen card uses same non-localized formatDate. Pre-existing i18n gap, not part of this review's fix but worth noting."]}
+    ],
+    "react_native_issues": [
+      {"component": "app/(tabs)/profile.tsx:900", "issue": "profile.insurances.map(...) has no defensive check. If a stored profile lacks the insurances field (e.g. migrated from an older schema), the Profile tab crashes with 'Cannot read properties of undefined (reading map)'. Fresh installs are unaffected because initializeStorage seeds insurances:[]. Recommend: (profile.insurances || []).map(...) or ensure migration back-fills the field. Reference: /app/frontend/app/(tabs)/profile.tsx:900"},
+      {"component": "Multiple styles across app", "issue": "Console emits 'shadow* style props are deprecated. Use boxShadow' warnings (React Native Web >=0.19). Non-blocking but should migrate to boxShadow to silence and stay forward-compatible."},
+      {"component": "MiniMapCard.tsx:367 & other places", "issue": "Console emits 'props.pointerEvents is deprecated. Use style.pointerEvents' warning. Move pointerEvents prop to style object."}
+    ]
+  },
+  "test_report_links": ["/app/test_reports/iteration_1.json"],
+  "action_items": [
+    "OPTIONAL / low-priority: In app/(tabs)/profile.tsx line 900, guard the .map calls with (profile.insurances || []) and similar for passports/other arrays to survive partial-profile edge cases.",
+    "OPTIONAL: Localize the short date on MiniMapCard and dashboard 'Until' box using the active language locale (import date-fns/locale/it, es, fr, de, pt, ja, ko, ru, zhCN and pass {locale} to format()).",
+    "OPTIONAL housekeeping: migrate deprecated shadow* and props.pointerEvents to style-based equivalents to clear console warnings."
+  ],
+  "critical_code_review_comments": [
+    "index.tsx dashboard Schengen card correctly derives canStayDays = max(0, schengenStatus.maxStayFromToday) and stayUntilDate = addDays(getToday(), canStayDays - 1); progress bar uses (90 - canStay)/90 which matches the review spec.",
+    "Roll-off note visibility condition (canStayDays > schengenStatus.daysRemaining) is correct and observed working (90 > 8 with seeded data).",
+    "MiniMapCard uses the same maxStayFromToday value producing identical 'You Can Stay' number as dashboard - single source of truth is preserved.",
+    "Translations for youCanStay/stayUntil/rollOffNote/daysLeft are present in all 10 languages (verified via grep).",
+    "profile.tsx:900 - insurances array access is not defensive; can crash on partial profile schema."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only)", "frontend": "100% (7/7 review tests passed)"},
+  "seed_data_creation": "Seeded 3 Portugal visits (Schengen C Short Stay) into localStorage key '@nomad_visits' plus a valid default profile in '@nomad_profile' with insurances:[] and passports:[] to match initializeStorage schema. Reload picks up the state via AppContext.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Real current date on the preview is 2026-07-11 (not January). To seed state, use localStorage keys '@nomad_visits' (Visit[] JSON) and '@nomad_profile' (must include insurances:[] and passports:[]). Use '@nomad_storage_version': '1'. Reload after seeding. The MiniMap X-close button has no testID; click at coordinates ~(334, 267) on 390x844 mobile viewport or use elementFromPoint. Bottom tab bar overlays lower cards; navigate via URL (/visit/<id>, /profile, /calendar) to bypass overlap when Playwright reports pointer interception. Language modal option list uses native language labels ('Italiano', 'Deutsch', 'Français', etc.).",
+  "rca_of_issue": "N/A - no bug reproduced. The user-reported confusion was addressed by the display-layer redesign: 'Days Remaining/Max Stay' boxes are replaced by 'You Can Stay/Until', roll-off explainer note appears when the forward simulation permits a longer stay than naive 90-daysUsed arithmetic, and the MiniMapCard shares the same forward-simulation value for consistency."
+}

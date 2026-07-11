@@ -2,10 +2,11 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Animated, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import { format, addDays } from 'date-fns';
 import { Visit, Passport } from '../../types';
 import { getCountryByCode, COUNTRIES } from '../../constants/countries';
 import { COUNTRY_COORDS, DEFAULT_COORDS } from '../../constants/countryCoords';
-import { getVisaStatus, isSchengenCountry, countsAgainstSchengen, visitCountsForSchengen } from '../../utils/dateUtils';
+import { getVisaStatus, isSchengenCountry, countsAgainstSchengen, visitCountsForSchengen, getToday } from '../../utils/dateUtils';
 import { calculateSchengenStatusExtended } from '../../utils/schengenEngine';
 import { getTranslatedCountryName } from '../../utils/countryNames';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -41,6 +42,10 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
     if (!isSchengenCounting || allVisits.length === 0) return null;
     return calculateSchengenStatusExtended(allVisits, passports);
   }, [isSchengenCounting, allVisits, passports]);
+
+  // Forward-looking stay info (roll-off aware): the real answer to "how long can I stay?"
+  const canStayDays = schengenStatus ? Math.max(0, schengenStatus.maxStayFromToday) : null;
+  const stayUntilDate = canStayDays !== null && canStayDays > 0 ? addDays(getToday(), canStayDays - 1) : null;
   
   // Check if this is an EU Citizen visit (no visa limits)
   const isEUCitizenVisit = activeVisit?.visaType === 'EU Citizen';
@@ -59,13 +64,17 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
       };
     }
     
-    // For Schengen countries with counting visas, override with Schengen cumulative days
+    // For Schengen countries with counting visas, override with Schengen cumulative days.
+    // daysRemaining uses the forward simulation (maxStayFromToday) so it reflects
+    // past days rolling off the 180-day window during the stay - the number a user
+    // standing in the country actually needs.
     if (isSchengenCounting && schengenStatus) {
+      const canStay = Math.max(0, schengenStatus.maxStayFromToday);
       return {
         ...baseStatus,
         daysUsed: schengenStatus.daysUsed,
-        daysRemaining: schengenStatus.daysRemaining,
-        percentageUsed: (schengenStatus.daysUsed / 90) * 100,
+        daysRemaining: canStay,
+        percentageUsed: ((90 - canStay) / 90) * 100,
         isOverstay: schengenStatus.daysUsed > 90,
       };
     }
@@ -430,19 +439,32 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
                     {activeVisitStatus.daysRemaining}
                   </Text>
                   <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                    {t('daysRemaining')}
+                    {isSchengenCounting && schengenStatus ? t('youCanStay') : t('daysRemaining')}
                   </Text>
                 </View>
                 
                 <View style={[styles.statSeparator, { backgroundColor: colors.border }]} />
                 
                 <View style={styles.statBox}>
-                  <Text style={[styles.statNum, { color: colors.text }]}>
-                    {activeVisit.allowedDays || 90}
-                  </Text>
-                  <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
-                    {t('allowedDays')}
-                  </Text>
+                  {isSchengenCounting && stayUntilDate ? (
+                    <>
+                      <Text style={[styles.statNum, styles.statDate, { color: colors.text }]}>
+                        {format(stayUntilDate, 'MMM d')}
+                      </Text>
+                      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                        {t('stayUntil')}
+                      </Text>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={[styles.statNum, { color: colors.text }]}>
+                        {activeVisit.allowedDays || 90}
+                      </Text>
+                      <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+                        {t('allowedDays')}
+                      </Text>
+                    </>
+                  )}
                 </View>
               </View>
             )}
@@ -490,7 +512,7 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
                 </Text>
               ) : (
                 <Text style={[styles.miniDays, { color: getProgressColor(activeVisitStatus.percentageUsed) }]}>
-                  {activeVisitStatus.daysRemaining} days left
+                  {activeVisitStatus.daysRemaining} {t('daysLeft')}
                 </Text>
               )}
             </View>
@@ -752,6 +774,10 @@ const styles = StyleSheet.create({
   },
   highlightStat: {
     fontSize: 28,
+  },
+  statDate: {
+    fontSize: 17,
+    paddingVertical: 5,
   },
   statLabel: {
     fontSize: 10,

@@ -351,10 +351,19 @@ describe('Schengen Engine - Gap Detection', () => {
 });
 
 describe('Schengen Engine - Official Calculator Scenarios', () => {
-  // These test cases are based on known scenarios from the EC calculator
+  // These test cases are based on known scenarios from the EC calculator.
+  // Dates are hardcoded to 2025, so we freeze the clock at 2025-06-01
+  // (otherwise these tests rot as real time passes the 180-day window).
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2025, 5, 1, 12, 0, 0)); // June 1, 2025
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
   
   it('Scenario 1: Simple 90-day stay', () => {
-    const today = new Date('2025-06-01');
     const visits = [
       createVisit('DE', '2025-03-01', '2025-05-29'), // 90 days exactly
     ];
@@ -368,7 +377,6 @@ describe('Schengen Engine - Official Calculator Scenarios', () => {
   });
 
   it('Scenario 2: Split stays within 180 days', () => {
-    const today = new Date('2025-06-01');
     const visits = [
       createVisit('FR', '2025-01-15', '2025-02-14'), // 31 days
       createVisit('ES', '2025-03-01', '2025-03-30'), // 30 days
@@ -384,7 +392,6 @@ describe('Schengen Engine - Official Calculator Scenarios', () => {
   });
 
   it('Scenario 3: EU passport holder is exempt', () => {
-    const today = new Date('2025-06-01');
     const visits = [
       createVisit('DE', '2024-06-01', '2025-05-30', 'Tourist', 'eu-passport'), // 365 days!
     ];
@@ -398,7 +405,6 @@ describe('Schengen Engine - Official Calculator Scenarios', () => {
   });
 
   it('Scenario 4: National D Visa is exempt', () => {
-    const today = new Date('2025-06-01');
     const visits = [
       createVisit('DE', '2024-06-01', '2025-05-30', 'National D Visa'), // 365 days
     ];
@@ -412,7 +418,6 @@ describe('Schengen Engine - Official Calculator Scenarios', () => {
   });
 
   it('Scenario 5: Travel to non-Schengen EU does not count', () => {
-    const today = new Date('2025-06-01');
     const visits = [
       createVisit('DE', '2025-03-01', '2025-03-30'), // 30 days Schengen
       createVisit('IE', '2025-04-01', '2025-04-30'), // 30 days Ireland (non-Schengen)

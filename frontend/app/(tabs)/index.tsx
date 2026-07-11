@@ -13,7 +13,7 @@ import {
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { PieChart } from 'react-native-gifted-charts';
-import { format } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import { useTheme } from '../../src/contexts/ThemeContext';
 import { useApp } from '../../src/contexts/AppContext';
 import { MiniMapCard } from '../../src/components/common/MiniMapCard';
@@ -25,6 +25,7 @@ import {
   isCurrentVisit, 
   getDaysByCountryForYear,
   formatDate,
+  getToday,
 } from '../../src/utils/dateUtils';
 import {
   calculateSchengenStatusExtended,
@@ -102,6 +103,13 @@ export default function DashboardScreen() {
     if (!hasSchengenVisits) return null;
     return calculateSchengenStatusExtended(visits, profile.passports);
   }, [visits, hasSchengenVisits, profile.passports]);
+
+  // Forward-looking stay values (roll-off aware): what the user can ACTUALLY do from today.
+  // Past days roll off the 180-day window during a stay, so the real max stay can
+  // exceed the naive "90 - daysUsed" arithmetic.
+  const canStayDays = schengenStatus ? Math.max(0, schengenStatus.maxStayFromToday) : 0;
+  const stayUntilDate = canStayDays > 0 ? addDays(getToday(), canStayDays - 1) : null;
+  const showRollOffNote = schengenStatus ? canStayDays > schengenStatus.daysRemaining : false;
 
   const countryHeatmapData = useMemo(() => {
     return calculateCountryHeatmap(visits);
@@ -267,41 +275,53 @@ export default function DashboardScreen() {
                 </View>
               </TouchableOpacity>
 
-              {/* Row 2: Days Remaining & Max Stay */}
+              {/* Window period - context for Days Used above */}
+              <Text style={[styles.schengenPeriod, { color: colors.textSecondary }]}>
+                {formatDate(schengenStatus.periodStartDate, 'MMM d')} - {formatDate(schengenStatus.periodEndDate, 'MMM d, yyyy')}
+              </Text>
+
+              {/* Row 2: Forward-looking stay info (roll-off aware) */}
               <View style={styles.schengenRow}>
                 <View style={[styles.schengenItemHalf, { backgroundColor: colors.success + '15' }]}>
                   <Text style={[styles.schengenValue, { color: colors.success }]}>
-                    {schengenStatus.daysRemaining}
+                    {canStayDays}
                   </Text>
                   <Text style={[styles.schengenLabel, { color: colors.textSecondary }]}>
-                    {t('daysRemaining')}
+                    {t('youCanStay')}
                   </Text>
                 </View>
                 <View style={[styles.schengenItemHalf, { backgroundColor: colors.primary + '15' }]}>
-                  <Text style={[styles.schengenValue, { color: colors.primary }]}>
-                    {schengenStatus.maxStayFromToday}
+                  <Text style={[styles.schengenValueDate, { color: colors.primary }]}>
+                    {stayUntilDate ? format(stayUntilDate, 'MMM d, yyyy') : '—'}
                   </Text>
                   <Text style={[styles.schengenLabel, { color: colors.textSecondary }]}>
-                    {t('maxStay')}
+                    {t('stayUntil')}
                   </Text>
                 </View>
               </View>
 
-              {/* Row 3: Progress Bar */}
+              {/* Roll-off explainer - shown when rolling window lets user stay longer than naive arithmetic */}
+              {showRollOffNote && (
+                <View style={[styles.rollOffNote, { backgroundColor: colors.primary + '10' }]}>
+                  <Ionicons name="information-circle" size={16} color={colors.primary} />
+                  <Text style={[styles.rollOffText, { color: colors.textSecondary }]}>
+                    {t('rollOffNote')}
+                  </Text>
+                </View>
+              )}
+
+              {/* Row 3: Progress Bar - stay allowance consumed as of today */}
               <View style={[styles.progressContainer, { backgroundColor: colors.border }]}>
                 <View
                   style={[
                     styles.progressBar,
                     {
-                      width: `${Math.min(100, (schengenStatus.daysUsed / 90) * 100)}%`,
-                      backgroundColor: getProgressColor((schengenStatus.daysUsed / 90) * 100),
+                      width: `${Math.min(100, ((90 - canStayDays) / 90) * 100)}%`,
+                      backgroundColor: getProgressColor(((90 - canStayDays) / 90) * 100),
                     },
                   ]}
                 />
               </View>
-              <Text style={[styles.schengenPeriod, { color: colors.textSecondary }]}>
-                {formatDate(schengenStatus.periodStartDate, 'MMM d')} - {formatDate(schengenStatus.periodEndDate, 'MMM d, yyyy')}
-              </Text>
 
               {/* NEW: Legal Full Re-Entry Date Widget */}
               <View style={[styles.reEntryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -315,7 +335,7 @@ export default function DashboardScreen() {
                   {format(schengenStatus.legalFullReEntryDate, 'MMMM d, yyyy')}
                 </Text>
                 <Text style={[styles.reEntrySubtext, { color: colors.textSecondary }]}>
-                  {schengenStatus.daysRemaining >= 90 
+                  {schengenStatus.legalFullReEntryDate.getTime() <= Date.now()
                     ? t('availableNow90Days')
                     : t('onThisDateFull90')}
                 </Text>
@@ -722,8 +742,25 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: '800',
   },
+  schengenValueDate: {
+    fontSize: 19,
+    fontWeight: '800',
+    paddingVertical: 5,
+  },
   schengenLabel: {
     fontSize: 14,
+  },
+  rollOffNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  rollOffText: {
+    fontSize: 12,
+    flex: 1,
   },
   schengenOutOf: {
     fontSize: 16,
