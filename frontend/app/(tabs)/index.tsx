@@ -121,6 +121,20 @@ export default function DashboardScreen() {
     );
   }, [visits, profile.passports]);
 
+  // Whether there's an OPEN-ENDED (no exit date) active Schengen visit.
+  // While a trip is open-ended, the fresh-90 re-entry date slides forward daily
+  // and is meaningless - so the Fresh 90-Day Allowance widget is hidden until
+  // the user sets an exit date (or leaves Schengen).
+  const hasOpenSchengenVisit = useMemo(() => {
+    return visits.some(v =>
+      !v.exitDate &&
+      isCurrentVisit(v) &&
+      isSchengenCountry(v.countryCode) &&
+      countsAgainstSchengen(v.visaType) &&
+      visitCountsForSchengen(v, profile.passports)
+    );
+  }, [visits, profile.passports]);
+
   const countryHeatmapData = useMemo(() => {
     return calculateCountryHeatmap(visits);
   }, [visits]);
@@ -347,37 +361,40 @@ export default function DashboardScreen() {
                 />
               </View>
 
-              {/* NEW: Legal Full Re-Entry Date Widget */}
-              <View style={[styles.reEntryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <View style={styles.reEntryHeader}>
-                  <Ionicons name="calendar-outline" size={18} color={colors.primary} />
-                  <Text style={[styles.reEntryTitle, { color: colors.text }]}>
-                    {t('fresh90DayAllowance')}
-                  </Text>
-                </View>
-                <Text style={[styles.reEntryDate, { color: colors.primary }]}>
-                  {format(schengenStatus.legalFullReEntryDate, 'MMMM d, yyyy')}
-                </Text>
-                <Text style={[styles.reEntrySubtext, { color: colors.textSecondary }]}>
-                  {schengenStatus.legalFullReEntryDate.getTime() <= Date.now()
-                    ? t('availableNow90Days')
-                    : t('onThisDateFull90')}
-                </Text>
-                {/* Show days since last Schengen exit instead of misleading reset badge */}
-                {schengenStatus.lastSchengenExit && (
-                  <View style={[styles.resetBadge, { backgroundColor: colors.textSecondary + '15' }]}>
-                    <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
-                    <Text style={[styles.resetBadgeText, { color: colors.textSecondary }]}>
-                      {(() => {
-                        const daysSinceExit = Math.floor(
-                          (new Date().getTime() - schengenStatus.lastSchengenExit!.getTime()) / (1000 * 60 * 60 * 24)
-                        );
-                        return `${daysSinceExit} ${t('daysSinceExit')}`;
-                      })()}
+              {/* Legal Full Re-Entry Date Widget - hidden while a Schengen visit is open-ended
+                  (the date slides daily until an exit date is set) */}
+              {!hasOpenSchengenVisit && (
+                <View style={[styles.reEntryCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={styles.reEntryHeader}>
+                    <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+                    <Text style={[styles.reEntryTitle, { color: colors.text }]}>
+                      {t('fresh90DayAllowance')}
                     </Text>
                   </View>
-                )}
-              </View>
+                  <Text style={[styles.reEntryDate, { color: colors.primary }]}>
+                    {format(schengenStatus.legalFullReEntryDate, 'MMMM d, yyyy')}
+                  </Text>
+                  <Text style={[styles.reEntrySubtext, { color: colors.textSecondary }]}>
+                    {schengenStatus.legalFullReEntryDate.getTime() <= Date.now()
+                      ? t('availableNow90Days')
+                      : t('onThisDateFull90')}
+                  </Text>
+                  {/* Show days since last Schengen exit instead of misleading reset badge */}
+                  {schengenStatus.lastSchengenExit && (
+                    <View style={[styles.resetBadge, { backgroundColor: colors.textSecondary + '15' }]}>
+                      <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+                      <Text style={[styles.resetBadgeText, { color: colors.textSecondary }]}>
+                        {(() => {
+                          const daysSinceExit = Math.floor(
+                            (new Date().getTime() - schengenStatus.lastSchengenExit!.getTime()) / (1000 * 60 * 60 * 24)
+                          );
+                          return `${daysSinceExit} ${t('daysSinceExit')}`;
+                        })()}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              )}
             </View>
           </View>
         )}

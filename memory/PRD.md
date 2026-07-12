@@ -7,7 +7,7 @@ Production React Native Expo app (TestFlight) for tracking travel visits, visa c
 - ZERO-RISK CHANGES ONLY. Analyze first, get approval before modifying files.
 - User is highly deployment-anxious (C-PTSD) — be empathetic, reassuring, never push breaking changes.
 - Build workflow: Agent saves on Emergent → user clicks 'Save' → on Mac: `git checkout -- app.json eas.json` → `git pull` → `eas build --platform ios --profile production`.
-- Current iOS buildNumber in app.json: **48**.
+- Current iOS buildNumber in app.json: **49**.
 
 ## Schengen engine (verified correct — do not modify)
 - `/app/frontend/src/utils/schengenEngine.ts` — EU-compliant date-array + rolling-sum engine.
@@ -22,7 +22,8 @@ Production React Native Expo app (TestFlight) for tracking travel visits, visa c
   - 4 new i18n keys in all 10 languages: youCanStay, stayUntil, rollOffNote, daysLeft.
   - Fixed pre-existing test rot in schengenEngine.test.ts (hardcoded 2025 dates now use jest fake timers).
 - Testing agent verified all 7 frontend scenarios PASS (report: /app/test_reports/iteration_1.json).
-- Stay countdown row added (user-approved enhancement): dashboard Schengen card shows "{n} days left of this stay" when currently inside Schengen on a counting visit AND canStayDays ≤ 30. Amber (time icon) >7 days, red (alert icon) ≤7, "Last day of this stay" at 1. i18n keys daysLeftOfStay/lastDayOfStay in all 10 languages. Verified via seeded screenshot (77 used / 14 can stay / Until Jul 24 / countdown visible). Build number bumped to 48.
+- Stay countdown row added (user-approved enhancement): dashboard Schengen card shows "{n} days left of this stay" when currently inside Schengen on a counting visit AND canStayDays ≤ 30. Amber (time icon) >7 days, red (alert icon) ≤7, "Last day of this stay" at 1. i18n keys daysLeftOfStay/lastDayOfStay in all 10 languages. Verified via seeded screenshot (77 used / 14 can stay / Until Jul 24 / countdown visible).
+- Fresh 90-Day Allowance widget visibility (user request): hidden while an active Schengen counting visit is OPEN-ENDED (no exit date — the re-entry date slides daily and is meaningless). Appears as soon as an exit date is set (even while still in the country) or when not in Schengen. `hasOpenSchengenVisit` memo in index.tsx. Verified both states via screenshot. Build number bumped to 49.
 
 ## Known optional follow-ups (user approval required — zero-risk mandate)
 - `(profile.insurances || []).map` defensive fallback in profile.tsx:900 (only crashes with malformed seed data, real users unaffected).
