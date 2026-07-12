@@ -280,6 +280,8 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "PRE-APP STORE HEALTH CHECK: Running comprehensive tests on all backend endpoints and frontend screens before packaging for App Store. This is a final quality gate."
+  - agent: "main"
+    message: "2026-06-12 - COUNTRY VISA/CONSULATE LINK + EMERGENCY NUMBER AUDIT: Scanned all 109 URLs across 91 countries in /app/frontend/src/constants/countryInfo.ts. Fixed 12 broken URLs (6 HTTP 404, 6 connection-level dead/moved) and 1 wrong emergency number (Uzbekistan general: 1050 → 112). All replacement URLs verified live via curl with real browser headers. Also hid the Cloud Save toggle in Profile → App Settings (single-device UX decision) and bumped app.json buildNumber 49 → 50. Zero backend changes. Frontend testing needed on: (a) CountryInfoCard rendering for updated countries (NL, AT, BG, LU, ME, MK, ID, AU, QA, RO, BT, MD, UZ), (b) Cloud Save toggle no longer visible in Profile → App Settings, (c) other screens still function normally."
   - agent: "testing"
     message: "✅ BACKEND COMPREHENSIVE HEALTH CHECK COMPLETE: All 15 backend tests passed (100% success rate). Health check, sync operations, error handling, edge cases, and additional endpoints all working correctly. NOTE: /api/data endpoints mentioned in review request do not exist - equivalent functionality available via /api/sync endpoints. Backend is ready for App Store packaging."
   - agent: "testing"

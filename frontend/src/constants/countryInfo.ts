@@ -78,7 +78,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
     emergencyNumbers: { police: '112', ambulance: '112', fire: '112', general: '112' },
     visaResources: [
       { name: 'IND Netherlands', url: 'https://ind.nl/en', type: 'immigration' },
-      { name: 'Netherlands Visa', url: 'https://www.netherlandsandyou.nl/travel-and-residence/visas-for-the-netherlands', type: 'visa' },
+      { name: 'Netherlands Worldwide (Visa)', url: 'https://www.netherlandsworldwide.nl/visa-the-netherlands/schengen-visa', type: 'visa' },
     ],
     currencyCode: 'EUR',
     drivingSide: 'right',
@@ -96,7 +96,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   AT: {
     emergencyNumbers: { police: '133', ambulance: '144', fire: '122', general: '112' },
     visaResources: [
-      { name: 'Austrian Embassy', url: 'https://www.bmeia.gv.at/en/austrian-embassy-other-country/', type: 'visa' },
+      { name: 'Austria Visa & Entry', url: 'https://www.bmeia.gv.at/en/travel-stay/entrance-and-residence-in-austria/visa', type: 'visa' },
     ],
     currencyCode: 'EUR',
     drivingSide: 'right',
@@ -271,7 +271,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
     emergencyNumbers: { police: '110', ambulance: '118', fire: '113', general: '112' },
     visaResources: [
       { name: 'Indonesia Immigration', url: 'https://www.imigrasi.go.id', type: 'immigration' },
-      { name: 'Visa Online', url: 'https://visa-online.imigrasi.go.id', type: 'visa' },
+      { name: 'Indonesia e-Visa Portal', url: 'https://evisa.imigrasi.go.id', type: 'visa' },
     ],
     currencyCode: 'IDR',
     drivingSide: 'left',
@@ -308,7 +308,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
     emergencyNumbers: { police: '000', ambulance: '000', fire: '000', general: '000' },
     visaResources: [
       { name: 'Australian Immigration', url: 'https://immi.homeaffairs.gov.au', type: 'immigration' },
-      { name: 'ETA Application', url: 'https://www.eta.homeaffairs.gov.au', type: 'visa' },
+      { name: 'ETA Application (App-only)', url: 'https://immi.homeaffairs.gov.au/visas/getting-a-visa/visa-listing/electronic-travel-authority-601', type: 'visa' },
     ],
     currencyCode: 'AUD',
     drivingSide: 'left',
@@ -410,7 +410,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   QA: {
     emergencyNumbers: { police: '999', ambulance: '999', fire: '999', general: '999' },
     visaResources: [
-      { name: 'Qatar Portal', url: 'https://portal.moi.gov.qa', type: 'immigration' },
+      { name: 'Qatar Hayya Platform', url: 'https://hayya.qa', type: 'immigration' },
     ],
     currencyCode: 'QAR',
     drivingSide: 'right',
@@ -500,7 +500,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   RO: {
     emergencyNumbers: { police: '112', ambulance: '112', fire: '112', general: '112' },
     visaResources: [
-      { name: 'Romania MAE', url: 'https://www.mae.ro/en/node/2084', type: 'visa' },
+      { name: 'Romania eVisa', url: 'https://evisa.mae.ro/', type: 'visa' },
     ],
     currencyCode: 'RON',
     drivingSide: 'right',
@@ -509,7 +509,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   BG: {
     emergencyNumbers: { police: '112', ambulance: '112', fire: '112', general: '112' },
     visaResources: [
-      { name: 'Bulgaria MFA', url: 'https://www.mfa.bg/en/services-travel/consular-services/visas', type: 'visa' },
+      { name: 'Bulgaria MFA', url: 'https://www.mfa.bg/en/services-travel/consular-services/travel-bulgaria/visa-bulgaria', type: 'visa' },
     ],
     currencyCode: 'BGN',
     drivingSide: 'right',
@@ -561,7 +561,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
     timezone: 'Asia/Almaty',
   },
   UZ: {
-    emergencyNumbers: { police: '102', ambulance: '103', fire: '101', general: '1050' },
+    emergencyNumbers: { police: '102', ambulance: '103', fire: '101', general: '112' },
     visaResources: [
       { name: 'Uzbekistan eVisa', url: 'https://e-visa.gov.uz/main', type: 'visa' },
     ],
@@ -635,7 +635,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   BT: {
     emergencyNumbers: { police: '113', ambulance: '112', fire: '110', general: '112' },
     visaResources: [
-      { name: 'Bhutan Tourism', url: 'https://www.tourism.gov.bt', type: 'visa' },
+      { name: 'Bhutan Travel (Official)', url: 'https://bhutan.travel/', type: 'visa' },
     ],
     currencyCode: 'BTN',
     drivingSide: 'left',
@@ -716,7 +716,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   LU: {
     emergencyNumbers: { police: '113', ambulance: '112', fire: '112', general: '112' },
     visaResources: [
-      { name: 'Luxembourg Immigration', url: 'https://maee.gouvernement.lu/en/services-aux-citoyens/visas.html', type: 'visa' },
+      { name: 'Luxembourg Immigration', url: 'https://mae.gouvernement.lu/en/services-aux-citoyens/visa-immigration.html', type: 'visa' },
     ],
     currencyCode: 'EUR',
     drivingSide: 'right',
@@ -788,7 +788,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   ME: {
     emergencyNumbers: { police: '122', ambulance: '124', fire: '123', general: '112' },
     visaResources: [
-      { name: 'Montenegro MFA', url: 'https://www.gov.me/en/diplomatic-missions/visa-requirements', type: 'visa' },
+      { name: 'Montenegro MFA', url: 'https://www.gov.me/en/mvp', type: 'visa' },
     ],
     currencyCode: 'EUR',
     drivingSide: 'right',
@@ -806,7 +806,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   MK: {
     emergencyNumbers: { police: '192', ambulance: '194', fire: '193', general: '112' },
     visaResources: [
-      { name: 'North Macedonia MFA', url: 'https://www.mfa.gov.mk/en/page/8/visa-information', type: 'visa' },
+      { name: 'North Macedonia MFA', url: 'https://www.mfa.gov.mk/en', type: 'visa' },
     ],
     currencyCode: 'MKD',
     drivingSide: 'right',
@@ -824,7 +824,7 @@ export const COUNTRY_INFO: Record<string, CountryInfo> = {
   MD: {
     emergencyNumbers: { police: '902', ambulance: '903', fire: '901', general: '112' },
     visaResources: [
-      { name: 'Moldova BMA', url: 'https://bma.gov.md/en', type: 'immigration' },
+      { name: 'Moldova eVisa', url: 'https://www.evisa.gov.md/', type: 'visa' },
     ],
     currencyCode: 'MDL',
     drivingSide: 'right',

@@ -1,0 +1,32 @@
+{
+  "summary": "Both backend and frontend regression testing for the Cloud-Save-hide + data-integrity fix passed cleanly. Backend smoke tests (4/4) green — /api/health returns healthy, DB connected, /api/sync endpoints unaffected. Frontend on Expo web preview (mobile viewport 390x844) boots without red screen; the Cloud Save toggle is no longer visible in Profile → App Settings (only 'Dark Mode' and 'Language' are shown). The AppContext one-time init cleanup was validated: seeded @nomad_settings with cloudSaveEnabled=true, reloaded the app, and observed the stored settings automatically flipped to cloudSaveEnabled=false. CountryInfoCard was verified end-to-end by seeding visits and opening /visit/[id] for 6 representative countries: Netherlands (renders 'Netherlands Worldwide (Visa)'), Australia ('ETA Application (App-only)'), Qatar ('Qatar Hayya Platform'), Romania ('Romania eVisa'), Bhutan ('Bhutan Travel (Official)') and Uzbekistan (visa link renders + Emergency Numbers row now shows General: 112 — screenshot captured, previous value '1050' no longer present). Remaining 6 URL-only countries (AT, BG, LU, ME, MK, ID, MD) verified at source in /app/frontend/src/constants/countryInfo.ts via grep — every expected updated string is present at the correct line. Regression check across tabs: Dashboard, Visits (/list), Calendar, Map, Tax, Profile all load without crash. Console shows only pre-existing non-fatal warnings already documented in iteration_1 (shadow* deprecation, props.pointerEvents deprecation, expo-notifications web-listener warning) plus a pre-existing 'Unexpected text node: . A text node cannot be a child of a <View>' error on the visit detail screen that is unrelated to this iteration's changes. Written in a calm, factual tone per user context note.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": [
+      {"component": "app/visit/[id].tsx (and possibly add.tsx)", "issue": "Pre-existing (not caused by this iteration): console emits 'Unexpected text node: . A text node cannot be a child of a <View>.' every time a visit detail page is rendered. A stray whitespace/string literal is being placed directly inside a <View> instead of a <Text>. Non-blocking but should be traced (likely an inline conditional emitting an empty string). Reference: /app/frontend/app/visit/[id].tsx"},
+    {"component": "Pre-existing (documented in iteration_1)", "issue": "'shadow*' style props and 'props.pointerEvents' deprecation warnings still present across screens — carried over from iteration_1, not introduced here."}
+    ]
+  },
+  "test_report_links": ["/app/test_reports/iteration_2.json", "/app/backend/tests/test_health_smoke.py", "/app/test_reports/pytest/pytest_results.xml"],
+  "action_items": [
+    "OPTIONAL (not blocking Build 50): investigate the 'Unexpected text node' console error on /visit/[id] — likely a stray {someString && ...} or literal space inside a <View> wrapping the CountryInfoCard/Edit-Visit layout.",
+    "OPTIONAL housekeeping carried from iteration_1: migrate deprecated shadow* → boxShadow and props.pointerEvents → style.pointerEvents to clear console noise."
+  ],
+  "critical_code_review_comments": [
+    "AppSettingsSection.tsx: Cloud Save block correctly wrapped in `{false && (...)}` so it is never rendered while preserving the code + i18n keys for future re-enable. Clean approach.",
+    "AppContext.tsx init effect correctly persists cloudSaveEnabled=false back to storage and calls syncQueue.setEnabled(false) — protects existing TestFlight users who had the toggle on from silent background sync. Verified live.",
+    "countryInfo.ts: all 12 updated visa/consulate URL labels and the UZ general emergency number (112) confirmed present at expected lines via grep and rendered via UI on 6/12 countries.",
+    "Backend server.py unchanged, health check + sync endpoints still respond correctly.",
+    "server.py properly excludes MongoDB _id from responses (visits/profile/settings all use projection {'_id': 0})."
+  ],
+  "updated_files": ["/app/backend/tests/test_health_smoke.py (created)", "/app/test_reports/iteration_2.json (created)"],
+  "success_rate": {"backend": "100% (4/4)", "frontend": "100% (all requested checks passed)"},
+  "seed_data_creation": "Seeded @nomad_visits (6 visits: NL, UZ, AU, QA, RO, BT), @nomad_profile (Test User, empty passports/insurances arrays), and @nomad_settings (with cloudSaveEnabled=true to test the auto-cleanup). Also set @nomad_storage_version='1'.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Frontend backend URL env var is EXPO_PUBLIC_BACKEND_URL (not EXPO_BACKEND_URL) — public preview: https://nomad-compass-6.preview.emergentagent.com. To seed visits use localStorage key '@nomad_visits' as Visit[] JSON; @nomad_profile MUST include passports:[] and insurances:[] arrays or Profile tab crashes. Visit detail deep-link works at /visit/<id> and the CountryInfoCard is expanded by default there (already open — no header click needed). System real date is currently 2026-07-12. Cloud Save row in AppSettingsSection is now behind `{false && (...)}` — do NOT expect it visible.",
+  "rca_of_issue": "N/A — no bug reproduced. All requested verification points passed."
+}
