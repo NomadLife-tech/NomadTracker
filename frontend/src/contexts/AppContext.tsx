@@ -77,8 +77,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
         ]);
         setVisits(loadedVisits);
         setProfile(loadedProfile);
-        setSettings(loadedSettings);
-        
+
+        // Cloud Save is intentionally disabled in the shipped app — Nomad Tracker
+        // is a single-device experience. If a legacy TestFlight user had the
+        // (now-hidden) toggle enabled in a previous build, quietly turn it off
+        // so we never silently push data to the backend from a shipped release.
+        let effectiveSettings = loadedSettings;
+        if (loadedSettings.cloudSaveEnabled) {
+          effectiveSettings = { ...loadedSettings, cloudSaveEnabled: false };
+          try {
+            await storage.saveSettings(effectiveSettings);
+          } catch (persistError) {
+            console.warn('[AppContext] Failed to persist cloudSave disable:', persistError);
+          }
+        }
+        setSettings(effectiveSettings);
+        syncQueue.setEnabled(false);
+
         // Initialize notifications on native platforms
         if (Platform.OS !== 'web') {
           try {

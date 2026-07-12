@@ -63,25 +63,34 @@ export function AppSettingsSection({
         </View>
       </TouchableOpacity>
 
-      {/* Cloud Save */}
-      <View style={styles.settingRow}>
-        <View style={styles.settingInfo}>
-          <Ionicons name="cloud" size={22} color={colors.text} />
-          <View>
-            <Text style={[styles.settingLabel, { color: colors.text }]}>
-              {t('cloudSave')}
-            </Text>
-            <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
-              {t('cloudSaveDescription')}
-            </Text>
+      {/*
+        Cloud Save row intentionally hidden.
+        Nomad Tracker is designed as a single-device, on-device experience —
+        cloud sync did not add user value for our audience.
+        Underlying sync infrastructure (syncQueue, /api/sync backend, and the
+        cloudSaveEnabled setting) is preserved and disabled by default so this
+        can be re-enabled cleanly in the future if requirements change.
+      */}
+      {false && (
+        <View style={styles.settingRow}>
+          <View style={styles.settingInfo}>
+            <Ionicons name="cloud" size={22} color={colors.text} />
+            <View>
+              <Text style={[styles.settingLabel, { color: colors.text }]}>
+                {t('cloudSave')}
+              </Text>
+              <Text style={[styles.settingHint, { color: colors.textSecondary }]}>
+                {t('cloudSaveDescription')}
+              </Text>
+            </View>
           </View>
+          <Switch
+            value={cloudSaveEnabled}
+            onValueChange={onCloudSaveChange}
+            trackColor={{ false: colors.border, true: colors.primary }}
+          />
         </View>
-        <Switch
-          value={cloudSaveEnabled}
-          onValueChange={onCloudSaveChange}
-          trackColor={{ false: colors.border, true: colors.primary }}
-        />
-      </View>
+      )}
     </View>
   );
 }
