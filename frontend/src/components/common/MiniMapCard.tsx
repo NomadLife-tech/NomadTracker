@@ -44,8 +44,18 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
   }, [isSchengenCounting, allVisits, passports]);
 
   // Forward-looking stay info (roll-off aware): the real answer to "how long can I stay?"
-  const canStayDays = schengenStatus ? Math.max(0, schengenStatus.maxStayFromToday) : null;
-  const stayUntilDate = canStayDays !== null && canStayDays > 0 ? addDays(getToday(), canStayDays - 1) : null;
+  //
+  // DISPLAY ADJUSTMENT: When the current activeVisit is a counting Schengen visit,
+  // today is already counted in the engine's `daysUsed`. The engine's
+  // `maxStayFromToday` also counts today, which double-counts today from the user's
+  // perspective. Subtract 1 so "You Can Stay" represents days AFTER today.
+  // `stayUntilDate` continues to use the raw value so the "Until" date stays correct.
+  // Engine remains untouched — this is a display-layer correction only.
+  const rawMaxStay = schengenStatus ? Math.max(0, schengenStatus.maxStayFromToday) : null;
+  const canStayDays = rawMaxStay === null
+    ? null
+    : (isSchengenCounting ? Math.max(0, rawMaxStay - 1) : rawMaxStay);
+  const stayUntilDate = rawMaxStay !== null && rawMaxStay > 0 ? addDays(getToday(), rawMaxStay - 1) : null;
   
   // Check if this is an EU Citizen visit (no visa limits)
   const isEUCitizenVisit = activeVisit?.visaType === 'EU Citizen';
@@ -68,8 +78,13 @@ export function MiniMapCard({ activeVisit, allVisits = [], passports = [], onPre
     // daysRemaining uses the forward simulation (maxStayFromToday) so it reflects
     // past days rolling off the 180-day window during the stay - the number a user
     // standing in the country actually needs.
+    //
+    // DISPLAY ADJUSTMENT: same as above — since today is already counted in daysUsed
+    // (isSchengenCounting == true means user is currently inside on a counting visit),
+    // subtract 1 from the raw engine value so `daysRemaining` reads as "days AFTER today".
     if (isSchengenCounting && schengenStatus) {
-      const canStay = Math.max(0, schengenStatus.maxStayFromToday);
+      const rawCanStay = Math.max(0, schengenStatus.maxStayFromToday);
+      const canStay = Math.max(0, rawCanStay - 1);
       return {
         ...baseStatus,
         daysUsed: schengenStatus.daysUsed,

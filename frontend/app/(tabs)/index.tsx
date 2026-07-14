@@ -104,13 +104,6 @@ export default function DashboardScreen() {
     return calculateSchengenStatusExtended(visits, profile.passports);
   }, [visits, hasSchengenVisits, profile.passports]);
 
-  // Forward-looking stay values (roll-off aware): what the user can ACTUALLY do from today.
-  // Past days roll off the 180-day window during a stay, so the real max stay can
-  // exceed the naive "90 - daysUsed" arithmetic.
-  const canStayDays = schengenStatus ? Math.max(0, schengenStatus.maxStayFromToday) : 0;
-  const stayUntilDate = canStayDays > 0 ? addDays(getToday(), canStayDays - 1) : null;
-  const showRollOffNote = schengenStatus ? canStayDays > schengenStatus.daysRemaining : false;
-
   // Whether the user is currently INSIDE Schengen on a counting visit (drives the stay countdown)
   const isCurrentlyInSchengen = useMemo(() => {
     return visits.some(v =>
@@ -120,6 +113,24 @@ export default function DashboardScreen() {
       visitCountsForSchengen(v, profile.passports)
     );
   }, [visits, profile.passports]);
+
+  // Forward-looking stay values (roll-off aware): what the user can ACTUALLY do from today.
+  // Past days roll off the 180-day window during a stay, so the real max stay can
+  // exceed the naive "90 - daysUsed" arithmetic.
+  //
+  // DISPLAY ADJUSTMENT: When the user is currently INSIDE Schengen on an active counting visit,
+  // today is already counted in `daysUsed`. The engine's `maxStayFromToday` also counts today,
+  // which causes a semantic double-count from the user's perspective ("I've been here 4 days
+  // AND I can stay 87 more" — but the 87 secretly includes today too). We subtract 1 so the
+  // displayed "You Can Stay" represents days AFTER today (i.e., days genuinely still available).
+  // When the user is NOT currently in Schengen (a fresh entry today would be new), the raw
+  // value already correctly represents "days starting today". Engine remains untouched — this
+  // is a display-layer correction only. `stayUntilDate` continues to use the raw value so
+  // the "Until" date stays correct.
+  const rawMaxStay = schengenStatus ? Math.max(0, schengenStatus.maxStayFromToday) : 0;
+  const canStayDays = isCurrentlyInSchengen ? Math.max(0, rawMaxStay - 1) : rawMaxStay;
+  const stayUntilDate = rawMaxStay > 0 ? addDays(getToday(), rawMaxStay - 1) : null;
+  const showRollOffNote = schengenStatus ? canStayDays > schengenStatus.daysRemaining : false;
 
   // Whether there's an OPEN-ENDED (no exit date) active Schengen visit.
   // While a trip is open-ended, the fresh-90 re-entry date slides forward daily

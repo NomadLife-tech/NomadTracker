@@ -1,0 +1,29 @@
+{
+  "summary": "Off-by-one Schengen display fix verified end-to-end. Jest suite: 4 suites / 35 tests passed (including the new userScenario_july14.test.ts). Live browser test on Expo web preview (mobile viewport 390x844) with the exact user seed (Portugal open-ended visit entryDate=2026-07-11, today=2026-07-14 confirmed by sandbox date): both the mini map card at the top AND the Schengen 90/180 Calculator section show '4 DAYS USED / 86 YOU CAN STAY / Oct 8 UNTIL'. The value '87' is NOT present anywhere on the page. 'Until' date is Oct 8, 2026 (unchanged, uses raw engine value). Regression case (Vietnam-only non-Schengen visit): Schengen calculator widget is correctly hidden, Active Visas widget shown instead, no crash, no spurious -1 subtraction. All five other tabs (visits, Calendar, Map, Tax, Profile) load without crash. Backend /api/health returns healthy. Only console noise is the pre-existing warnings already documented in iteration_2 (shadow*, props.pointerEvents, expo-notifications web listener, iframe sandbox, and the pre-existing 'Unexpected text node' on visit detail screen) — none introduced by this fix. Fix is display-layer only in index.tsx and MiniMapCard.tsx; engine schengenEngine.ts untouched as intended. Written in a supportive, factual tone per user context note.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [],
+    "react_native_issues": [
+      {"component": "Pre-existing (documented in iteration_2, not caused by this iteration)", "issue": "'Unexpected text node: . A text node cannot be a child of a <View>' fires when navigating to Visits list. Non-blocking. Reference: /app/frontend/app/visit/[id].tsx"},
+      {"component": "Pre-existing (documented in iteration_1/2)", "issue": "shadow* and props.pointerEvents deprecation warnings across screens. Non-blocking."}
+    ]
+  },
+  "test_report_links": ["/app/test_reports/iteration_3.json", "/app/frontend/src/utils/__tests__/userScenario_july14.test.ts"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "index.tsx L130-132: canStayDays = isCurrentlyInSchengen ? Math.max(0, rawMaxStay - 1) : rawMaxStay. stayUntilDate uses rawMaxStay - 1 unconditionally, which is correct because when NOT in Schengen, rawMaxStay represents days starting today, so today+rawMaxStay-1 is still the last day of the hypothetical stay. Clean.",
+    "MiniMapCard.tsx L54-58: mirrors the same display contract based on isSchengenCounting. Both surfaces reach the same value (86) for the seeded scenario — no divergence.",
+    "userScenario_july14.test.ts pins both the engine contract (maxStayFromToday=87) and the display contract (86 when currently in Schengen, raw when not). Good regression guard.",
+    "Engine (schengenEngine.ts) untouched — respects the 'display-layer only' intent stated in the request.",
+    "isCurrentlyInSchengen and isSchengenCounting are computed with the same predicate chain (isCurrentVisit && isSchengenCountry && countsAgainstSchengen && visitCountsForSchengen), so the two surfaces stay in sync."
+  ],
+  "updated_files": ["/app/test_reports/iteration_3.json (created)"],
+  "success_rate": {"backend": "100% (health OK)", "frontend": "100% (primary + regression + tab-load all pass; 35/35 Jest tests pass)"},
+  "seed_data_creation": "Primary: @nomad_visits = [{PT, entry 2026-07-11, open-ended, Schengen C (Short Stay)}], @nomad_profile = {passports:[], insurances:[]}. Regression: @nomad_visits = [{VN, entry 2026-06-13, exit 2026-07-10, Tourist}].",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Sandbox date is 2026-07-14. Frontend env var is EXPO_PUBLIC_BACKEND_URL. Public URL: https://nomad-compass-6.preview.emergentagent.com. Seed key '@nomad_visits' (Visit[]) + '@nomad_profile' (must include passports:[] and insurances:[]). The display fix is in index.tsx L130-132 and MiniMapCard.tsx L54-58 (subtract 1 from maxStayFromToday when the user is currently inside Schengen on a counting visit). Engine untouched — do not expect changes in schengenEngine.ts.",
+  "rca_of_issue": "N/A — fix verified working. Root cause of the original off-by-one (documented for context): engine's calculateMaxStay counts today (dayOffset 0 = today) as an available day when projecting forward, but daysUsed also counts today for an active visit. When both are shown side-by-side the user perceives a double-count of today. Fix subtracts 1 from displayed maxStay only when the user is currently inside Schengen on a counting visit; stayUntilDate correctly keeps using the raw value so today + (raw - 1) = correct last legal day (Oct 8)."
+}
