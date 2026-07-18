@@ -9,10 +9,39 @@ interface CountryHeatmapProps {
   onCountryPress?: (country: CountryHeatmapData) => void;
   onShowAllCountries?: () => void;
   t: (key: string) => string;
+  selectedYear: number;
+  onYearChange: (delta: number) => void;
+  maxYear: number;
 }
 
-export function CountryHeatmap({ data, onCountryPress, onShowAllCountries, t }: CountryHeatmapProps) {
+export function CountryHeatmap({ data, onCountryPress, onShowAllCountries, t, selectedYear, onYearChange, maxYear }: CountryHeatmapProps) {
   const { colors } = useTheme();
+
+  const yearSelector = (
+    <View style={styles.yearSelector}>
+      <TouchableOpacity
+        onPress={() => onYearChange(-1)}
+        style={[styles.yearButton, { backgroundColor: colors.border }]}
+      >
+        <Ionicons name="chevron-back" size={16} color={colors.text} />
+      </TouchableOpacity>
+      <Text style={[styles.yearText, { color: colors.text }]}>{selectedYear}</Text>
+      <TouchableOpacity
+        onPress={() => onYearChange(1)}
+        disabled={selectedYear >= maxYear}
+        style={[
+          styles.yearButton,
+          { backgroundColor: selectedYear >= maxYear ? colors.border + '50' : colors.border },
+        ]}
+      >
+        <Ionicons
+          name="chevron-forward"
+          size={16}
+          color={selectedYear >= maxYear ? colors.textSecondary : colors.text}
+        />
+      </TouchableOpacity>
+    </View>
+  );
 
   const getHeatColor = (intensity: number) => {
     // Gradient from light blue to dark blue
@@ -27,15 +56,18 @@ export function CountryHeatmap({ data, onCountryPress, onShowAllCountries, t }: 
     return (
       <View style={[styles.container, { backgroundColor: colors.card }]}>
         <View style={styles.header}>
-          <Ionicons name="map" size={20} color={colors.primary} />
-          <Text style={[styles.title, { color: colors.text }]}>
-            {t('countryHeatmap')}
-          </Text>
+          <View style={styles.headerLeft}>
+            <Ionicons name="map" size={20} color={colors.primary} />
+            <Text style={[styles.title, { color: colors.text }]}>
+              {t('countryHeatmap')}
+            </Text>
+          </View>
+          {yearSelector}
         </View>
         <View style={styles.emptyState}>
           <Ionicons name="globe-outline" size={48} color={colors.textSecondary} />
           <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-            {t('noVisitsYet')}
+            {t('noDataForYear')} {selectedYear}
           </Text>
         </View>
       </View>
@@ -45,10 +77,13 @@ export function CountryHeatmap({ data, onCountryPress, onShowAllCountries, t }: 
   return (
     <View style={[styles.container, { backgroundColor: colors.card }]}>
       <View style={styles.header}>
-        <Ionicons name="map" size={20} color={colors.primary} />
-        <Text style={[styles.title, { color: colors.text }]}>
-          {t('countryHeatmap')}
-        </Text>
+        <View style={styles.headerLeft}>
+          <Ionicons name="map" size={20} color={colors.primary} />
+          <Text style={[styles.title, { color: colors.text }]}>
+            {t('countryHeatmap')}
+          </Text>
+        </View>
+        {yearSelector}
       </View>
 
       {/* Legend */}
@@ -114,8 +149,31 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
     marginBottom: 12,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  yearSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  yearButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  yearText: {
+    fontSize: 14,
+    fontWeight: '600',
+    minWidth: 40,
+    textAlign: 'center',
   },
   title: {
     fontSize: 16,

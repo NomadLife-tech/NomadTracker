@@ -1,5 +1,7 @@
+import { differenceInDays, isAfter, isBefore } from 'date-fns';
 import { Visit } from '../types';
 import { COUNTRIES } from '../constants/countries';
+import { toLocalMidnight, getToday } from './dateUtils';
 
 export interface TravelStreak {
   currentStreak: number;
@@ -117,22 +119,38 @@ export function calculateTravelStreaks(visits: Visit[]): TravelStreak {
   };
 }
 
-// Calculate country heat map data
-export function calculateCountryHeatmap(visits: Visit[]): CountryHeatmapData[] {
+// Calculate country heat map data for a specific calendar year
+// Uses the same local-midnight day counting as the Days per Country chart (calculateTaxDays)
+export function calculateCountryHeatmap(visits: Visit[], year: number): CountryHeatmapData[] {
+  const yearStart = new Date(year, 0, 1);
+  const yearEnd = new Date(year, 11, 31);
+  const today = getToday();
+  const effectiveEnd = isBefore(yearEnd, today) ? yearEnd : today;
+
   const countryStats: Record<string, { visitCount: number; totalDays: number }> = {};
 
   visits.forEach((visit) => {
-    const code = visit.countryCode;
-    if (!countryStats[code]) {
-      countryStats[code] = { visitCount: 0, totalDays: 0 };
+    const entryDate = toLocalMidnight(visit.entryDate);
+    const exitDate = visit.exitDate ? toLocalMidnight(visit.exitDate) : today;
+
+    // Skip visits that don't overlap the selected year
+    if (isAfter(entryDate, yearEnd) || isBefore(exitDate, yearStart)) {
+      return;
     }
 
-    countryStats[code].visitCount++;
+    // Clamp days to the selected year (and to today for ongoing visits)
+    const overlapStart = isAfter(entryDate, yearStart) ? entryDate : yearStart;
+    const overlapEnd = isBefore(exitDate, effectiveEnd) ? exitDate : effectiveEnd;
 
-    const entryDate = new Date(visit.entryDate);
-    const exitDate = visit.exitDate ? new Date(visit.exitDate) : new Date();
-    const days = Math.ceil((exitDate.getTime() - entryDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    countryStats[code].totalDays += days;
+    if (isBefore(overlapStart, overlapEnd) || overlapStart.getTime() === overlapEnd.getTime()) {
+      const days = differenceInDays(overlapEnd, overlapStart) + 1;
+      const code = visit.countryCode;
+      if (!countryStats[code]) {
+        countryStats[code] = { visitCount: 0, totalDays: 0 };
+      }
+      countryStats[code].visitCount++;
+      countryStats[code].totalDays += days;
+    }
   });
 
   // Find max values for intensity calculation

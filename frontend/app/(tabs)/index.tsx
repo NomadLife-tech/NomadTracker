@@ -49,6 +49,7 @@ export default function DashboardScreen() {
   
   const [refreshing, setRefreshing] = useState(false);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [heatmapYear, setHeatmapYear] = useState(new Date().getFullYear());
   const [showVisitsModal, setShowVisitsModal] = useState(false);
   const [showCountriesModal, setShowCountriesModal] = useState(false);
   const [showSchengenModal, setShowSchengenModal] = useState(false);
@@ -147,8 +148,8 @@ export default function DashboardScreen() {
   }, [visits, profile.passports]);
 
   const countryHeatmapData = useMemo(() => {
-    return calculateCountryHeatmap(visits);
-  }, [visits]);
+    return calculateCountryHeatmap(visits, heatmapYear);
+  }, [visits, heatmapYear]);
 
   // Active visas (visits with entry date in past/today AND (no exit date OR exit date in future))
   const activeVisas = useMemo(() => {
@@ -493,6 +494,9 @@ export default function DashboardScreen() {
           data={countryHeatmapData} 
           t={t} 
           onShowAllCountries={() => setShowCountriesModal(true)}
+          selectedYear={heatmapYear}
+          onYearChange={(delta) => setHeatmapYear(prev => Math.min(prev + delta, currentYear))}
+          maxYear={currentYear}
         />
 
         {/* Days per Country Pie Chart */}
